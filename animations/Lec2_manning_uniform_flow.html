@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Lecture 2 — Manning Uniform Flow &amp; Normal Depth</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --bg:#0f1420; --panel:#171e2e; --panel2:#1d2638; --ink:#e8edf6; --dim:#9aa7bd;
+    --accent:#4db8ff; --sub:#3b82f6; --crit:#f59e0b; --sup:#ef4444; --line:#2b3650;
+    --ok:#34d399; --violet:#a78bfa;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%; overflow:hidden; background:var(--bg); color:var(--ink);
+    font-family:"Segoe UI",system-ui,sans-serif;}
+  .panel{position:absolute; background:color-mix(in srgb, var(--panel) 92%, transparent);
+    border:1px solid var(--line); border-radius:10px; padding:12px 14px;
+    backdrop-filter:blur(6px); font-size:13px; line-height:1.45; z-index:2;}
+  #ui{left:12px; top:12px; width:252px; max-height:calc(100% - 24px); overflow-y:auto;}
+  #readout{right:12px; top:12px; width:276px; max-height:calc(100% - 24px); overflow-y:auto;}
+  #actions{left:50%; transform:translateX(-50%); bottom:12px; display:flex; gap:8px; padding:8px;}
+  #stage{position:absolute; inset:0; padding:12px 302px 64px 278px;
+    display:flex; flex-direction:column; gap:10px;}
+  #row2{flex:1.05; min-height:0; display:flex; gap:10px;}
+  #profWrap{flex:0.95; min-height:0; position:relative;}
+  #xsWrap{flex:0.42; min-width:0; position:relative;}
+  #chartWrap{flex:0.58; min-width:0; position:relative;}
+  canvas.view{width:100%; height:100%; display:block; background:var(--panel);
+    border:1px solid var(--line); border-radius:10px;}
+  h1{font-size:14px; margin-bottom:2px; color:var(--accent);}
+  .sub{color:var(--dim); font-size:11px; margin-bottom:10px;}
+  h2{font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--dim);
+    margin:12px 0 6px; border-bottom:1px solid var(--line); padding-bottom:3px;}
+  label.row{display:flex; justify-content:space-between; align-items:center; margin:7px 0 2px;
+    font-size:12.5px;}
+  label.row .val{color:var(--accent); font-variant-numeric:tabular-nums; font-weight:600;}
+  input[type=range]{width:100%; accent-color:var(--accent);}
+  select{width:100%; background:var(--panel2); color:var(--ink); border:1px solid var(--line);
+    border-radius:6px; padding:5px 6px; font-size:13px;}
+  .chk{display:flex; align-items:center; gap:7px; margin:6px 0; font-size:12.5px; cursor:pointer;}
+  .chk input{accent-color:var(--accent);}
+  button{background:var(--panel2); color:var(--ink); border:1px solid var(--line);
+    border-radius:7px; padding:7px 13px; font-size:12.5px; cursor:pointer;}
+  button:hover{border-color:var(--accent); color:var(--accent);}
+  button.active{background:var(--accent); color:#08111e; border-color:var(--accent); font-weight:600;}
+  table.vals{width:100%; border-collapse:collapse; font-variant-numeric:tabular-nums;}
+  table.vals td{padding:2.5px 0; font-size:12.5px;}
+  table.vals td:first-child{color:var(--dim);}
+  table.vals td:last-child{text-align:right; font-weight:600;}
+  .formula{font-family:Cambria,Georgia,serif; font-style:italic; font-size:12.5px;
+    color:#c9d6ea; background:var(--panel2); border-radius:6px; padding:7px 9px; margin-top:6px;}
+  .note{font-size:11px; color:var(--dim); margin-top:8px;}
+  #class{margin-top:8px; padding:7px 10px; border-radius:7px; text-align:center; font-weight:700;
+    font-size:13px; background:var(--sub); color:#fff;}
+  .hidden{display:none !important;}
+  @media (max-width:1150px){
+    html,body{overflow-y:auto; height:auto; min-height:100%;}
+    body{display:flex; flex-direction:column;}
+    .panel{position:static; width:auto; max-height:none; margin:10px 12px 0;}
+    #ui{order:1;} #stage{order:2; position:static; padding:10px 12px;}
+    #actions{order:3; align-self:center; transform:none;} #readout{order:4; margin-bottom:12px;}
+    #profWrap{flex:none; height:270px;}
+    #row2{flex:none; flex-direction:column; height:auto;}
+    #xsWrap{flex:none; height:300px;} #chartWrap{flex:none; height:360px;}
+  }
+</style>
+</head>
+<body>
+
+<div id="ui" class="panel">
+  <h1>Manning Uniform Flow</h1>
+  <div class="sub">CVE2142 · Lecture 2 · Normal depth, critical depth &amp; slope classification</div>
+
+  <h2>Channel</h2>
+  <select id="shape">
+    <option value="trap" selected>Trapezoidal</option>
+    <option value="rect">Rectangular</option>
+    <option value="tri">Triangular</option>
+  </select>
+  <div id="ctl-b">
+    <label class="row">Bottom width b <span class="val" id="v-b"></span></label>
+    <input type="range" id="s-b" min="0.5" max="8" step="0.1" value="2.5">
+  </div>
+  <div id="ctl-m">
+    <label class="row">Side slope m (mH:1V) <span class="val" id="v-m"></span></label>
+    <input type="range" id="s-m" min="0.25" max="3" step="0.05" value="2">
+  </div>
+
+  <h2>Roughness (Manning n)</h2>
+  <select id="mat">
+    <option value="0.010">Glass / PVC — n = 0.010</option>
+    <option value="0.012">Finished concrete — n = 0.012</option>
+    <option value="0.013" selected>Concrete — n = 0.013</option>
+    <option value="0.015">Brickwork — n = 0.015</option>
+    <option value="0.022">Clean earth channel — n = 0.022</option>
+    <option value="0.025">Gravel bed — n = 0.025</option>
+    <option value="0.030">Earth with weeds — n = 0.030</option>
+    <option value="0.035">Natural stream — n = 0.035</option>
+    <option value="custom">Custom…</option>
+  </select>
+  <label class="row">n <span class="val" id="v-n"></span></label>
+  <input type="range" id="s-n" min="0.010" max="0.040" step="0.001" value="0.013">
+
+  <h2>Flow &amp; slope</h2>
+  <div>
+    <label class="row">Discharge Q <span class="val" id="v-Q"></span></label>
+    <input type="range" id="s-Q" min="1" max="50" step="0.5" value="26">
+  </div>
+  <div>
+    <label class="row">Bed slope S₀ (log scale) <span class="val" id="v-S0"></span></label>
+    <input type="range" id="s-S0" min="-4" max="-1.3" step="0.01" value="-3.0458">
+  </div>
+
+  <h2>Show</h2>
+  <label class="chk"><input type="checkbox" id="t-part" checked> Water particles (mean V)</label>
+  <label class="chk"><input type="checkbox" id="t-yc" checked> Critical-depth line y꜀</label>
+
+  <div class="note"><b>Aha demo:</b> press <i>Sweep slope</i> — the normal depth yₙ falls as
+  the channel steepens, while y꜀ stays put (it depends only on Q and geometry). Where they
+  cross is the <b>critical slope S꜀</b>: the channel flips from mild to steep.</div>
+</div>
+
+<div id="readout" class="panel">
+  <h2 style="margin-top:0">Depths (solved)</h2>
+  <table class="vals">
+    <tr><td>Normal depth yₙ (Manning)</td><td id="o-yn"></td></tr>
+    <tr><td>Critical depth y꜀ (Fr = 1)</td><td id="o-yc"></td></tr>
+    <tr><td>Critical slope S꜀</td><td id="o-Sc"></td></tr>
+  </table>
+  <div id="class">MILD SLOPE</div>
+
+  <h2>Section at yₙ</h2>
+  <table class="vals">
+    <tr><td>Flow area A</td><td id="o-A"></td></tr>
+    <tr><td>Wetted perimeter P</td><td id="o-P"></td></tr>
+    <tr><td>Hydraulic radius R = A/P</td><td id="o-R"></td></tr>
+    <tr><td>Top width T</td><td id="o-T"></td></tr>
+    <tr><td>Velocity V = Q/A</td><td id="o-V"></td></tr>
+    <tr><td>Froude number Fr</td><td id="o-Fr"></td></tr>
+    <tr><td>Bed shear τ₀ = ρgRS₀</td><td id="o-tau"></td></tr>
+    <tr><td id="o-optlab">Best-section b/y (min P)</td><td id="o-opt"></td></tr>
+  </table>
+  <div class="formula">
+    V = (1/n)·R^⅔·S₀^½ &nbsp;·&nbsp; Q = V·A &nbsp;·&nbsp; R = A/P<br>
+    y꜀ : Q²T/(gA³) = 1 &nbsp;·&nbsp; S꜀ = [nQ/(A꜀R꜀^⅔)]²<br>
+    best trapezoid: b/y = 2(√(1+m²) − m)
+  </div>
+  <div class="note">Uniform flow: gravity along the bed exactly balances boundary friction,
+  so depth and velocity are constant — bed, water surface and energy line are all
+  <b>parallel</b> (S_f = S_w = S₀). yₙ is found by solving Manning's equation for depth;
+  y꜀ from the critical-flow condition dE/dy = 0.</div>
+</div>
+
+<div id="stage">
+  <div id="profWrap"><canvas id="prof" class="view"></canvas></div>
+  <div id="row2">
+    <div id="xsWrap"><canvas id="xs" class="view"></canvas></div>
+    <div id="chartWrap"><canvas id="chart" class="view"></canvas></div>
+  </div>
+</div>
+
+<div id="actions" class="panel">
+  <button id="b-sweep">▶ Sweep slope S₀ (mild → steep)</button>
+  <button id="b-reset">Reset (lecture Ex. 3)</button>
+</div>
+
+<script>
+'use strict';
+/* ---------------- physics ---------------- */
+const G=9.81, RHO=1000, XLEN=30, TSCALE=0.4;
+const st={shape:'trap', b:2.5, m:2, n:0.013, Q:26, logS:-3.0458,
+  part:true, ycl:true, sweep:false};
+const S0=()=>Math.pow(10,st.logS);
+const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
+
+function geom(y){                    // A, P, T for the current shape at depth y
+  const {b,m}=st;
+  if(st.shape==='rect') return {A:b*y, P:b+2*y, T:b};
+  if(st.shape==='tri')  return {A:m*y*y, P:2*y*Math.sqrt(1+m*m), T:2*m*y};
+  return {A:(b+m*y)*y, P:b+2*y*Math.sqrt(1+m*m), T:b+2*m*y};
+}
+const manningQ=(y,s)=>{ const g=geom(y); return g.A*Math.pow(g.A/g.P,2/3)*Math.sqrt(s)/st.n; };
+function normalDepth(s){             // bisection: manningQ monotonic in y
+  let lo=1e-4, hi=40;
+  for(let i=0;i<70;i++){ const m2=(lo+hi)/2; (manningQ(m2,s)<st.Q)?lo=m2:hi=m2; }
+  return (lo+hi)/2;
+}
+function criticalDepth(){            // bisection on Q²T/(gA³) = 1 (decreasing in y)
+  let lo=1e-4, hi=40;
+  for(let i=0;i<70;i++){ const m2=(lo+hi)/2, g=geom(m2);
+    (st.Q*st.Q*g.T/(G*Math.pow(g.A,3))>1)?lo=m2:hi=m2; }
+  return (lo+hi)/2;
+}
+function solve(){
+  const s=S0(), yn=normalDepth(s), yc=criticalDepth();
+  const g=geom(yn), R=g.A/g.P, V=st.Q/g.A, D=g.A/g.T;
+  const gc=geom(yc), Rc=gc.A/gc.P;
+  const Sc=Math.pow(st.n*st.Q/(gc.A*Math.pow(Rc,2/3)),2);
+  return {s, yn, yc, Sc, A:g.A, P:g.P, T:g.T, R, V, Fr:V/Math.sqrt(G*D),
+    tau:RHO*G*R*s, Eh:V*V/(2*G)};
+}
+const slopeClass=r=> Math.abs(r.s-r.Sc)/r.Sc<0.05 ? ['CRITICAL SLOPE  (yₙ ≈ y꜀)','--crit']
+  : r.s<r.Sc ? ['MILD SLOPE  (yₙ > y꜀ — subcritical normal flow)','--sub']
+             : ['STEEP SLOPE  (yₙ < y꜀ — supercritical normal flow)','--sup'];
+
+/* ---------------- UI ---------------- */
+const $=id=>document.getElementById(id);
+const fS=s=>s<0.001?s.toExponential(1):s.toFixed(4);
+function syncChips(){
+  $('v-b').textContent=st.b.toFixed(1)+' m';
+  $('v-m').textContent=st.m.toFixed(2);
+  $('v-n').textContent=st.n.toFixed(3);
+  $('v-Q').textContent=st.Q.toFixed(1)+' m³/s';
+  $('v-S0').textContent=fS(S0());
+}
+const bindS=(id,k,f)=>$(id).addEventListener('input',e=>{st[k]=parseFloat(e.target.value);
+  f?.(); dirty=true; syncChips();});
+bindS('s-b','b'); bindS('s-m','m'); bindS('s-Q','Q'); bindS('s-S0','logS');
+bindS('s-n','n',()=>{ $('mat').value=[...$('mat').options].some(o=>o.value===st.n.toFixed(3))
+  ?st.n.toFixed(3):'custom'; });
+$('mat').addEventListener('change',e=>{ if(e.target.value!=='custom'){
+  st.n=parseFloat(e.target.value); $('s-n').value=st.n; dirty=true; syncChips(); }});
+$('shape').addEventListener('change',e=>{ st.shape=e.target.value;
+  $('ctl-b').classList.toggle('hidden',st.shape==='tri');
+  $('ctl-m').classList.toggle('hidden',st.shape==='rect');
+  dirty=true; syncChips(); });
+$('t-part').addEventListener('change',e=>st.part=e.target.checked);
+$('t-yc').addEventListener('change',e=>st.ycl=e.target.checked);
+$('b-sweep').onclick=()=>{ st.sweep=!st.sweep; $('b-sweep').classList.toggle('active',st.sweep); };
+$('b-reset').onclick=()=>{ Object.assign(st,{shape:'trap',b:2.5,m:2,n:0.013,Q:26,logS:-3.0458,sweep:false});
+  $('shape').value='trap'; $('ctl-b').classList.remove('hidden'); $('ctl-m').classList.remove('hidden');
+  $('s-b').value=2.5; $('s-m').value=2; $('s-n').value=0.013; $('mat').value='0.013';
+  $('s-Q').value=26; $('s-S0').value=-3.0458; $('b-sweep').classList.remove('active');
+  dirty=true; syncChips(); };
+syncChips();
+
+function updateReadout(r){
+  $('o-yn').textContent=r.yn.toFixed(3)+' m';
+  $('o-yc').textContent=r.yc.toFixed(3)+' m';
+  $('o-Sc').textContent=fS(r.Sc);
+  $('o-A').textContent=r.A.toFixed(2)+' m²';
+  $('o-P').textContent=r.P.toFixed(2)+' m';
+  $('o-R').textContent=r.R.toFixed(3)+' m';
+  $('o-T').textContent=r.T.toFixed(2)+' m';
+  $('o-V').textContent=r.V.toFixed(3)+' m/s';
+  $('o-Fr').textContent=r.Fr.toFixed(3);
+  $('o-tau').textContent=r.tau.toFixed(1)+' N/m²';
+  if(st.shape==='tri'){ $('o-optlab').textContent='Best-section m (min P)';
+    $('o-opt').textContent='1.00  (current '+st.m.toFixed(2)+')'; }
+  else { $('o-optlab').textContent='Best-section b/y (min P)';
+    const opt=2*(Math.sqrt(1+st.m*st.m)-(st.shape==='rect'?0:st.m));
+    $('o-opt').textContent=opt.toFixed(2)+'  (current '+(st.b/r.yn).toFixed(2)+')'; }
+  const [txt,col]=slopeClass(r), el=$('class');
+  el.textContent=txt;
+  el.style.background=`var(${col})`;
+  el.style.color=col==='--crit'?'#08111e':'#fff';
+}
+
+/* ---------------- canvas helpers ---------------- */
+function fitCanvas(cv){
+  const dpr=Math.min(devicePixelRatio,2), w=cv.clientWidth, h=cv.clientHeight;
+  if(cv.width!==Math.round(w*dpr)||cv.height!==Math.round(h*dpr)){cv.width=w*dpr;cv.height=h*dpr;}
+  const ctx=cv.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0); return [ctx,w,h];
+}
+const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+function mkLabel(ctx,W,M){ return (txt,x,y,color)=>{
+  ctx.font='600 12.5px Segoe UI';
+  const w=ctx.measureText(txt).width, xx=clamp(x,M.l+2,W-M.r-w-2);
+  ctx.fillStyle='rgba(15,20,32,0.75)'; ctx.fillRect(xx-3,y-11,w+6,15);
+  ctx.fillStyle=color; ctx.fillText(txt,xx,y); };}
+
+/* ---------------- longitudinal profile ---------------- */
+const NP=90, px=new Float32Array(NP), pf=new Float32Array(NP);
+for(let i=0;i<NP;i++){ px[i]=Math.random()*XLEN; pf[i]=0.1+0.8*Math.random(); }
+function drawProfile(r,dt){
+  const [ctx,W,H]=fitCanvas($('prof'));
+  ctx.clearRect(0,0,W,H);
+  const M={l:14,r:14,t:24,b:20};
+  const drop=r.s*XLEN, need=drop+Math.max(r.yn+r.Eh, r.yc)*1.35;
+  const sx=(W-M.l-M.r)/XLEN;
+  const ex=clamp((H-M.t-M.b)/need/sx,1,12), sy=sx*ex;
+  const bed=x=>(XLEN-x)*r.s;                        // bed elevation above downstream end
+  const X=x=>M.l+x*sx, Y=e=>H-M.b-e*sy;
+  const label=mkLabel(ctx,W,M);
+  ctx.font='12px Segoe UI'; ctx.fillStyle=css('--dim');
+  ctx.fillText(`Longitudinal profile (reach ${XLEN} m`
+    +(ex>1.05?`, vertical ×${ex.toFixed(1)} exaggerated`:', true scale')
+    +`) — uniform flow at normal depth`, M.l, 15);
+
+  // water body
+  ctx.beginPath(); ctx.moveTo(X(0),Y(bed(0)));
+  ctx.lineTo(X(XLEN),Y(bed(XLEN)));
+  ctx.lineTo(X(XLEN),Y(bed(XLEN)+r.yn)); ctx.lineTo(X(0),Y(bed(0)+r.yn));
+  ctx.closePath(); ctx.fillStyle='rgba(22,112,200,0.45)'; ctx.fill();
+
+  // three parallel lines: bed, water surface, energy line
+  const line=(e0,color,w2,dash)=>{ ctx.strokeStyle=color; ctx.lineWidth=w2;
+    if(dash)ctx.setLineDash(dash);
+    ctx.beginPath(); ctx.moveTo(X(0),Y(bed(0)+e0)); ctx.lineTo(X(XLEN),Y(bed(XLEN)+e0));
+    ctx.stroke(); ctx.setLineDash([]); };
+  line(0,'#8a8f98',2.5);
+  line(r.yn,'#3ea2ff',1.8);
+  line(r.yn+r.Eh,'#e8edf6',1.2,[6,4]);
+  if(st.ycl) line(r.yc,css('--crit'),1.2,[6,4]);
+
+  // particles at mean velocity
+  if(st.part){
+    ctx.fillStyle='#e8f4ff';
+    for(let i=0;i<NP;i++){
+      px[i]+=r.V*dt*TSCALE; if(px[i]>XLEN)px[i]=0;
+      ctx.beginPath(); ctx.arc(X(px[i]),Y(bed(px[i])+pf[i]*r.yn),1.6,0,7); ctx.fill();
+    }
+  }
+  label(`Energy line, slope S_f = S₀  (+V²/2g = ${(r.Eh*1000).toFixed(0)} mm)`, X(0.4), Y(bed(0.4)+r.yn+r.Eh)-6,'#e8edf6');
+  label(`Water surface — normal depth yₙ = ${r.yn.toFixed(2)} m (S_w = S₀)`, X(8), Y(bed(8)+r.yn)-6,'#3ea2ff');
+  label(`Bed, slope S₀ = ${fS(r.s)}`, X(XLEN*0.72), Y(bed(XLEN*0.72))+18,'#c9d6ea');
+  if(st.ycl) label(`y꜀ = ${r.yc.toFixed(2)} m`, X(XLEN*0.55), Y(bed(XLEN*0.55)+r.yc)+16, css('--crit'));
+  const [txt,col]=slopeClass(r);
+  label(txt, W*0.32, M.t+16, css(col));
+}
+
+/* ---------------- cross-section ---------------- */
+function drawXS(r){
+  const [ctx,W,H]=fitCanvas($('xs'));
+  ctx.clearRect(0,0,W,H);
+  const M={l:14,r:14,t:26,b:24};
+  const yTop=r.yn*1.3;
+  const half=(st.shape==='rect'?st.b/2:st.shape==='tri'?st.m*yTop:st.b/2+st.m*yTop)+0.3;
+  const sc=Math.min((W-M.l-M.r)/(2*half),(H-M.t-M.b)/yTop);
+  const X=z=>W/2+z*sc, Y=h=>H-M.b-h*sc;
+  const label=mkLabel(ctx,W,M);
+  ctx.font='12px Segoe UI'; ctx.fillStyle=css('--dim');
+  ctx.fillText('Cross-section at yₙ (true scale)', M.l, 15);
+
+  const wall=(y)=>st.shape==='rect'?st.b/2:st.shape==='tri'?st.m*y:st.b/2+st.m*y;
+  // water polygon
+  ctx.beginPath();
+  if(st.shape==='tri'){ ctx.moveTo(X(0),Y(0)); }
+  else { ctx.moveTo(X(-st.b/2),Y(0)); ctx.lineTo(X(st.b/2),Y(0)); }
+  ctx.lineTo(X(wall(r.yn)),Y(r.yn)); ctx.lineTo(X(-wall(r.yn)),Y(r.yn));
+  ctx.closePath(); ctx.fillStyle='rgba(22,112,200,0.5)'; ctx.fill();
+  // channel walls up to freeboard — wetted part highlighted
+  const seg=(z1,h1,z2,h2,color,w2)=>{ ctx.strokeStyle=color; ctx.lineWidth=w2;
+    ctx.beginPath(); ctx.moveTo(X(z1),Y(h1)); ctx.lineTo(X(z2),Y(h2)); ctx.stroke(); };
+  if(st.shape!=='tri'){
+    seg(-st.b/2,0,st.b/2,0,css('--crit'),3.5);                       // wetted bed
+    seg(-wall(r.yn),r.yn,-st.b/2,0,css('--crit'),3.5);
+    seg(wall(r.yn),r.yn,st.b/2,0,css('--crit'),3.5);
+  } else {
+    seg(-wall(r.yn),r.yn,0,0,css('--crit'),3.5); seg(0,0,wall(r.yn),r.yn,css('--crit'),3.5);
+  }
+  seg(-wall(yTop),yTop,-wall(r.yn),r.yn,'#8a8f98',2);                // dry freeboard
+  seg(wall(r.yn),r.yn,wall(yTop),yTop,'#8a8f98',2);
+  // surface
+  seg(-wall(r.yn),r.yn,wall(r.yn),r.yn,'#3ea2ff',1.8);
+  label(`T = ${r.T.toFixed(2)} m`, X(0)-34, Y(r.yn)-8, '#3ea2ff');
+  label(`yₙ = ${r.yn.toFixed(2)} m`, X(wall(r.yn))+8, Y(r.yn/2), '#e8edf6');
+  label(`P = ${r.P.toFixed(2)} m (wetted, amber)`, X(0)-80, Y(0)+18, css('--crit'));
+  label(`A = ${r.A.toFixed(2)} m² · R = A/P = ${r.R.toFixed(3)} m`, X(0)-90, Y(r.yn*0.45), '#e8f4ff');
+}
+
+/* ---------------- yn & yc vs S0 chart ---------------- */
+let dirty=true, curve=[], chartYc=0;
+const LS0=-4, LS1=-1.3;
+function rebuildCurve(){
+  curve=[]; chartYc=criticalDepth();
+  for(let i=0;i<=90;i++){ const ls=LS0+(LS1-LS0)*i/90;
+    curve.push([ls, normalDepth(Math.pow(10,ls))]); }
+  dirty=false;
+}
+function drawChart(r){
+  if(dirty) rebuildCurve();
+  const [ctx,W,H]=fitCanvas($('chart'));
+  ctx.clearRect(0,0,W,H);
+  const M={l:44,r:14,t:26,b:34};
+  const ymax=Math.max(chartYc*2.4, r.yn*1.25);
+  const X=ls=>M.l+(ls-LS0)/(LS1-LS0)*(W-M.l-M.r);
+  const Y=y=>H-M.b-clamp(y/ymax,0,1)*(H-M.t-M.b);
+  const label=mkLabel(ctx,W,M);
+  const lSc=Math.log10(r.Sc);
+
+  // mild / steep shading split at Sc
+  ctx.fillStyle='#3b82f614'; ctx.fillRect(M.l,M.t,X(clamp(lSc,LS0,LS1))-M.l,H-M.t-M.b);
+  ctx.fillStyle='#ef444414'; ctx.fillRect(X(clamp(lSc,LS0,LS1)),M.t,W-M.r-X(clamp(lSc,LS0,LS1)),H-M.t-M.b);
+
+  ctx.font='11px Segoe UI';
+  for(const ls of [-4,-3,-2]){ ctx.strokeStyle=css('--line');
+    ctx.beginPath(); ctx.moveTo(X(ls),M.t); ctx.lineTo(X(ls),H-M.b); ctx.stroke();
+    ctx.fillStyle=css('--dim'); ctx.fillText('10'+(ls===-4?'⁻⁴':ls===-3?'⁻³':'⁻²'),X(ls)-8,H-M.b+15); }
+  for(let v=0;v<=ymax;v+=ymax>4?1:0.5){ ctx.strokeStyle=css('--line');
+    ctx.beginPath(); ctx.moveTo(M.l,Y(v)); ctx.lineTo(W-M.r,Y(v)); ctx.stroke();
+    ctx.fillStyle=css('--dim'); ctx.fillText(v.toFixed(1),M.l-30,Y(v)+4); }
+  ctx.fillStyle=css('--ink'); ctx.font='600 12px Segoe UI';
+  ctx.fillText('Depth (m) vs bed slope S₀ — why the slope classification exists', M.l, 15);
+  ctx.fillText('S₀', W-M.r-20, H-8);
+
+  // yn(S0) curve and yc line
+  ctx.strokeStyle=css('--accent'); ctx.lineWidth=2; ctx.beginPath(); let s=false;
+  for(const [ls,y] of curve){ const yy=Y(y);
+    if(y>ymax){ s=false; continue; } s?ctx.lineTo(X(ls),yy):(ctx.moveTo(X(ls),yy),s=true); }
+  ctx.stroke();
+  ctx.strokeStyle=css('--crit'); ctx.setLineDash([6,4]);
+  ctx.beginPath(); ctx.moveTo(M.l,Y(chartYc)); ctx.lineTo(W-M.r,Y(chartYc)); ctx.stroke();
+  ctx.setLineDash([]);
+  // Sc marker
+  if(lSc>LS0&&lSc<LS1){ ctx.strokeStyle='#e8edf6'; ctx.setLineDash([3,4]);
+    ctx.beginPath(); ctx.moveTo(X(lSc),M.t); ctx.lineTo(X(lSc),H-M.b); ctx.stroke(); ctx.setLineDash([]);
+    label(`S꜀ = ${fS(r.Sc)}`, X(lSc)-30, H-M.b-8, '#e8edf6'); }
+  label('yₙ(S₀) — Manning', X(LS0)+16, Y(curve[6][1])-8, css('--accent'));
+  label(`y꜀ = ${chartYc.toFixed(2)} m — independent of S₀`, X(-3.1), Y(chartYc)-8, css('--crit'));
+  label('MILD', M.l+10, M.t+16, css('--sub'));
+  label('STEEP', W-M.r-58, M.t+16, css('--sup'));
+  // current point
+  ctx.fillStyle='#e8f4ff'; ctx.beginPath();
+  ctx.arc(X(st.logS),Y(r.yn),5,0,7); ctx.fill();
+}
+
+/* ---------------- main loop ---------------- */
+let prev=performance.now(), sweepT=0;
+function frame(now){
+  requestAnimationFrame(frame);
+  const dt=Math.min((now-prev)/1000,0.05); prev=now;
+  if(st.sweep){
+    sweepT+=dt/12;
+    const f=1-Math.abs(1-(sweepT%1)*2);
+    st.logS=LS0+0.2+(LS1-LS0-0.4)*f; $('s-S0').value=st.logS; syncChips();
+  }
+  const r=solve();
+  updateReadout(r);
+  drawProfile(r,dt);
+  drawXS(r);
+  drawChart(r);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

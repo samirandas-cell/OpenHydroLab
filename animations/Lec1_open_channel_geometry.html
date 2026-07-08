@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Lecture 1 — Open Channel Flow: Geometry, Cross-section &amp; Froude Number</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --bg:#0f1420; --panel:#171e2e; --panel2:#1d2638; --ink:#e8edf6; --dim:#9aa7bd;
+    --accent:#4db8ff; --sub:#3b82f6; --crit:#f59e0b; --sup:#ef4444; --line:#2b3650;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%; overflow:hidden; background:var(--bg); color:var(--ink);
+    font-family:"Segoe UI",system-ui,sans-serif;}
+  #c{position:absolute; inset:0; width:100%; height:100%; display:block;}
+  .panel{position:absolute; background:color-mix(in srgb, var(--panel) 92%, transparent);
+    border:1px solid var(--line); border-radius:10px; padding:12px 14px;
+    backdrop-filter:blur(6px); font-size:13px; line-height:1.45;}
+  #ui{left:12px; top:12px; width:250px; max-height:calc(100% - 24px); overflow-y:auto;}
+  #readout{right:12px; top:12px; width:265px; max-height:calc(100% - 24px); overflow-y:auto;}
+  #views{left:50%; transform:translateX(-50%); bottom:12px; display:flex; gap:8px; padding:8px;}
+  h1{font-size:14px; margin-bottom:2px; color:var(--accent);}
+  .sub{color:var(--dim); font-size:11px; margin-bottom:10px;}
+  h2{font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--dim);
+    margin:12px 0 6px; border-bottom:1px solid var(--line); padding-bottom:3px;}
+  label.row{display:flex; justify-content:space-between; align-items:center; margin:7px 0 2px;
+    font-size:12.5px;}
+  label.row .val{color:var(--accent); font-variant-numeric:tabular-nums; font-weight:600;}
+  input[type=range]{width:100%; accent-color:var(--accent);}
+  select{width:100%; background:var(--panel2); color:var(--ink); border:1px solid var(--line);
+    border-radius:6px; padding:5px 6px; font-size:13px;}
+  .chk{display:flex; align-items:center; gap:7px; margin:6px 0; font-size:12.5px; cursor:pointer;}
+  .chk input{accent-color:var(--accent);}
+  button{background:var(--panel2); color:var(--ink); border:1px solid var(--line);
+    border-radius:7px; padding:7px 13px; font-size:12.5px; cursor:pointer;}
+  button:hover{border-color:var(--accent); color:var(--accent);}
+  button.active{background:var(--accent); color:#08111e; border-color:var(--accent); font-weight:600;}
+  table.vals{width:100%; border-collapse:collapse; font-variant-numeric:tabular-nums;}
+  table.vals td{padding:2.5px 0; font-size:12.5px;}
+  table.vals td:first-child{color:var(--dim);}
+  table.vals td:last-child{text-align:right; font-weight:600;}
+  #regime{margin-top:8px; padding:7px 10px; border-radius:7px; text-align:center; font-weight:700;
+    font-size:13.5px; background:var(--sub); color:#fff;}
+  .formula{font-family:Cambria,Georgia,serif; font-style:italic; font-size:12.5px;
+    color:#c9d6ea; background:var(--panel2); border-radius:6px; padding:7px 9px; margin-top:6px;}
+  .note{font-size:11px; color:var(--dim); margin-top:8px;}
+  .hidden{display:none;}
+</style>
+<script type="importmap">
+{"imports":{
+  "three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+}}
+</script>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<div id="ui" class="panel">
+  <h1>Open Channel Flow — 3D</h1>
+  <div class="sub">CVE2142 · Lecture 1 · Geometry, X-section &amp; Froude number</div>
+
+  <h2>Channel shape</h2>
+  <select id="shape">
+    <option value="trap" selected>Trapezoidal</option>
+    <option value="rect">Rectangular</option>
+    <option value="tri">Triangular</option>
+    <option value="circ">Circular (culvert, partially full)</option>
+  </select>
+
+  <h2>Geometry</h2>
+  <div id="ctl-b">
+    <label class="row">Bottom width b <span class="val" id="v-b"></span></label>
+    <input type="range" id="s-b" min="0.5" max="6" step="0.1" value="3">
+  </div>
+  <div id="ctl-m">
+    <label class="row">Side slope m (mH:1V) <span class="val" id="v-m"></span></label>
+    <input type="range" id="s-m" min="0.25" max="3" step="0.05" value="1.5">
+  </div>
+  <div id="ctl-d">
+    <label class="row">Diameter d <span class="val" id="v-d"></span></label>
+    <input type="range" id="s-d" min="1" max="4" step="0.1" value="2.5">
+  </div>
+  <div>
+    <label class="row">Flow depth y <span class="val" id="v-y"></span></label>
+    <input type="range" id="s-y" min="0.1" max="2.4" step="0.02" value="1.2">
+  </div>
+  <div>
+    <label class="row">Bed slope S₀ <span class="val" id="v-S0"></span></label>
+    <input type="range" id="s-S0" min="0" max="0.05" step="0.001" value="0.01">
+  </div>
+
+  <h2>Flow</h2>
+  <div>
+    <label class="row">Mean velocity V <span class="val" id="v-V"></span></label>
+    <input type="range" id="s-V" min="0.1" max="6" step="0.05" value="1.0">
+  </div>
+
+  <h2>Show</h2>
+  <label class="chk"><input type="checkbox" id="t-xs" checked> Cross-section slice + dimensions</label>
+  <label class="chk"><input type="checkbox" id="t-prof" checked> Velocity profile (1/7-power law)</label>
+  <label class="chk"><input type="checkbox" id="t-part" checked> Surface drift particles</label>
+  <label class="chk"><input type="checkbox" id="t-stone"> Throw stones (wave celerity demo)</label>
+  <div class="note">Stone demo: ripples spread at c = √(gD) relative to the water while being
+  carried at V. Watch whether they can travel upstream (Fr &lt; 1) or not (Fr &gt; 1).</div>
+</div>
+
+<div id="readout" class="panel">
+  <h2 style="margin-top:0">Geometry elements</h2>
+  <table class="vals">
+    <tr><td>Flow area A</td><td id="o-A"></td></tr>
+    <tr><td>Wetted perimeter P</td><td id="o-P"></td></tr>
+    <tr><td>Hydraulic radius R = A/P</td><td id="o-R"></td></tr>
+    <tr><td>Top width T</td><td id="o-T"></td></tr>
+    <tr><td>Hydraulic depth D = A/T</td><td id="o-D"></td></tr>
+  </table>
+  <div class="formula" id="o-formula"></div>
+
+  <h2>Flow &amp; regime</h2>
+  <table class="vals">
+    <tr><td>Discharge Q = V·A</td><td id="o-Q"></td></tr>
+    <tr><td>Wave celerity c = √(gD)</td><td id="o-c"></td></tr>
+    <tr><td>Wave speed downstream V+c</td><td id="o-vpc"></td></tr>
+    <tr><td>Wave speed upstream V−c</td><td id="o-vmc"></td></tr>
+    <tr><td>Froude number Fr = V/√(gD)</td><td id="o-Fr"></td></tr>
+  </table>
+  <div id="regime">SUBCRITICAL</div>
+  <div class="note">Uniform-flow view: the water surface is drawn parallel to the bed
+  (normal-depth condition). Velocity profile uses u(ξ)=(8/7)·V·ξ<sup>1/7</sup>, whose
+  depth-average is exactly V (α≈1.05, β≈1.02).</div>
+</div>
+
+<div id="views" class="panel">
+  <button id="b-3d" class="active">3D view</button>
+  <button id="b-xs">Cross-section</button>
+  <button id="b-long">Longitudinal profile</button>
+</div>
+
+<script type="module">
+import * as THREE from 'three';
+import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+
+/* ---------------- constants & state ---------------- */
+const G = 9.81;          // m/s²
+const L = 20;            // channel reach length shown (m)
+const XS = L * 0.55;     // x-station of the cross-section slice (m)
+const WALLH = 2.6;       // wall height for prismatic shapes (m)
+const STONE_X = 6;       // stone drop station (m)
+
+const state = {
+  shape:'trap', b:3, m:1.5, y:1.2, d:2.5, S0:0.01, V:1.0,
+  showXS:true, showProf:true, showPart:true, stones:false
+};
+
+const clamp = (v,a,b)=>Math.min(b,Math.max(a,v));
+const f2 = v=>v.toFixed(2), f3 = v=>v.toFixed(3);
+
+/* ---------------- hydraulics (exact formulas, Chow) ---------------- */
+function hydraulics(s){
+  let A,P,T;
+  if (s.shape==='rect'){ A=s.b*s.y; P=s.b+2*s.y; T=s.b; }
+  else if (s.shape==='trap'){ A=(s.b+s.m*s.y)*s.y; P=s.b+2*s.y*Math.sqrt(1+s.m*s.m); T=s.b+2*s.m*s.y; }
+  else if (s.shape==='tri'){ A=s.m*s.y*s.y; P=2*s.y*Math.sqrt(1+s.m*s.m); T=2*s.m*s.y; }
+  else { // circular, partially full
+    const r=s.d/2, th=2*Math.acos(clamp(1-2*s.y/s.d,-1,1));
+    A=r*r*0.5*(th-Math.sin(th)); P=r*th; T=s.d*Math.sin(th/2);
+  }
+  const R=A/P, D=A/T, c=Math.sqrt(G*D), Fr=s.V/c, Q=s.V*A;
+  return {A,P,T,R,D,c,Fr,Q};
+}
+const bedElev = x => -state.S0 * x;               // bed elevation relative to x = 0
+const surfElev = x => state.y + bedElev(x);       // water surface (uniform flow)
+
+/* ---------------- three.js scaffold ---------------- */
+const canvas = document.getElementById('c');
+const renderer = new THREE.WebGLRenderer({canvas, antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0f1420);
+scene.fog = new THREE.Fog(0x0f1420, 55, 110);
+
+const camera = new THREE.PerspectiveCamera(45, 2, 0.1, 300);
+const controls = new OrbitControls(camera, canvas);
+controls.enableDamping = true;
+
+scene.add(new THREE.AmbientLight(0xffffff, 0.55));
+const sun = new THREE.DirectionalLight(0xffffff, 1.15);
+sun.position.set(-12, 24, 14);
+scene.add(sun);
+
+function setView(which){
+  document.querySelectorAll('#views button').forEach(b=>b.classList.remove('active'));
+  if (which==='3d'){ camera.position.set(-9, 9, 16); controls.target.set(L*0.45, 0, 0);
+    document.getElementById('b-3d').classList.add('active'); }
+  if (which==='xs'){ camera.position.set(XS+19, bedElev(XS)+state.y+1.2, 0.001); controls.target.set(XS, bedElev(XS)+state.y*0.45, 0);
+    document.getElementById('b-xs').classList.add('active'); }
+  if (which==='long'){ camera.position.set(L/2, bedElev(L/2)+1.2, 13); controls.target.set(L/2, bedElev(L/2)+0.6, 0);
+    document.getElementById('b-long').classList.add('active'); }
+}
+document.getElementById('b-3d').onclick = ()=>setView('3d');
+document.getElementById('b-xs').onclick = ()=>setView('xs');
+document.getElementById('b-long').onclick = ()=>setView('long');
+
+/* ---------------- text label sprites ---------------- */
+function makeLabel(text, color='#e8edf6', px=30){
+  const cv = document.createElement('canvas');
+  const ctx = cv.getContext('2d');
+  ctx.font = `600 ${px}px "Segoe UI", sans-serif`;
+  const w = Math.ceil(ctx.measureText(text).width)+16;
+  cv.width = w; cv.height = px+18;
+  const c2 = cv.getContext('2d');
+  c2.font = `600 ${px}px "Segoe UI", sans-serif`;
+  c2.shadowColor = 'rgba(0,0,0,.85)'; c2.shadowBlur = 6;
+  c2.fillStyle = color; c2.textBaseline='middle';
+  c2.fillText(text, 8, cv.height/2);
+  const tex = new THREE.CanvasTexture(cv);
+  tex.anisotropy = 4;
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({map:tex, depthTest:false, transparent:true}));
+  const S = 0.011;
+  sp.scale.set(cv.width*S, cv.height*S, 1);
+  return sp;
+}
+
+/* ---------------- cross-section outlines ---------------- */
+// Channel boundary polyline [(z, h)] left bank top -> bed -> right bank top
+function channelPolyline(s){
+  if (s.shape==='rect') return [[-s.b/2,WALLH],[-s.b/2,0],[s.b/2,0],[s.b/2,WALLH]];
+  if (s.shape==='trap') return [[-s.b/2-s.m*WALLH,WALLH],[-s.b/2,0],[s.b/2,0],[s.b/2+s.m*WALLH,WALLH]];
+  if (s.shape==='tri')  return [[-s.m*WALLH,WALLH],[0,0],[s.m*WALLH,WALLH]];
+  return null; // circular handled as cylinder
+}
+// Wetted (water) polygon [(z, h)], closed, counter-clockwise
+function waterPolygon(s){
+  if (s.shape==='rect') return [[-s.b/2,0],[s.b/2,0],[s.b/2,s.y],[-s.b/2,s.y]];
+  if (s.shape==='trap') return [[-s.b/2,0],[s.b/2,0],[s.b/2+s.m*s.y,s.y],[-s.b/2-s.m*s.y,s.y]];
+  if (s.shape==='tri')  return [[0,0],[s.m*s.y,s.y],[-s.m*s.y,s.y]];
+  const r=s.d/2, pw=Math.acos(clamp(1-2*s.y/s.d,-1,1)), pts=[];
+  for(let i=0;i<=48;i++){ const p=-pw+2*pw*i/48; pts.push([r*Math.sin(p), r*(1-Math.cos(p))]); }
+  return pts; // arc from left-surface down around to right-surface; closes along the chord
+}
+
+/* ---------------- static scene build ---------------- */
+let staticG = null, waterMesh = null, surfGeo = null, surfMesh = null;
+let profileG = null, xsG = null;
+let hyd = hydraulics(state);
+
+function stripMesh(pts, color, opacity=1){
+  // extrude a polyline along x from 0..L, with bed-slope shear
+  const n = pts.length, pos = [], idx = [];
+  for (const X of [0, L]) for (const [z,h] of pts) pos.push(X, h + bedElev(X), z);
+  for (let i=0;i<n-1;i++) idx.push(i,i+1,n+i, i+1,n+i+1,n+i);
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos,3));
+  g.setIndex(idx); g.computeVertexNormals();
+  return new THREE.Mesh(g, new THREE.MeshStandardMaterial({
+    color, side:THREE.DoubleSide, transparent:opacity<1, opacity,
+    roughness:.95, metalness:0}));
+}
+
+function buildStatic(){
+  if (staticG){ scene.remove(staticG); staticG.traverse(o=>{o.geometry?.dispose(); o.material?.dispose?.();}); }
+  staticG = new THREE.Group(); scene.add(staticG);
+  hyd = hydraulics(state);
+  const s = state;
+
+  /* --- channel body --- */
+  if (s.shape==='circ'){
+    const r = s.d/2;
+    const cyl = new THREE.Mesh(
+      new THREE.CylinderGeometry(r*1.02, r*1.02, L, 48, 1, true),
+      new THREE.MeshStandardMaterial({color:0x8a8f98, side:THREE.DoubleSide,
+        transparent:true, opacity:0.35, roughness:.9}));
+    cyl.rotation.z = Math.PI/2 + Math.atan(s.S0); // axis along x, tilted with bed slope
+    cyl.position.set(L/2, r + bedElev(L/2), 0);
+    staticG.add(cyl);
+  } else {
+    staticG.add(stripMesh(channelPolyline(s), 0x9a958c));      // concrete lining
+    const topZ = channelPolyline(s)[0][0];                     // left bank-top z (<0)
+    staticG.add(stripMesh([[topZ-7,WALLH],[topZ,WALLH]], 0x33502f));   // left ground
+    staticG.add(stripMesh([[-topZ,WALLH],[-topZ+7,WALLH]], 0x33502f)); // right ground
+  }
+
+  /* --- water body (extruded wetted polygon, sheared to bed slope) --- */
+  const poly = waterPolygon(s);
+  const shp = new THREE.Shape(poly.map(p=>new THREE.Vector2(p[0],p[1])));
+  const wg = new THREE.ExtrudeGeometry(shp, {depth:L, bevelEnabled:false});
+  wg.rotateY(Math.PI/2);                                   // extrusion axis -> world x
+  { const a = wg.attributes.position;
+    for (let i=0;i<a.count;i++) a.setY(i, a.getY(i) - 0.02 + bedElev(a.getX(i)));
+    a.needsUpdate = true; wg.computeVertexNormals(); }
+  waterMesh = new THREE.Mesh(wg, new THREE.MeshPhysicalMaterial({
+    color:0x1670c8, transparent:true, opacity:0.5, roughness:0.25, side:THREE.DoubleSide}));
+  staticG.add(waterMesh);
+
+  /* --- animated free surface --- */
+  surfGeo = new THREE.PlaneGeometry(L, hyd.T*0.995, 100, 12);
+  surfGeo.rotateX(-Math.PI/2);
+  surfMesh = new THREE.Mesh(surfGeo, new THREE.MeshPhysicalMaterial({
+    color:0x3ea2ff, transparent:true, opacity:0.65, roughness:0.15,
+    side:THREE.DoubleSide}));
+  surfMesh.position.x = L/2;
+  staticG.add(surfMesh);
+
+  /* --- flow direction arrow --- */
+  const fl = makeLabel('Flow  ⟶', '#9fd1ff', 34);
+  fl.position.set(2.5, surfElev(2.5)+0.85, 0);
+  staticG.add(fl);
+
+  /* --- longitudinal annotations: datum + slope --- */
+  const dashMat = new THREE.LineDashedMaterial({color:0x8899bb, dashSize:.35, gapSize:.22});
+  const datum = new THREE.Line(new THREE.BufferGeometry().setFromPoints(
+    [new THREE.Vector3(0,0,hyd.T/2+0.02), new THREE.Vector3(L,0,hyd.T/2+0.02)]), dashMat);
+  datum.computeLineDistances(); staticG.add(datum);
+  const sl = makeLabel(`S₀ = ${state.S0.toFixed(3)}  (drop ${(state.S0*L).toFixed(2)} m over ${L} m)`, '#c9d6ea', 26);
+  sl.position.set(L*0.72, bedElev(L*0.72)-0.55, hyd.T/2+0.05);
+  staticG.add(sl);
+
+  buildCrossSection();
+  buildProfile();
+  buildParticles();
+  stoneMarker.position.set(STONE_X, surfElev(STONE_X)+0.05, 0);
+  updateReadout();
+}
+
+/* --- cross-section slice with dimension annotations --- */
+function buildCrossSection(){
+  if (xsG){ staticG.remove(xsG); }
+  xsG = new THREE.Group(); staticG.add(xsG);
+  const s = state, e = bedElev(XS);
+  const poly = waterPolygon(s);
+
+  const shp = new THREE.Shape(poly.map(p=>new THREE.Vector2(p[0],p[1])));
+  const fg = new THREE.ShapeGeometry(shp); fg.rotateY(-Math.PI/2);
+  const fill = new THREE.Mesh(fg, new THREE.MeshBasicMaterial({
+    color:0x54c2ff, transparent:true, opacity:0.4, side:THREE.DoubleSide, depthWrite:false}));
+  fill.position.set(XS, e, 0); xsG.add(fill);
+
+  // wetted-perimeter outline (bright) + surface chord
+  const wp = poly.map(([z,h])=>new THREE.Vector3(XS+0.012, h+e, -z));
+  const outl = new THREE.Line(new THREE.BufferGeometry().setFromPoints(wp),
+    new THREE.LineBasicMaterial({color:0xffd166}));
+  xsG.add(outl);
+  const chord = new THREE.Line(new THREE.BufferGeometry().setFromPoints(
+    [wp[0], wp[wp.length-1]]), new THREE.LineBasicMaterial({color:0x54c2ff}));
+  xsG.add(chord);
+
+  const lab = (t,x,y,z,col='#e8edf6',px=26)=>{ const sp=makeLabel(t,col,px); sp.position.set(x,y,z); xsG.add(sp); };
+  lab(`T = ${f2(hyd.T)} m`, XS, e+s.y+0.32, 0, '#54c2ff');
+  lab(`y = ${f2(s.y)} m`, XS, e+s.y*0.5, -(hyd.T/2+1.1), '#e8edf6');
+  if (s.shape==='rect'||s.shape==='trap') lab(`b = ${f2(s.b)} m`, XS, e-0.38, 0, '#ffd166');
+  if (s.shape==='trap'||s.shape==='tri') lab(`m = ${f2(s.m)}`, XS, e+s.y*0.55, (hyd.T/2+1.0), '#ffd166');
+  if (s.shape==='circ') lab(`d = ${f2(s.d)} m`, XS, e-0.38, 0, '#ffd166');
+  lab(`P (wetted perimeter) = ${f2(hyd.P)} m`, XS, e-0.85, 0, '#ffd166', 23);
+
+  // depth dimension line
+  const dl = new THREE.Line(new THREE.BufferGeometry().setFromPoints(
+    [new THREE.Vector3(XS, e, -(hyd.T/2+0.55)), new THREE.Vector3(XS, e+s.y, -(hyd.T/2+0.55))]),
+    new THREE.LineBasicMaterial({color:0xe8edf6}));
+  xsG.add(dl);
+  xsG.visible = state.showXS;
+}
+
+/* --- velocity profile: u(ξ) = (8/7) V ξ^(1/7)  (depth-average = V) --- */
+function buildProfile(){
+  if (profileG){ staticG.remove(profileG); }
+  profileG = new THREE.Group(); staticG.add(profileG);
+  const s = state, e = bedElev(XS), n = 9, tips = [];
+  const scaleLen = 2.2 / Math.max(1.2, s.V*8/7); // longest arrow ≈ 2.2 m on screen
+  for (let i=0;i<n;i++){
+    const xi = (i+0.6)/n;
+    const u = (8/7)*s.V*Math.pow(xi, 1/7);
+    const h = e + xi*s.y;
+    const ar = new THREE.ArrowHelper(new THREE.Vector3(1,0,0),
+      new THREE.Vector3(XS, h, 0), u*scaleLen, 0xffe08a, 0.16, 0.1);
+    profileG.add(ar);
+    tips.push(new THREE.Vector3(XS+u*scaleLen, h, 0));
+  }
+  profileG.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(tips),
+    new THREE.LineBasicMaterial({color:0xffe08a})));
+  const pl = makeLabel('u(ξ) = (8/7)·V·ξ^(1/7)   α≈1.05, β≈1.02', '#ffe08a', 23);
+  pl.position.set(XS+1.3, e+s.y+0.75, 0); profileG.add(pl);
+  profileG.visible = state.showProf;
+}
+
+/* --- surface drift particles (surface speed = (8/7)V from the profile) --- */
+const NPART = 130;
+let partPts = null;
+const pu = new Float32Array(NPART), pz = new Float32Array(NPART);
+for (let i=0;i<NPART;i++){ pu[i]=Math.random()*L; pz[i]=(Math.random()*2-1)*0.9; }
+function buildParticles(){
+  if (partPts){ staticG.remove(partPts); partPts.geometry.dispose(); }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(new Float32Array(NPART*3),3));
+  partPts = new THREE.Points(g, new THREE.PointsMaterial({color:0xe8f4ff, size:0.09}));
+  staticG.add(partPts);
+  partPts.visible = state.showPart;
+}
+
+/* --- stone / ripple demo --- */
+const stoneMarker = new THREE.Mesh(new THREE.SphereGeometry(0.09),
+  new THREE.MeshBasicMaterial({color:0xff5566}));
+scene.add(stoneMarker);
+let ripples = [];   // {t0, x0, line}
+const rippleG = new THREE.Group(); scene.add(rippleG);
+function spawnRipple(t){
+  const pts = [];
+  for (let i=0;i<=64;i++){ const a=i/64*2*Math.PI; pts.push(new THREE.Vector3(Math.cos(a),0,Math.sin(a))); }
+  const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),
+    new THREE.LineBasicMaterial({color:0xffffff, transparent:true, opacity:0.95}));
+  rippleG.add(line);
+  ripples.push({t0:t, x0:STONE_X, line});
+}
+
+/* ---------------- readout ---------------- */
+const FORMULAS = {
+  rect:'A = b·y &nbsp;&nbsp; P = b + 2y &nbsp;&nbsp; T = b',
+  trap:'A = (b + m·y)·y &nbsp;&nbsp; P = b + 2y√(1+m²) &nbsp;&nbsp; T = b + 2m·y',
+  tri:'A = m·y² &nbsp;&nbsp; P = 2y√(1+m²) &nbsp;&nbsp; T = 2m·y',
+  circ:'θ = 2·cos⁻¹(1 − 2y/d) &nbsp;&nbsp; A = (d²/8)(θ − sin θ) &nbsp;&nbsp; P = θ·d/2 &nbsp;&nbsp; T = d·sin(θ/2)'
+};
+function updateReadout(){
+  hyd = hydraulics(state);
+  const set=(id,t)=>document.getElementById(id).textContent=t;
+  set('o-A', f2(hyd.A)+' m²'); set('o-P', f2(hyd.P)+' m');
+  set('o-R', f3(hyd.R)+' m'); set('o-T', f2(hyd.T)+' m'); set('o-D', f3(hyd.D)+' m');
+  set('o-Q', f2(hyd.Q)+' m³/s'); set('o-c', f2(hyd.c)+' m/s');
+  set('o-vpc', f2(state.V+hyd.c)+' m/s');
+  const up = state.V-hyd.c;
+  set('o-vmc', f2(up)+' m/s'+(up>=0?' (cannot go upstream)':''));
+  set('o-Fr', hyd.Fr.toFixed(3));
+  document.getElementById('o-formula').innerHTML = FORMULAS[state.shape];
+  const reg = document.getElementById('regime');
+  if (Math.abs(hyd.Fr-1) < 0.05){ reg.textContent='CRITICAL  (Fr ≈ 1)'; reg.style.background='var(--crit)'; }
+  else if (hyd.Fr < 1){ reg.textContent='SUBCRITICAL  (Fr < 1, tranquil)'; reg.style.background='var(--sub)'; }
+  else { reg.textContent='SUPERCRITICAL  (Fr > 1, rapid)'; reg.style.background='var(--sup)'; }
+}
+
+/* ---------------- UI wiring ---------------- */
+function bindSlider(id, key, fmt=f2, unit=' m'){
+  const el = document.getElementById('s-'+id), out = document.getElementById('v-'+id);
+  const show = ()=> out.textContent = fmt(state[key]) + unit;
+  el.addEventListener('input', ()=>{ state[key]=parseFloat(el.value); show(); onParamChange(); });
+  show();
+}
+bindSlider('b','b'); bindSlider('m','m',f2,''); bindSlider('d','d');
+bindSlider('y','y'); bindSlider('S0','S0',f3,''); bindSlider('V','V',f2,' m/s');
+
+document.getElementById('shape').addEventListener('change', e=>{
+  state.shape = e.target.value;
+  document.getElementById('ctl-b').classList.toggle('hidden', state.shape==='tri'||state.shape==='circ');
+  document.getElementById('ctl-m').classList.toggle('hidden', state.shape==='rect'||state.shape==='circ');
+  document.getElementById('ctl-d').classList.toggle('hidden', state.shape!=='circ');
+  onParamChange();
+});
+document.getElementById('ctl-d').classList.add('hidden');
+
+const bindChk = (id,key,fn)=>document.getElementById(id).addEventListener('change',e=>{
+  state[key]=e.target.checked; fn?.(); });
+bindChk('t-xs','showXS', ()=>{ xsG.visible=state.showXS; });
+bindChk('t-prof','showProf', ()=>{ profileG.visible=state.showProf; });
+bindChk('t-part','showPart', ()=>{ partPts.visible=state.showPart; });
+bindChk('t-stone','stones', ()=>{ if(!state.stones){ ripples.forEach(r=>rippleG.remove(r.line)); ripples=[]; } });
+
+function onParamChange(){
+  // keep depth physically inside a circular culvert
+  if (state.shape==='circ'){
+    const ymax = 0.95*state.d;
+    if (state.y > ymax){ state.y = ymax;
+      document.getElementById('s-y').value = state.y;
+      document.getElementById('v-y').textContent = f2(state.y)+' m'; }
+  }
+  buildStatic();
+}
+
+/* ---------------- animation loop ---------------- */
+const clock = new THREE.Clock();
+let lastStone = -10;
+function animate(){
+  requestAnimationFrame(animate);
+  const t = clock.getElapsedTime(), dt = Math.min(clock.getDelta(), 0.05);
+  // dt from getDelta after getElapsedTime is 0; track manually:
+  animate.prev = animate.prev ?? t;
+  const step = Math.min(t - animate.prev, 0.05); animate.prev = t;
+
+  /* free surface: gentle texture ripples drifting downstream (cosmetic, small amplitude) */
+  if (surfGeo){
+    const a = surfGeo.attributes.position;
+    const amp = Math.min(0.02, 0.035*state.y);
+    for (let i=0;i<a.count;i++){
+      const gx = a.getX(i) + L/2;                    // world x
+      a.setY(i, state.y + bedElev(gx)
+        + amp*Math.sin(3.1*gx - 2.6*t)
+        + amp*0.5*Math.sin(5.4*gx + 1.9*a.getZ(i) - 3.9*t));
+    }
+    a.needsUpdate = true; surfGeo.computeVertexNormals();
+  }
+
+  /* surface particles drift at the free-surface velocity (8/7)V */
+  if (partPts && state.showPart){
+    const a = partPts.geometry.attributes.position;
+    const us = (8/7)*state.V;
+    for (let i=0;i<NPART;i++){
+      pu[i] += us*step; if (pu[i] > L) pu[i] -= L;
+      a.setXYZ(i, pu[i], surfElev(pu[i])+0.03, pz[i]*hyd.T/2*0.92);
+    }
+    a.needsUpdate = true;
+  }
+
+  /* stone ripples: radius grows at c, centre advected at V — the Froude demo */
+  if (state.stones && t - lastStone > 1.1){ spawnRipple(t); lastStone = t; }
+  for (let i=ripples.length-1; i>=0; i--){
+    const r = ripples[i], age = t - r.t0;
+    const rad = hyd.c*age, cx = r.x0 + state.V*age;
+    if (rad > 9 || cx - rad > L){ rippleG.remove(r.line); r.line.geometry.dispose(); ripples.splice(i,1); continue; }
+    r.line.scale.set(rad, 1, rad);
+    r.line.position.set(cx, surfElev(cx)+0.045, 0);
+    r.line.rotation.z = Math.atan(state.S0);
+    r.line.material.opacity = Math.max(0, 0.95 - age*0.28);
+  }
+  stoneMarker.visible = state.stones;
+
+  controls.update();
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if (canvas.width !== w*renderer.getPixelRatio() || canvas.height !== h*renderer.getPixelRatio()){
+    renderer.setSize(w, h, false);
+    camera.aspect = w/h; camera.updateProjectionMatrix();
+  }
+  renderer.render(scene, camera);
+}
+
+buildStatic();
+setView('3d');
+renderer.setSize(canvas.clientWidth, canvas.clientHeight, false);
+camera.aspect = canvas.clientWidth/canvas.clientHeight; camera.updateProjectionMatrix();
+animate();
+</script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+cff-version: 1.2.0
+message: "If you use OpenChannelLab, please cite it as below."
+title: "OpenChannelLab: interactive, physics-accurate animations for teaching open-channel hydraulics"
+type: software
+authors:
+  - family-names: Das
+    given-names: Samiran
+    affiliation: "University of Glasgow, Singapore"
+    # orcid: "https://orcid.org/XXXX-XXXX-XXXX-XXXX"  # TODO: add ORCID
+version: 1.0.0
+date-released: 2026-07-08
+license: MIT
+repository-code: "https://github.com/USERNAME/OpenChannelLab"
+# doi: 10.5281/zenodo.XXXXXXX  # TODO: added automatically at first Zenodo release
+keywords:
+  - open-channel hydraulics
+  - engineering education
+  - interactive simulation
+  - specific energy
+  - hydraulic jump
+  - gradually varied flow
