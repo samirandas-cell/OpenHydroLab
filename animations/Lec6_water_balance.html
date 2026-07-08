@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Lecture 6 — Water Balance of a Lake / Catchment</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --bg:#0f1420; --panel:#171e2e; --panel2:#1d2638; --ink:#e8edf6; --dim:#9aa7bd;
+    --accent:#4db8ff; --sub:#3b82f6; --crit:#f59e0b; --sup:#ef4444; --line:#2b3650;
+    --ok:#34d399; --violet:#a78bfa;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%; overflow:hidden; background:var(--bg); color:var(--ink);
+    font-family:"Segoe UI",system-ui,sans-serif;}
+  .panel{position:absolute; background:color-mix(in srgb, var(--panel) 92%, transparent);
+    border:1px solid var(--line); border-radius:10px; padding:12px 14px;
+    backdrop-filter:blur(6px); font-size:13px; line-height:1.45; z-index:2;}
+  #ui{left:12px; top:12px; width:252px; max-height:calc(100% - 24px); overflow-y:auto;}
+  #readout{right:12px; top:12px; width:290px; max-height:calc(100% - 24px); overflow-y:auto;}
+  #actions{left:50%; transform:translateX(-50%); bottom:12px; display:flex; gap:8px; padding:8px;
+    flex-wrap:wrap; justify-content:center;}
+  #stage{position:absolute; inset:0; padding:12px 316px 64px 278px; display:flex;}
+  #wrap{flex:1; min-height:0; position:relative;}
+  canvas.view{width:100%; height:100%; display:block; background:var(--panel);
+    border:1px solid var(--line); border-radius:10px;}
+  h1{font-size:14px; margin-bottom:2px; color:var(--accent);}
+  .sub{color:var(--dim); font-size:11px; margin-bottom:10px;}
+  h2{font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--dim);
+    margin:12px 0 6px; border-bottom:1px solid var(--line); padding-bottom:3px;}
+  label.row{display:flex; justify-content:space-between; align-items:center; margin:7px 0 2px;
+    font-size:12.5px;}
+  label.row .val{color:var(--accent); font-variant-numeric:tabular-nums; font-weight:600;}
+  input[type=range]{width:100%; accent-color:var(--accent);}
+  button{background:var(--panel2); color:var(--ink); border:1px solid var(--line);
+    border-radius:7px; padding:7px 13px; font-size:12.5px; cursor:pointer;}
+  button:hover{border-color:var(--accent); color:var(--accent);}
+  button.active{background:var(--accent); color:#08111e; border-color:var(--accent); font-weight:600;}
+  table.vals{width:100%; border-collapse:collapse; font-variant-numeric:tabular-nums;}
+  table.vals td{padding:2.5px 0; font-size:12.5px;}
+  table.vals td:first-child{color:var(--dim);}
+  table.vals td:last-child{text-align:right; font-weight:600;}
+  .formula{font-family:Cambria,Georgia,serif; font-style:italic; font-size:12.5px;
+    color:#c9d6ea; background:var(--panel2); border-radius:6px; padding:7px 9px; margin-top:6px;}
+  .note{font-size:11px; color:var(--dim); margin-top:8px;}
+  #chip{margin-top:8px; padding:8px 10px; border-radius:7px; text-align:center; font-weight:700;
+    font-size:14px; background:var(--sub); color:#fff;}
+  @media (max-width:1150px){
+    html,body{overflow-y:auto; height:auto; min-height:100%;}
+    body{display:flex; flex-direction:column;}
+    .panel{position:static; width:auto; max-height:none; margin:10px 12px 0;}
+    #ui{order:1;} #stage{order:2; position:static; padding:10px 12px;}
+    #actions{order:3; align-self:center; transform:none;} #readout{order:4; margin-bottom:12px;}
+    #wrap{flex:none; height:420px; width:100%;}
+  }
+</style>
+</head>
+<body>
+
+<div id="ui" class="panel">
+  <h1>Water Balance of a Lake</h1>
+  <div class="sub">CVE2142 · Lecture 6 · Continuity over a control volume —
+  every level change is computed from the water-budget equation</div>
+
+  <h2>Flows (period averages)</h2>
+  <div>
+    <label class="row">Inflow I <span class="val" id="v-I"></span></label>
+    <input type="range" id="s-I" min="0" max="20" step="0.1" value="6.0">
+  </div>
+  <div>
+    <label class="row">Outflow O <span class="val" id="v-O"></span></label>
+    <input type="range" id="s-O" min="0" max="20" step="0.1" value="6.5">
+  </div>
+  <div>
+    <label class="row">Rainfall P <span class="val" id="v-P"></span></label>
+    <input type="range" id="s-P" min="0" max="400" step="1" value="145">
+  </div>
+  <div>
+    <label class="row">Evaporation E <span class="val" id="v-E"></span></label>
+    <input type="range" id="s-E" min="0" max="150" step="1" value="61">
+  </div>
+
+  <h2>Lake &amp; period</h2>
+  <div>
+    <label class="row">Surface area A <span class="val" id="v-A"></span></label>
+    <input type="range" id="s-A" min="1" max="10" step="0.1" value="5">
+  </div>
+  <div>
+    <label class="row">Duration t <span class="val" id="v-t"></span></label>
+    <input type="range" id="s-t" min="1" max="90" step="1" value="30">
+  </div>
+  <div>
+    <label class="row">Initial level z₀ <span class="val" id="v-z0"></span></label>
+    <input type="range" id="s-z0" min="103.0" max="103.4" step="0.005" value="103.2">
+  </div>
+
+  <div class="note"><b>Aha demo:</b> press <i>Run period</i> and watch the level move —
+  the lake rises only because rainfall (+145 mm) beats evaporation (−61 mm) plus the
+  net river outflow (−25.9 mm). Set P = 61 and I = O and nothing moves: a balanced budget.
+  Defaults reproduce <b>Lecture 6, Example 1</b> (final level 103.258 m).</div>
+</div>
+
+<div id="readout" class="panel">
+  <h2 style="margin-top:0">Water budget (as depths over A)</h2>
+  <div class="formula">ΔS = P + I·t/A − O·t/A − E</div>
+  <table class="vals">
+    <tr><td>Rainfall  z_P</td><td id="o-zP"></td></tr>
+    <tr><td>Inflow  z_I = I·t/A</td><td id="o-zI"></td></tr>
+    <tr><td>Outflow  z_O = O·t/A</td><td id="o-zO"></td></tr>
+    <tr><td>Evaporation  z_E</td><td id="o-zE"></td></tr>
+    <tr><td>Net change Δz</td><td id="o-dz"></td></tr>
+  </table>
+  <div id="chip">Δz = +58.1 mm — RISING</div>
+
+  <h2>Volumes</h2>
+  <table class="vals">
+    <tr><td>Rain volume</td><td id="o-VP"></td></tr>
+    <tr><td>Inflow volume</td><td id="o-VI"></td></tr>
+    <tr><td>Outflow volume</td><td id="o-VO"></td></tr>
+    <tr><td>Evaporated volume</td><td id="o-VE"></td></tr>
+    <tr><td>Storage change ΔS</td><td id="o-VS"></td></tr>
+  </table>
+
+  <h2>Lake level</h2>
+  <table class="vals">
+    <tr><td>Initial elevation z₀</td><td id="o-z0"></td></tr>
+    <tr><td>Elapsed time</td><td id="o-day"></td></tr>
+    <tr><td>Current elevation z(t)</td><td id="o-zt"></td></tr>
+    <tr><td>Final elevation z_f</td><td id="o-zf"></td></tr>
+  </table>
+  <div class="formula">V̄ᵢₙ − V̄ₒᵤₜ = ΔS  (continuity)</div>
+  <div class="note">All rates are period averages, so the level varies linearly in time.
+  Groundwater exchange G and transpiration T are taken as zero (as in Example 1).</div>
+</div>
+
+<div id="actions" class="panel">
+  <button id="b-run">▶ Run period</button>
+  <button id="b-reset">Reset</button>
+  <button id="b-ex1">Example 1 defaults</button>
+</div>
+
+<div id="stage"><div id="wrap"><canvas id="cv" class="view"></canvas></div></div>
+
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const cv = $("cv"), ctx = cv.getContext("2d");
+
+/* ---------- state ---------- */
+const S = {I:6.0, O:6.5, P:145, E:61, A:5, t:30, z0:103.2, day:0, playing:false};
+const sliders = [
+  ["I","s-I","v-I", v=>v.toFixed(1)+" m³/s"],
+  ["O","s-O","v-O", v=>v.toFixed(1)+" m³/s"],
+  ["P","s-P","v-P", v=>v.toFixed(0)+" mm"],
+  ["E","s-E","v-E", v=>v.toFixed(0)+" mm"],
+  ["A","s-A","v-A", v=>v.toFixed(1)+" ×10⁷ m²"],
+  ["t","s-t","v-t", v=>v.toFixed(0)+" days"],
+  ["z0","s-z0","v-z0", v=>v.toFixed(3)+" m"],
+];
+sliders.forEach(([k,s,v,fmt])=>{
+  $(s).addEventListener("input", ()=>{ S[k]=+$(s).value; S.day=Math.min(S.day,S.t); update(); });
+});
+
+/* ---------- physics (all mm over the lake area) ---------- */
+function budget(){
+  const A = S.A*1e7;                       // m²
+  const tsec = S.t*86400;                  // s
+  const zI = S.I*tsec/A*1000;              // mm
+  const zO = S.O*tsec/A*1000;              // mm
+  const dz = S.P + zI - zO - S.E;          // mm
+  return {A, tsec, zP:S.P, zI, zO, zE:S.E, dz,
+          VP:S.P/1000*A, VI:S.I*tsec, VO:S.O*tsec, VE:S.E/1000*A,
+          VS:dz/1000*A, zf:S.z0+dz/1000};
+}
+function levelAt(day){                     // linear in time (constant rates)
+  const b = budget();
+  return S.z0 + b.dz/1000 * (day/S.t);
+}
+
+/* ---------- readout ---------- */
+const fmm = v => (v>=0?"+":"") + v.toFixed(2) + " mm";
+const fMm3 = v => (v/1e6).toFixed(3) + " ×10⁶ m³";
+function update(){
+  const b = budget();
+  $("o-zP").textContent = "+"+b.zP.toFixed(2)+" mm";
+  $("o-zI").textContent = "+"+b.zI.toFixed(2)+" mm";
+  $("o-zO").textContent = "−"+b.zO.toFixed(2)+" mm";
+  $("o-zE").textContent = "−"+b.zE.toFixed(2)+" mm";
+  $("o-dz").textContent = fmm(b.dz);
+  $("o-VP").textContent = fMm3(b.VP);
+  $("o-VI").textContent = fMm3(b.VI);
+  $("o-VO").textContent = fMm3(b.VO);
+  $("o-VE").textContent = fMm3(b.VE);
+  $("o-VS").textContent = (b.VS>=0?"+":"")+fMm3(b.VS).replace("+","");
+  $("o-z0").textContent = S.z0.toFixed(3)+" m";
+  $("o-day").textContent = S.day.toFixed(1)+" / "+S.t+" d";
+  $("o-zt").textContent = levelAt(S.day).toFixed(4)+" m";
+  $("o-zf").textContent = b.zf.toFixed(4)+" m";
+  const chip = $("chip");
+  if (Math.abs(b.dz) < 0.5){ chip.style.background="var(--crit)"; chip.textContent="Δz ≈ 0 — BALANCED"; }
+  else if (b.dz > 0){ chip.style.background="var(--sub)"; chip.textContent="Δz = +"+b.dz.toFixed(1)+" mm — RISING"; }
+  else { chip.style.background="var(--sup)"; chip.textContent="Δz = "+b.dz.toFixed(1)+" mm — FALLING"; }
+}
+
+/* ---------- animation / drawing ---------- */
+let drops=[], wisps=[], last=performance.now();
+function resize(){
+  const r = cv.parentElement.getBoundingClientRect(), dpr = devicePixelRatio||1;
+  cv.width = r.width*dpr; cv.height = r.height*dpr;
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+}
+addEventListener("resize", resize);
+
+function draw(now){
+  const dt = Math.min((now-last)/1000, .05); last = now;
+  if (S.playing){
+    S.day += dt*S.t/8;                 // whole period plays in ~8 s
+    if (S.day >= S.t){ S.day = S.t; S.playing=false; $("b-run").classList.remove("active"); }
+    update();
+  }
+  const W = cv.width/(devicePixelRatio||1), H = cv.height/(devicePixelRatio||1);
+  ctx.clearRect(0,0,W,H);
+
+  /* geometry: elevation axis maps 102.9–103.5 m onto lake band */
+  const zMin=102.9, zMax=103.5;
+  const gTop = H*0.30, gBot = H*0.88;                 // ground band
+  const zToY = z => gBot - (z - zMin)/(zMax - zMin)*(gBot - gTop);
+  const bedZ = 103.0;
+  const Lx0 = W*0.24, Lx1 = W*0.76;                   // lake extent
+  const z  = levelAt(S.day), yW = zToY(z), yBed = zToY(bedZ);
+
+  /* sky */
+  ctx.fillStyle="#0c1526"; ctx.fillRect(0,0,W,gBot);
+  /* ground */
+  ctx.fillStyle="#243244";
+  ctx.beginPath();
+  ctx.moveTo(0,gBot); ctx.lineTo(0,zToY(103.35)); ctx.lineTo(Lx0-40,zToY(103.35));
+  ctx.lineTo(Lx0,yBed); ctx.lineTo(Lx1,yBed); ctx.lineTo(Lx1+40,zToY(103.35));
+  ctx.lineTo(W,zToY(103.35)); ctx.lineTo(W,gBot); ctx.closePath(); ctx.fill();
+  ctx.fillStyle="#1a2534"; ctx.fillRect(0,gBot,W,H-gBot);
+
+  /* water body */
+  const slop = 40*(z-bedZ)/(103.35-bedZ);
+  ctx.fillStyle="rgba(59,130,246,.55)";
+  ctx.beginPath();
+  ctx.moveTo(Lx0-slop,yW); ctx.lineTo(Lx0,yBed); ctx.lineTo(Lx1,yBed); ctx.lineTo(Lx1+slop,yW);
+  ctx.closePath(); ctx.fill();
+  ctx.strokeStyle="#4db8ff"; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(Lx0-slop,yW); ctx.lineTo(Lx1+slop,yW); ctx.stroke();
+
+  /* elevation axis */
+  ctx.strokeStyle="var(--line)"; ctx.fillStyle="#9aa7bd"; ctx.font="11px Segoe UI";
+  ctx.textAlign="right";
+  for(let e=zMin+0.1; e<=zMax+1e-9; e+=0.1){
+    const y=zToY(e);
+    ctx.strokeStyle="#2b3650"; ctx.beginPath(); ctx.moveTo(W*0.08,y); ctx.lineTo(W*0.10,y); ctx.stroke();
+    ctx.fillText(e.toFixed(1), W*0.075, y+4);
+  }
+  ctx.save(); ctx.translate(W*0.025,(gTop+gBot)/2); ctx.rotate(-Math.PI/2);
+  ctx.textAlign="center"; ctx.fillText("elevation (m above datum)",0,0); ctx.restore();
+
+  /* datum line at z0 and current level marker */
+  ctx.setLineDash([5,4]); ctx.strokeStyle="#f59e0b";
+  ctx.beginPath(); ctx.moveTo(W*0.10,zToY(S.z0)); ctx.lineTo(W*0.95,zToY(S.z0)); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle="#f59e0b"; ctx.textAlign="left";
+  ctx.fillText("z₀ = "+S.z0.toFixed(3)+" m", W*0.78, zToY(S.z0)-5);
+  ctx.fillStyle="#4db8ff";
+  ctx.fillText("z = "+z.toFixed(3)+" m", W*0.78, yW+14);
+
+  /* inflow / outflow arrows: width ∝ rate */
+  const arrow=(x0,y0,x1,y1,wd,col,label)=>{
+    if (wd<=0){return;}
+    ctx.strokeStyle=col; ctx.fillStyle=col; ctx.lineWidth=Math.max(1.5,wd);
+    ctx.beginPath(); ctx.moveTo(x0,y0); ctx.lineTo(x1,y1); ctx.stroke();
+    const a=Math.atan2(y1-y0,x1-x0), hs=6+wd;
+    ctx.beginPath(); ctx.moveTo(x1,y1);
+    ctx.lineTo(x1-hs*Math.cos(a-0.4), y1-hs*Math.sin(a-0.4));
+    ctx.lineTo(x1-hs*Math.cos(a+0.4), y1-hs*Math.sin(a+0.4)); ctx.closePath(); ctx.fill();
+    ctx.font="12px Segoe UI"; ctx.textAlign="center"; ctx.fillText(label,(x0+x1)/2,y0-10-wd);
+  };
+  arrow(W*0.12, yW-4, Lx0-slop-4, yW-4, S.I*0.8, "#34d399", "I = "+S.I.toFixed(1)+" m³/s");
+  arrow(Lx1+slop+4, yW-4, W*0.93, yW-4, S.O*0.8, "#ef4444", "O = "+S.O.toFixed(1)+" m³/s");
+
+  /* rain drops (rate ∝ P/t) */
+  const rainRate = S.P/S.t;                          // mm/day
+  if (Math.random() < rainRate*dt*2.2)
+    drops.push({x:Lx0+Math.random()*(Lx1-Lx0), y:20+Math.random()*30});
+  ctx.strokeStyle="#4db8ff"; ctx.lineWidth=1.5;
+  drops = drops.filter(d=>{
+    d.y += 320*dt;
+    if (d.y > yW) return false;
+    ctx.beginPath(); ctx.moveTo(d.x,d.y); ctx.lineTo(d.x,d.y+7); ctx.stroke();
+    return true;
+  });
+  ctx.fillStyle="#4db8ff"; ctx.font="12px Segoe UI"; ctx.textAlign="center";
+  if (S.P>0) ctx.fillText("P = "+S.P+" mm  ("+rainRate.toFixed(1)+" mm/day)",(Lx0+Lx1)/2, 16);
+
+  /* evaporation wisps (rate ∝ E/t) */
+  const evapRate = S.E/S.t;
+  if (Math.random() < evapRate*dt*2.2)
+    wisps.push({x:Lx0+30+Math.random()*(Lx1-Lx0-60), y:yW-2, a:1});
+  wisps = wisps.filter(w=>{
+    w.y -= 55*dt; w.a -= 0.5*dt;
+    if (w.a<=0) return false;
+    ctx.strokeStyle=`rgba(245,158,11,${w.a})`; ctx.lineWidth=1.5;
+    ctx.beginPath();
+    for(let i=0;i<=8;i++) ctx.lineTo(w.x+4*Math.sin(w.y*0.15+i), w.y-i*2.2);
+    ctx.stroke();
+    return true;
+  });
+  ctx.fillStyle="#f59e0b"; ctx.textAlign="center";
+  if (S.E>0) ctx.fillText("E = "+S.E+" mm", (Lx0+Lx1)/2, gTop-26);
+
+  /* day counter */
+  ctx.fillStyle="#e8edf6"; ctx.font="600 13px Segoe UI"; ctx.textAlign="left";
+  ctx.fillText("day "+S.day.toFixed(1)+" of "+S.t, W*0.12, H*0.95);
+
+  requestAnimationFrame(draw);
+}
+
+/* ---------- buttons ---------- */
+$("b-run").addEventListener("click", ()=>{
+  if (S.day >= S.t) S.day = 0;
+  S.playing = !S.playing;
+  $("b-run").classList.toggle("active", S.playing);
+});
+$("b-reset").addEventListener("click", ()=>{ S.playing=false; S.day=0;
+  $("b-run").classList.remove("active"); update(); });
+$("b-ex1").addEventListener("click", ()=>{
+  const d={I:6.0,O:6.5,P:145,E:61,A:5,t:30,z0:103.2};
+  Object.assign(S,d,{day:0,playing:false});
+  $("s-I").value=6.0; $("s-O").value=6.5; $("s-P").value=145; $("s-E").value=61;
+  $("s-A").value=5; $("s-t").value=30; $("s-z0").value=103.2;
+  $("b-run").classList.remove("active"); update();
+});
+
+/* ---------- boot ---------- */
+sliders.forEach(([k,s,v,fmt])=>{
+  const el=$(s), lab=$(v);
+  const sync=()=>{ lab.textContent = fmt(+el.value); };
+  el.addEventListener("input", sync); sync();
+});
+resize(); update(); requestAnimationFrame(draw);
+</script>
+</body>
+</html>

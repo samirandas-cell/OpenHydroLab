@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Lecture 12 — Steady Flow to a Well: Thiem &amp; Dupuit</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --bg:#0f1420; --panel:#171e2e; --panel2:#1d2638; --ink:#e8edf6; --dim:#9aa7bd;
+    --accent:#4db8ff; --sub:#3b82f6; --crit:#f59e0b; --sup:#ef4444; --line:#2b3650;
+    --ok:#34d399; --violet:#a78bfa;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%; overflow:hidden; background:var(--bg); color:var(--ink);
+    font-family:"Segoe UI",system-ui,sans-serif;}
+  .panel{position:absolute; background:color-mix(in srgb, var(--panel) 92%, transparent);
+    border:1px solid var(--line); border-radius:10px; padding:12px 14px;
+    backdrop-filter:blur(6px); font-size:13px; line-height:1.45; z-index:2;}
+  #ui{left:12px; top:12px; width:252px; max-height:calc(100% - 24px); overflow-y:auto;}
+  #readout{right:12px; top:12px; width:300px; max-height:calc(100% - 24px); overflow-y:auto;}
+  #actions{left:50%; transform:translateX(-50%); bottom:12px; display:flex; gap:8px; padding:8px;
+    flex-wrap:wrap; justify-content:center;}
+  #stage{position:absolute; inset:0; padding:12px 326px 64px 278px; display:flex;}
+  #wrap{flex:1; min-height:0; position:relative;}
+  canvas.view{width:100%; height:100%; display:block; background:var(--panel);
+    border:1px solid var(--line); border-radius:10px;}
+  h1{font-size:14px; margin-bottom:2px; color:var(--accent);}
+  .sub{color:var(--dim); font-size:11px; margin-bottom:10px;}
+  h2{font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--dim);
+    margin:12px 0 6px; border-bottom:1px solid var(--line); padding-bottom:3px;}
+  label.row{display:flex; justify-content:space-between; align-items:center; margin:7px 0 2px;
+    font-size:12.5px;}
+  label.row .val{color:var(--accent); font-variant-numeric:tabular-nums; font-weight:600;}
+  input[type=range]{width:100%; accent-color:var(--accent);}
+  button{background:var(--panel2); color:var(--ink); border:1px solid var(--line);
+    border-radius:7px; padding:7px 13px; font-size:12.5px; cursor:pointer;}
+  button:hover{border-color:var(--accent); color:var(--accent);}
+  button.active{background:var(--accent); color:#08111e; border-color:var(--accent); font-weight:600;}
+  table.vals{width:100%; border-collapse:collapse; font-variant-numeric:tabular-nums;}
+  table.vals td{padding:2.5px 0; font-size:12.5px;}
+  table.vals td:first-child{color:var(--dim);}
+  table.vals td:last-child{text-align:right; font-weight:600;}
+  .formula{font-family:Cambria,Georgia,serif; font-style:italic; font-size:12.5px;
+    color:#c9d6ea; background:var(--panel2); border-radius:6px; padding:7px 9px; margin-top:6px;}
+  .note{font-size:11px; color:var(--dim); margin-top:8px;}
+  #chip{margin-top:8px; padding:8px 10px; border-radius:7px; text-align:center; font-weight:700;
+    font-size:13.5px; background:var(--sub); color:#fff;}
+  @media (max-width:1150px){
+    html,body{overflow-y:auto; height:auto; min-height:100%;}
+    body{display:flex; flex-direction:column;}
+    .panel{position:static; width:auto; max-height:none; margin:10px 12px 0;}
+    #ui{order:1;} #stage{order:2; position:static; padding:10px 12px;}
+    #actions{order:3; align-self:center; transform:none;} #readout{order:4; margin-bottom:12px;}
+    #wrap{flex:none; height:440px; width:100%;}
+  }
+</style>
+</head>
+<body>
+
+<div id="ui" class="panel">
+  <h1>Steady Radial Flow to a Well</h1>
+  <div class="sub">CVE2142 · Lecture 12 · The cone of depression is drawn from the
+  Thiem / Dupuit–Thiem equations; particle speeds follow Darcy's law</div>
+
+  <h2>Aquifer</h2>
+  <div>
+    <label class="row">Hydraulic conductivity K <span class="val" id="v-K"></span></label>
+    <input type="range" id="s-K" min="1" max="150" step="1" value="45">
+  </div>
+  <div id="rowB">
+    <label class="row">Aquifer thickness B <span class="val" id="v-B"></span></label>
+    <input type="range" id="s-B" min="5" max="40" step="1" value="20">
+  </div>
+  <div id="rowH" style="display:none">
+    <label class="row">Initial sat. thickness H₀ <span class="val" id="v-H"></span></label>
+    <input type="range" id="s-H" min="10" max="40" step="1" value="25">
+  </div>
+  <div>
+    <label class="row">Porosity n <span class="val" id="v-n"></span></label>
+    <input type="range" id="s-n" min="0.10" max="0.50" step="0.001" value="0.271">
+  </div>
+
+  <h2>Pumping</h2>
+  <div>
+    <label class="row">Drawdown at well s_w <span class="val" id="v-sw"></span></label>
+    <input type="range" id="s-sw" min="0" max="10" step="0.1" value="3.0">
+  </div>
+  <div>
+    <label class="row">Radius of influence R <span class="val" id="v-R"></span></label>
+    <input type="range" id="s-R" min="50" max="1000" step="10" value="300">
+  </div>
+  <div>
+    <label class="row">Well radius r_w <span class="val" id="v-rw"></span></label>
+    <input type="range" id="s-rw" min="0.05" max="0.50" step="0.01" value="0.15">
+  </div>
+  <div>
+    <label class="row">Probe radius r <span class="val" id="v-rp"></span></label>
+    <input type="range" id="s-rp" min="1" max="100" step="1" value="10">
+  </div>
+
+  <div class="note"><b>Aha demo:</b> defaults reproduce <b>Lecture 12, Example 4</b>
+  (confined, K = 45 m/day, B = 20 m, s_w = 3 m, R = 300 m, 30-cm well → Q ≈ 25.8 L/s).
+  Pump harder (raise s_w) and the cone deepens while Q grows in proportion. Switch to
+  <i>unconfined</i>: the same drawdown now thins the aquifer itself, so the profile follows
+  h², not h — watch the cone change shape.</div>
+</div>
+
+<div id="readout" class="panel">
+  <h2 style="margin-top:0">Discharge</h2>
+  <div class="formula" id="f-main">Q = 2πKB·(h₂−h₁) / ln(r₂/r₁)  (Thiem, confined)</div>
+  <table class="vals">
+    <tr id="rT"><td>Transmissivity T = K·B</td><td id="o-T"></td></tr>
+    <tr><td>K in m/s</td><td id="o-Kms"></td></tr>
+    <tr><td>ln(R/r_w)</td><td id="o-ln"></td></tr>
+    <tr><td>Discharge Q</td><td id="o-Q"></td></tr>
+    <tr><td></td><td id="o-Q2"></td></tr>
+  </table>
+  <div id="chip"></div>
+
+  <h2>At the probe radius r</h2>
+  <div class="formula">V_D = Q/(2πr·b),&nbsp;&nbsp;V_p = V_D/n  (seepage)</div>
+  <table class="vals">
+    <tr><td>Head / sat. thickness h(r)</td><td id="o-h"></td></tr>
+    <tr><td>Drawdown s(r)</td><td id="o-s"></td></tr>
+    <tr><td>Darcy velocity V_D</td><td id="o-vd"></td></tr>
+    <tr><td>Seepage velocity V_p</td><td id="o-vp"></td></tr>
+    <tr><td>Travel: probe → well</td><td id="o-tt"></td></tr>
+  </table>
+  <div class="note">V_D is the fictitious full-section velocity (Q = A·V_D); real water
+  moves through the pores at V_p = V_D/n &gt; V_D — Example 2's distinction. Particle
+  animation runs at V_p, time-accelerated (factor shown on canvas). Vertical scale is
+  true; drawdown is drawn to scale within the section.</div>
+</div>
+
+<div id="actions" class="panel">
+  <button id="m-conf" class="active">Confined (Thiem)</button>
+  <button id="m-unconf">Unconfined (Dupuit)</button>
+  <button id="b-ex4">Example 4 defaults</button>
+</div>
+
+<div id="stage"><div id="wrap"><canvas id="cv" class="view"></canvas></div></div>
+
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const cv = $("cv"), ctx = cv.getContext("2d");
+
+/* ---------- state ---------- */
+const S = {K:45, B:20, H0:25, n:0.271, sw:3.0, R:300, rw:0.15, rp:10, mode:"conf"};
+
+/* ---------- physics (SI internally; K slider is m/day) ---------- */
+function calc(){
+  const Kms = S.K/86400;
+  const lnRr = Math.log(S.R/S.rw);
+  let Q, hw;
+  const swMax = S.mode==="conf" ? 10 : 0.8*S.H0;
+  const sw = Math.min(S.sw, swMax);
+  if (S.mode==="conf"){
+    const T = Kms*S.B;
+    Q = 2*Math.PI*T*sw/lnRr;                    // m³/s
+    hw = null;
+  } else {
+    hw = S.H0 - sw;
+    Q = Math.PI*Kms*(S.H0*S.H0 - hw*hw)/lnRr;
+  }
+  return {Kms, lnRr, Q, sw, hw, T:Kms*S.B};
+}
+function headAt(r, c){                           // h relative to aquifer base (unconf) or
+  r = Math.max(S.rw, Math.min(r, S.R));          // piezometric drawdown s (conf)
+  if (S.mode==="conf"){
+    return c.sw*Math.log(S.R/r)/c.lnRr;          // drawdown s(r)
+  }
+  const hw = c.hw;
+  return Math.sqrt(hw*hw + (S.H0*S.H0-hw*hw)*Math.log(r/S.rw)/c.lnRr);  // h(r)
+}
+function velAt(r, c){                            // Darcy velocity magnitude at radius r
+  r = Math.max(S.rw, r);
+  const b = S.mode==="conf" ? S.B : headAt(r,c);
+  return c.Q/(2*Math.PI*r*b);
+}
+/* travel time probe→well: dt = dr/Vp, integrate numerically */
+function travelTime(c){
+  let t=0, steps=400;
+  const r0=S.rw, r1=Math.max(S.rp, S.rw+0.01);
+  for(let k=0;k<steps;k++){
+    const r=r0+(r1-r0)*(k+0.5)/steps;
+    const vp=velAt(r,c)/S.n;
+    t += (r1-r0)/steps/vp;
+  }
+  return t;                                      // seconds
+}
+
+/* ---------- readout ---------- */
+const fmtT = s => s<3600?  (s/60).toFixed(1)+" min"
+              : s<86400? (s/3600).toFixed(1)+" h"
+              : s<86400*365? (s/86400).toFixed(1)+" days"
+              : (s/86400/365).toFixed(2)+" yr";
+function update(){
+  const c = calc();
+  $("v-K").textContent=S.K+" m/day"; $("v-B").textContent=S.B+" m";
+  $("v-H").textContent=S.H0+" m"; $("v-n").textContent=S.n.toFixed(3);
+  $("v-sw").textContent=c.sw.toFixed(1)+" m"; $("v-R").textContent=S.R+" m";
+  $("v-rw").textContent=S.rw.toFixed(2)+" m"; $("v-rp").textContent=S.rp+" m";
+  $("o-T").textContent=(c.T).toExponential(3)+" m²/s";
+  $("o-Kms").textContent=c.Kms.toExponential(3)+" m/s";
+  $("o-ln").textContent=c.lnRr.toFixed(4);
+  $("o-Q").textContent=c.Q.toFixed(5)+" m³/s";
+  $("o-Q2").textContent="= "+(c.Q*1000).toFixed(1)+" L/s = "+(c.Q*86400).toFixed(0)+" m³/day";
+  $("chip").textContent="Q = "+(c.Q*1000).toFixed(1)+" L/s";
+  const h = headAt(S.rp,c);
+  if (S.mode==="conf"){
+    $("o-h").textContent="s = "+h.toFixed(2)+" m below static";
+    $("o-s").textContent=h.toFixed(2)+" m";
+  } else {
+    $("o-h").textContent=h.toFixed(2)+" m";
+    $("o-s").textContent=(S.H0-h).toFixed(2)+" m";
+  }
+  const vd=velAt(S.rp,c);
+  $("o-vd").textContent=(vd*86400).toFixed(3)+" m/day";
+  $("o-vp").textContent=(vd/S.n*86400).toFixed(3)+" m/day";
+  $("o-tt").textContent=fmtT(travelTime(c));
+}
+[["K","s-K"],["B","s-B"],["H0","s-H"],["n","s-n"],["sw","s-sw"],["R","s-R"],
+ ["rw","s-rw"],["rp","s-rp"]].forEach(([k,s])=>{
+  $(s).addEventListener("input", ()=>{ S[k]=+$(s).value; update(); });
+});
+const setMode = m => {
+  S.mode=m;
+  $("m-conf").classList.toggle("active",m==="conf");
+  $("m-unconf").classList.toggle("active",m==="unconf");
+  $("rowB").style.display = m==="conf"?"":"none";
+  $("rowH").style.display = m==="unconf"?"":"none";
+  $("rT").style.display   = m==="conf"?"":"none";
+  $("f-main").textContent = m==="conf"
+    ? "Q = 2πKB·(h₂−h₁) / ln(r₂/r₁)  (Thiem, confined)"
+    : "Q = πK·(h₂²−h₁²) / ln(r₂/r₁)  (Dupuit–Thiem, unconfined)";
+  update();
+};
+$("m-conf").addEventListener("click",()=>setMode("conf"));
+$("m-unconf").addEventListener("click",()=>setMode("unconf"));
+$("b-ex4").addEventListener("click",()=>{
+  Object.assign(S,{K:45,B:20,sw:3.0,R:300,rw:0.15,n:0.271,rp:10});
+  $("s-K").value=45; $("s-B").value=20; $("s-sw").value=3; $("s-R").value=300;
+  $("s-rw").value=0.15; $("s-n").value=0.271; $("s-rp").value=10;
+  setMode("conf");
+});
+
+/* ---------- drawing ---------- */
+let parts=[], last=performance.now();
+function resize(){
+  const r = cv.parentElement.getBoundingClientRect(), dpr = devicePixelRatio||1;
+  cv.width = r.width*dpr; cv.height = r.height*dpr;
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+}
+addEventListener("resize", resize);
+
+function draw(now){
+  const dt=Math.min((now-last)/1000,.05); last=now;
+  const W = cv.width/(devicePixelRatio||1), H = cv.height/(devicePixelRatio||1);
+  ctx.clearRect(0,0,W,H);
+  const c = calc();
+
+  /* layout: x maps radius −R..R; y maps elevation (m above aquifer base) */
+  const cx=W/2, span=W*0.44;
+  const xOf = r => cx + r/S.R*span;              // signed radius
+  const topEl = S.mode==="conf" ? S.B+22 : S.H0+10;   // m shown above base
+  const gY=H*0.12, bY=H*0.86;
+  const yOf = e => bY - e/topEl*(bY-gY);
+
+  /* ground & layers */
+  ctx.fillStyle="#1a2534"; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle="#243244"; ctx.fillRect(0,0,W,gY);   // sky/ground strip
+  ctx.fillStyle="#111927"; ctx.fillRect(0,yOf(0),W,H-yOf(0));  // bedrock
+  const aqTop = S.mode==="conf" ? S.B : S.H0;
+  /* aquifer body */
+  ctx.fillStyle="#7a6748";
+  ctx.fillRect(0,yOf(S.mode==="conf"?S.B:topEl-4),W, (S.mode==="conf"? yOf(0)-yOf(S.B) : yOf(0)-yOf(topEl-4)));
+  if (S.mode==="conf"){
+    /* aquitard */
+    ctx.fillStyle="#39445a";
+    ctx.fillRect(0,yOf(S.B+6),W, yOf(S.B)-yOf(S.B+6));
+    ctx.fillStyle="#9aa7bd"; ctx.font="11px Segoe UI"; ctx.textAlign="left";
+    ctx.fillText("aquitard (confining layer)", 12, yOf(S.B+3)+4);
+  }
+
+  /* saturated zone shading */
+  ctx.fillStyle="rgba(59,130,246,.38)";
+  ctx.beginPath();
+  if (S.mode==="conf"){
+    ctx.rect(0,yOf(S.B),W,yOf(0)-yOf(S.B));
+  } else {
+    ctx.moveTo(xOf(-S.R),yOf(headAt(S.R,c)));
+    for(let k=0;k<=120;k++){ const r=-S.R+2*S.R*k/120;
+      ctx.lineTo(xOf(r), yOf(headAt(Math.abs(r),c))); }
+    ctx.lineTo(xOf(S.R),yOf(0)); ctx.lineTo(xOf(-S.R),yOf(0)); ctx.closePath();
+  }
+  ctx.fill();
+
+  /* piezometric surface / water table curve */
+  const staticEl = S.mode==="conf" ? S.B+15 : S.H0;   // static piezo head 15 m above top
+  ctx.setLineDash([5,4]); ctx.strokeStyle="#9aa7bd"; ctx.lineWidth=1.2;
+  ctx.beginPath(); ctx.moveTo(0,yOf(staticEl)); ctx.lineTo(W,yOf(staticEl)); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle="#9aa7bd"; ctx.font="11px Segoe UI"; ctx.textAlign="left";
+  ctx.fillText(S.mode==="conf"?"static piezometric surface":"static water table",
+               12, yOf(staticEl)-5);
+  ctx.strokeStyle="#4db8ff"; ctx.lineWidth=2.2;
+  ctx.beginPath();
+  for(let k=0;k<=200;k++){
+    const r=-S.R+2*S.R*k/200, ra=Math.max(Math.abs(r),S.rw);
+    const e = S.mode==="conf" ? staticEl-headAt(ra,c) : headAt(ra,c);
+    const y=yOf(e), x=xOf(r);
+    k===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  }
+  ctx.stroke();
+  ctx.fillStyle="#4db8ff"; ctx.textAlign="left";
+  ctx.fillText(S.mode==="conf"?"pumping piezometric surface (cone of depression)"
+                              :"pumping water table (cone of depression)",
+               12, yOf(S.mode==="conf"?staticEl-c.sw:c.hw)-8);
+
+  /* well */
+  const wpx=Math.max(4, S.rw/S.R*span*2);
+  ctx.fillStyle="#0d1320";
+  ctx.fillRect(cx-wpx, gY, 2*wpx, yOf(2)-gY);
+  ctx.strokeStyle="#e8edf6"; ctx.lineWidth=1.4;
+  ctx.strokeRect(cx-wpx, gY, 2*wpx, yOf(2)-gY);
+  /* water level in well */
+  const wl = S.mode==="conf" ? staticEl-c.sw : c.hw;
+  ctx.fillStyle="rgba(77,184,255,.85)";
+  ctx.fillRect(cx-wpx+1, yOf(wl), 2*wpx-2, yOf(2)-yOf(wl));
+  /* pump arrow */
+  ctx.strokeStyle="#f59e0b"; ctx.lineWidth=2.5;
+  ctx.beginPath(); ctx.moveTo(cx,gY); ctx.lineTo(cx,gY-16); ctx.lineTo(cx+26,gY-16); ctx.stroke();
+  ctx.fillStyle="#f59e0b"; ctx.beginPath();
+  ctx.moveTo(cx+26,gY-21); ctx.lineTo(cx+36,gY-16); ctx.lineTo(cx+26,gY-11); ctx.closePath(); ctx.fill();
+  ctx.font="600 12px Segoe UI"; ctx.textAlign="left";
+  ctx.fillText("Q = "+(c.Q*1000).toFixed(1)+" L/s", cx+42, gY-12);
+
+  /* drawdown annotation */
+  ctx.strokeStyle="#ef4444"; ctx.lineWidth=1.4;
+  const xa=cx+wpx+14;
+  ctx.beginPath(); ctx.moveTo(xa,yOf(staticEl)); ctx.lineTo(xa,yOf(wl)); ctx.stroke();
+  ctx.fillStyle="#ef4444"; ctx.textAlign="left";
+  ctx.fillText("s_w = "+c.sw.toFixed(1)+" m", xa+6, (yOf(staticEl)+yOf(wl))/2+4);
+
+  /* probe marker */
+  const xp=xOf(S.rp);
+  ctx.setLineDash([3,3]); ctx.strokeStyle="#a78bfa";
+  ctx.beginPath(); ctx.moveTo(xp,gY); ctx.lineTo(xp,yOf(0)); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle="#a78bfa"; ctx.textAlign="center";
+  ctx.fillText("r = "+S.rp+" m", xp, yOf(0)+16);
+
+  /* R marker */
+  ctx.fillStyle="#9aa7bd"; ctx.textAlign="center";
+  ctx.fillText("R = "+S.R+" m", xOf(S.R)-30, gY+16);
+
+  /* particles: seepage velocity, time-accelerated */
+  const ACC=2e5;                                   // time acceleration
+  if (parts.length<90 && Math.random()<0.5){
+    const side=Math.random()<0.5?-1:1;
+    const bTop = S.mode==="conf" ? S.B : headAt(S.R,c);
+    parts.push({r:S.R*(0.35+0.63*Math.random()), side,
+                e: 1+Math.random()*(bTop-2)});
+  }
+  ctx.fillStyle="rgba(232,237,246,.9)";
+  parts = parts.filter(p=>{
+    const vp = velAt(p.r,c)/S.n;                   // m/s
+    p.r -= vp*ACC*dt;
+    if (p.r <= S.rw+0.5) return false;
+    const bHere = S.mode==="conf" ? S.B : headAt(p.r,c);
+    const e = Math.min(p.e, bHere-0.5);
+    ctx.beginPath(); ctx.arc(xOf(p.side*p.r), yOf(e), 1.8, 0, 7); ctx.fill();
+    return true;
+  });
+  ctx.fillStyle="#9aa7bd"; ctx.font="10px Segoe UI"; ctx.textAlign="right";
+  ctx.fillText("particles at seepage velocity V_p = V_D/n, time ×"+ACC.toExponential(0).replace("e+","×10^"), W-10, H-8);
+
+  /* scale note */
+  ctx.textAlign="left";
+  ctx.fillText("vertical scale true within section; horizontal compressed to show R", 10, H-8);
+
+  requestAnimationFrame(draw);
+}
+
+/* ---------- boot ---------- */
+resize(); update(); requestAnimationFrame(draw);
+</script>
+</body>
+</html>

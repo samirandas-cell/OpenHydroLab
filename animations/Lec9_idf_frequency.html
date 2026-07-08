@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Lecture 9 — Rainfall Frequency Analysis &amp; IDF Curves</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --bg:#0f1420; --panel:#171e2e; --panel2:#1d2638; --ink:#e8edf6; --dim:#9aa7bd;
+    --accent:#4db8ff; --sub:#3b82f6; --crit:#f59e0b; --sup:#ef4444; --line:#2b3650;
+    --ok:#34d399; --violet:#a78bfa;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%; overflow:hidden; background:var(--bg); color:var(--ink);
+    font-family:"Segoe UI",system-ui,sans-serif;}
+  .panel{position:absolute; background:color-mix(in srgb, var(--panel) 92%, transparent);
+    border:1px solid var(--line); border-radius:10px; padding:12px 14px;
+    backdrop-filter:blur(6px); font-size:13px; line-height:1.45; z-index:2;}
+  #ui{left:12px; top:12px; width:252px; max-height:calc(100% - 24px); overflow-y:auto;}
+  #readout{right:12px; top:12px; width:300px; max-height:calc(100% - 24px); overflow-y:auto;}
+  #stage{position:absolute; inset:0; padding:12px 326px 12px 278px; display:flex;}
+  #wrap{flex:1; min-height:0; position:relative;}
+  canvas.view{width:100%; height:100%; display:block; background:var(--panel);
+    border:1px solid var(--line); border-radius:10px;}
+  h1{font-size:14px; margin-bottom:2px; color:var(--accent);}
+  .sub{color:var(--dim); font-size:11px; margin-bottom:10px;}
+  h2{font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--dim);
+    margin:12px 0 6px; border-bottom:1px solid var(--line); padding-bottom:3px;}
+  label.row{display:flex; justify-content:space-between; align-items:center; margin:7px 0 2px;
+    font-size:12.5px;}
+  label.row .val{color:var(--accent); font-variant-numeric:tabular-nums; font-weight:600;}
+  input[type=range]{width:100%; accent-color:var(--accent);}
+  table.vals{width:100%; border-collapse:collapse; font-variant-numeric:tabular-nums;}
+  table.vals td{padding:2.5px 0; font-size:12.5px;}
+  table.vals td:first-child{color:var(--dim);}
+  table.vals td:last-child{text-align:right; font-weight:600;}
+  .formula{font-family:Cambria,Georgia,serif; font-style:italic; font-size:12.5px;
+    color:#c9d6ea; background:var(--panel2); border-radius:6px; padding:7px 9px; margin-top:6px;}
+  .note{font-size:11px; color:var(--dim); margin-top:8px;}
+  #chip{margin-top:8px; padding:8px 10px; border-radius:7px; text-align:center; font-weight:700;
+    font-size:13.5px; background:var(--sub); color:#fff;}
+  @media (max-width:1150px){
+    html,body{overflow-y:auto; height:auto; min-height:100%;}
+    body{display:flex; flex-direction:column;}
+    .panel{position:static; width:auto; max-height:none; margin:10px 12px 0;}
+    #ui{order:1;} #stage{order:2; position:static; padding:10px 12px;}
+    #readout{order:3; margin-bottom:12px;}
+    #wrap{flex:none; height:460px; width:100%;}
+  }
+</style>
+</head>
+<body>
+
+<div id="ui" class="panel">
+  <h1>IDF Curves — Gumbel (EV1)</h1>
+  <div class="sub">CVE2142 · Lecture 9 · Every curve is computed from the Gumbel
+  distribution fitted by the method of moments to a synthetic gauge's annual-maximum
+  statistics</div>
+
+  <h2>Annual-maximum statistics</h2>
+  <div>
+    <label class="row">Mean 1-h AM depth μ₁ₕ <span class="val" id="v-mu"></span></label>
+    <input type="range" id="s-mu" min="30" max="120" step="1" value="70">
+  </div>
+  <div>
+    <label class="row">Duration exponent η <span class="val" id="v-eta"></span></label>
+    <input type="range" id="s-eta" min="0.10" max="0.50" step="0.01" value="0.30">
+    <div class="note" style="margin-top:2px">μ(d) = μ₁ₕ·d^η — how depth grows with duration.</div>
+  </div>
+  <div>
+    <label class="row">Coeff. of variation Cv <span class="val" id="v-cv"></span></label>
+    <input type="range" id="s-cv" min="0.10" max="0.50" step="0.01" value="0.25">
+  </div>
+  <div>
+    <label class="row">Climate uplift <span class="val" id="v-cc"></span></label>
+    <input type="range" id="s-cc" min="0" max="40" step="1" value="0">
+    <div class="note" style="margin-top:2px">Scales all AM depths — dashed curves show
+    the present-day IDF for comparison.</div>
+  </div>
+
+  <h2>Design point</h2>
+  <div>
+    <label class="row">Duration d <span class="val" id="v-d"></span></label>
+    <input type="range" id="s-d" min="0" max="100" step="1" value="44">
+  </div>
+  <div>
+    <label class="row">Return period T <span class="val" id="v-T"></span></label>
+    <input type="range" id="s-T" min="0" max="100" step="1" value="73">
+  </div>
+  <div>
+    <label class="row">Design life n <span class="val" id="v-n"></span></label>
+    <input type="range" id="s-n" min="1" max="100" step="1" value="20">
+  </div>
+
+  <div class="note"><b>Aha demo:</b> set T = 50 yr and n = 20 yr: the risk panel shows a
+  "rare" 50-year event still has a <b>33% chance</b> of striking at least once inside the
+  design life (Lecture 9, Example 4). Then push the climate-uplift slider and watch the
+  whole IDF family shift up — the design intensity for the same (d, T) grows.</div>
+</div>
+
+<div id="readout" class="panel">
+  <h2 style="margin-top:0">Gumbel fit at duration d</h2>
+  <div class="formula">α = (√6/π)·σ ≈ 0.7797σ,&nbsp; ξ = μ − 0.5772α</div>
+  <table class="vals">
+    <tr><td>Mean depth μ(d)</td><td id="o-mu"></td></tr>
+    <tr><td>Std dev σ(d)</td><td id="o-sd"></td></tr>
+    <tr><td>Scale α</td><td id="o-al"></td></tr>
+    <tr><td>Location ξ</td><td id="o-xi"></td></tr>
+  </table>
+
+  <h2>Design depth &amp; intensity</h2>
+  <div class="formula">x_T = ξ + α·y_T,&nbsp; y_T = −ln[−ln(1−1/T)]</div>
+  <table class="vals">
+    <tr><td>Reduced variate y_T</td><td id="o-yT"></td></tr>
+    <tr><td>Depth x_T</td><td id="o-xT"></td></tr>
+    <tr><td>Intensity i = x_T/d</td><td id="o-i"></td></tr>
+  </table>
+  <div id="chip"></div>
+
+  <h2>Risk over the design life</h2>
+  <div class="formula">P(X≥1) = 1 − (1−p)ⁿ,&nbsp; p = 1/T</div>
+  <table class="vals">
+    <tr><td>Annual probability p</td><td id="o-p"></td></tr>
+    <tr><td>Exactly once in n yr</td><td id="o-r1"></td></tr>
+    <tr><td>Exactly twice in n yr</td><td id="o-r2"></td></tr>
+    <tr><td>At least once in n yr</td><td id="o-r1p"></td></tr>
+  </table>
+  <div class="note">Binomial: P(X=r) = C(n,r)·pʳ(1−p)ⁿ⁻ʳ. With T = 50, n = 20 this
+  reproduces Example 4: 0.272 / (n=15: 0.032) / 0.332.</div>
+</div>
+
+<div id="stage"><div id="wrap"><canvas id="cv" class="view"></canvas></div></div>
+
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const cv = $("cv"), ctx = cv.getContext("2d");
+
+/* ---------- state ---------- */
+const S = {mu:70, eta:0.30, cv:0.25, cc:0, dIdx:44, TIdx:73, n:20};
+
+/* duration slider is log-spaced 5 min … 24 h; T slider log-spaced 1.01 … 200 */
+const dMin = 5/60, dMax = 24;
+const dOf = idx => dMin*Math.pow(dMax/dMin, idx/100);
+const TOf = idx => 1.25*Math.pow(200/1.25, idx/100);
+const snapT = T => {           // snap near standard return periods for clean teaching values
+  const std=[2,5,10,25,50,100];
+  for (const s of std) if (Math.abs(T-s)/s < 0.06) return s;
+  return T;
+};
+
+/* ---------- physics ---------- */
+const EULER = 0.5772156649;
+function gumbelAt(d){                       // d in hours → {mu,sd,al,xi} in mm
+  const up = 1 + S.cc/100;
+  const mu = S.mu*Math.pow(d,S.eta)*up;
+  const sd = S.cv*mu;
+  const al = Math.sqrt(6)/Math.PI*sd;
+  return {mu, sd, al, xi: mu - EULER*al};
+}
+const yT = T => -Math.log(-Math.log(1-1/T));
+function depth(d,T,uplifted=true){
+  const saved = S.cc; if(!uplifted) S.cc = 0;
+  const g = gumbelAt(d); if(!uplifted) S.cc = saved;
+  return g.xi + g.al*yT(T);
+}
+const intensity = (d,T,up=true) => depth(d,T,up)/d;
+function binom(n,r,p){
+  let c=1; for(let i=0;i<r;i++) c = c*(n-i)/(i+1);
+  return c*Math.pow(p,r)*Math.pow(1-p,n-r);
+}
+const fmtDur = d => d<1 ? Math.round(d*60)+" min" : d.toFixed(d<3?1:0)+" h";
+
+/* ---------- readout ---------- */
+function update(){
+  const d = dOf(S.dIdx), T = snapT(TOf(S.TIdx)), n = S.n;
+  $("v-mu").textContent = S.mu+" mm"; $("v-eta").textContent = S.eta.toFixed(2);
+  $("v-cv").textContent = S.cv.toFixed(2); $("v-cc").textContent = "+"+S.cc+" %";
+  $("v-d").textContent = fmtDur(d); $("v-T").textContent = T.toFixed(T<10?1:0)+" yr";
+  $("v-n").textContent = n+" yr";
+  const g = gumbelAt(d), y = yT(T), x = g.xi + g.al*y;
+  $("o-mu").textContent = g.mu.toFixed(1)+" mm";
+  $("o-sd").textContent = g.sd.toFixed(1)+" mm";
+  $("o-al").textContent = g.al.toFixed(2)+" mm";
+  $("o-xi").textContent = g.xi.toFixed(1)+" mm";
+  $("o-yT").textContent = y.toFixed(3);
+  $("o-xT").textContent = x.toFixed(1)+" mm";
+  $("o-i").textContent  = (x/d).toFixed(1)+" mm/h";
+  $("chip").textContent = fmtDur(d)+" · T = "+T.toFixed(0)+" yr  →  "+(x/d).toFixed(0)+" mm/h";
+  const p = 1/T;
+  $("o-p").textContent   = p.toFixed(4);
+  $("o-r1").textContent  = binom(n,1,p).toFixed(3);
+  $("o-r2").textContent  = binom(n,2,p).toFixed(4);
+  $("o-r1p").textContent = (1-Math.pow(1-p,n)).toFixed(3);
+  drawPlot();
+}
+["mu","eta","cv","cc","n"].forEach(k=>{
+  $("s-"+k).addEventListener("input", ()=>{ S[k]=+$("s-"+k).value; update(); });
+});
+$("s-d").addEventListener("input", ()=>{ S.dIdx=+$("s-d").value; update(); });
+$("s-T").addEventListener("input", ()=>{ S.TIdx=+$("s-T").value; update(); });
+
+/* ---------- plot ---------- */
+const Ts = [2,5,10,25,50,100];
+const Tcol = {2:"#34d399",5:"#4db8ff",10:"#3b82f6",25:"#a78bfa",50:"#f59e0b",100:"#ef4444"};
+function resize(){
+  const r = cv.parentElement.getBoundingClientRect(), dpr = devicePixelRatio||1;
+  cv.width = r.width*dpr; cv.height = r.height*dpr;
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  drawPlot();
+}
+addEventListener("resize", resize);
+
+function drawPlot(){
+  const W = cv.width/(devicePixelRatio||1), H = cv.height/(devicePixelRatio||1);
+  ctx.clearRect(0,0,W,H);
+  const mL=64, mR=20, mT=34, mB=48;
+  const pw = W-mL-mR, ph = H-mT-mB;
+  const iMin=5, iMax=1500;                          // mm/h, log scale
+  const xOf = d => mL + (Math.log10(d)-Math.log10(dMin))/(Math.log10(dMax)-Math.log10(dMin))*pw;
+  const yOfI = i => mT + (Math.log10(iMax)-Math.log10(i))/(Math.log10(iMax)-Math.log10(iMin))*ph;
+
+  /* gridlines */
+  ctx.font="11px Segoe UI"; ctx.fillStyle="#9aa7bd";
+  const dTicks=[5/60,10/60,15/60,0.5,1,2,3,6,12,24];
+  ctx.textAlign="center";
+  dTicks.forEach(d=>{
+    const x=xOf(d);
+    ctx.strokeStyle="#222c42"; ctx.beginPath(); ctx.moveTo(x,mT); ctx.lineTo(x,mT+ph); ctx.stroke();
+    ctx.fillText(fmtDur(d), x, mT+ph+16);
+  });
+  ctx.textAlign="right";
+  [5,10,20,50,100,200,500,1000].forEach(i=>{
+    const y=yOfI(i);
+    ctx.strokeStyle="#222c42"; ctx.beginPath(); ctx.moveTo(mL,y); ctx.lineTo(mL+pw,y); ctx.stroke();
+    ctx.fillText(i, mL-6, y+4);
+  });
+  ctx.strokeStyle="#2b3650"; ctx.strokeRect(mL,mT,pw,ph);
+  ctx.textAlign="center"; ctx.fillStyle="#c9d6ea";
+  ctx.fillText("duration d (log scale)", mL+pw/2, H-8);
+  ctx.save(); ctx.translate(16,mT+ph/2); ctx.rotate(-Math.PI/2);
+  ctx.fillText("intensity i (mm/h, log scale)",0,0); ctx.restore();
+  ctx.fillStyle="#4db8ff"; ctx.font="600 13px Segoe UI";
+  ctx.fillText("Intensity–Duration–Frequency curves (Gumbel/EV1, method of moments)", mL+pw/2, 18);
+
+  /* curves */
+  const curve = (T, uplifted, dash) => {
+    ctx.setLineDash(dash?[5,4]:[]);
+    ctx.strokeStyle = Tcol[T]; ctx.lineWidth = dash?1.2:2.2;
+    ctx.globalAlpha = dash?0.65:1;
+    ctx.beginPath();
+    for(let k=0;k<=140;k++){
+      const d = dMin*Math.pow(dMax/dMin, k/140);
+      const i = intensity(d,T,uplifted);
+      if (i<iMin||i>iMax){ if(k===0) ctx.moveTo(xOf(d),yOfI(Math.min(iMax,Math.max(iMin,i)))); continue; }
+      k===0 ? ctx.moveTo(xOf(d),yOfI(i)) : ctx.lineTo(xOf(d),yOfI(i));
+    }
+    ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha=1;
+  };
+  Ts.forEach(T=>{ if (S.cc>0) curve(T,false,true); curve(T,true,false); });
+
+  /* curve labels */
+  ctx.textAlign="left"; ctx.font="600 11px Segoe UI";
+  Ts.forEach(T=>{
+    const d=dMax, i=intensity(d,T);
+    if (i>=iMin&&i<=iMax){ ctx.fillStyle=Tcol[T]; ctx.fillText("T="+T, xOf(d)-34, yOfI(i)-5); }
+  });
+
+  /* design point marker */
+  const d = dOf(S.dIdx), T = snapT(TOf(S.TIdx)), i = intensity(d,T);
+  const x=xOf(d), y=yOfI(Math.min(iMax,Math.max(iMin,i)));
+  ctx.setLineDash([4,4]); ctx.strokeStyle="#e8edf6"; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(x,mT+ph); ctx.lineTo(x,y); ctx.lineTo(mL,y); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle="#e8edf6"; ctx.beginPath(); ctx.arc(x,y,5,0,7); ctx.fill();
+  ctx.strokeStyle="#0f1420"; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(x,y,5,0,7); ctx.stroke();
+  ctx.font="600 12px Segoe UI"; ctx.textAlign="left";
+  ctx.fillText(i.toFixed(0)+" mm/h", x+9, y-8);
+}
+
+/* ---------- boot ---------- */
+resize(); update();
+</script>
+</body>
+</html>

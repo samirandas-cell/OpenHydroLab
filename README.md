@@ -23,8 +23,13 @@ verified by hand against worked textbook examples before release.
 | `animations/Lab1_specific_energy_critical_depth.html` | Specific energy diagram, alternate depths, critical depth, sluice gate & choking | 2D, fully offline |
 | `animations/Lab2_hydraulic_jump.html` | Hydraulic jump: sequent depths (momentum), all five jump types, energy loss vs theory | 2D, fully offline |
 | `animations/Lec5_gvf_profiles.html` | Gradually varied flow: numerical integration of the GVF equation, auto-classification of all 12 profile types | 2D, fully offline |
+| `animations/Lec6_water_balance.html` | Catchment/lake water balance: P + I − O − E = ΔS animated as a moving lake level | 2D, fully offline |
+| `animations/Lec9_idf_frequency.html` | Rainfall frequency analysis: Gumbel/EV1 by method of moments, live IDF curve family, binomial design-life risk, climate uplift | 2D, fully offline |
+| `animations/Lec10_rational_method.html` | Rational method: composite runoff coefficient, IDF intensity at t_c, peak flow — with an urbanization demo | 2D, fully offline |
+| `animations/Lec11_unit_hydrograph.html` | Unit hydrograph: linearity & superposition of lagged scaled UHs, S-curve to equilibrium discharge | 2D, fully offline |
+| `animations/Lec12_well_drawdown.html` | Steady radial flow to a well: Thiem (confined) & Dupuit–Thiem (unconfined) cones of depression, Darcy vs seepage velocity | 2D, fully offline |
 
-In development: weirs and sluice gates, channel transitions, IDF curves, unit hydrograph.
+In development: weirs and sluice gates, channel transitions, Thiessen polygons, unsteady well drawdown (Theis).
 
 ## Using in your course
 
