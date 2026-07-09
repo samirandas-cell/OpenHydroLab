@@ -26,6 +26,7 @@ verified by hand against worked textbook examples before release.
 | `animations/Lec6_water_balance.html` | Catchment/lake water balance: P + I − O − E = ΔS animated as a moving lake level | 2D, fully offline |
 | `animations/Lec9_idf_frequency.html` | Rainfall frequency analysis: Gumbel/EV1 by method of moments, live IDF curve family, binomial design-life risk, climate uplift | 2D, fully offline |
 | `animations/Lec10_rational_method.html` | Rational method: composite runoff coefficient, IDF intensity at t_c, peak flow — with an urbanization demo | 2D, fully offline |
+| `animations/Lec10_storm_hydrograph.html` | Storm hydrograph: rainfall → φ-index losses → linear-reservoir routing → live streamflow response; rising/recession limbs, lag time, baseflow separation, mass balance, urbanization comparison | 2D, fully offline |
 | `animations/Lec11_unit_hydrograph.html` | Unit hydrograph: linearity & superposition of lagged scaled UHs, S-curve to equilibrium discharge | 2D, fully offline |
 | `animations/Lec12_well_drawdown.html` | Steady radial flow to a well: Thiem (confined) & Dupuit–Thiem (unconfined) cones of depression, Darcy vs seepage velocity | 2D, fully offline |
 
