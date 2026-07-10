@@ -91,17 +91,24 @@
 
   <!-- ============ mode 2: apply ============ -->
   <div id="ctl-apply" style="display:none">
-    <h2>Effective rainfall pulses (6-h each)</h2>
+    <h2>Storm pattern</h2>
     <div>
-      <label class="row">Pulse R₁ (0–6 h) <span class="val" id="v-R1"></span></label>
+      <label class="row">Pulse duration Dᵣ <span class="val" id="v-Dr"></span></label>
+      <input type="range" id="s-Dr" min="1" max="12" step="0.5" value="6">
+      <div class="note" style="margin-top:2px">Changing Dᵣ automatically switches to the
+      Dᵣ-hour UH (built by the S-curve method of mode 3) — a UH may only be applied to
+      pulses of <i>its own</i> duration.</div>
+    </div>
+    <div>
+      <label class="row"><span id="lb-R1">Pulse R₁</span> <span class="val" id="v-R1"></span></label>
       <input type="range" id="s-R1" min="0" max="5" step="0.1" value="3.0">
     </div>
     <div>
-      <label class="row">Pulse R₂ (6–12 h) <span class="val" id="v-R2"></span></label>
+      <label class="row"><span id="lb-R2">Pulse R₂</span> <span class="val" id="v-R2"></span></label>
       <input type="range" id="s-R2" min="0" max="5" step="0.1" value="2.0">
     </div>
     <div>
-      <label class="row">Pulse R₃ (12–18 h) <span class="val" id="v-R3"></span></label>
+      <label class="row"><span id="lb-R3">Pulse R₃</span> <span class="val" id="v-R3"></span></label>
       <input type="range" id="s-R3" min="0" max="5" step="0.1" value="0">
     </div>
     <div>
@@ -109,11 +116,12 @@
       <input type="range" id="s-bf2" min="0" max="60" step="1" value="10">
     </div>
     <h2>Show</h2>
-    <label class="chk"><input type="checkbox" id="t-uh6" checked> 6-h UH (dashed, 1 cm)</label>
+    <label class="chk"><input type="checkbox" id="t-uh6" checked> UH in use (dashed, 1 cm)</label>
     <div class="note"><b>Aha demo:</b> the total flood is the colored bands <i>stacked</i> —
-    each band is one rain pulse pushed through the same UH, lagged by when it fell.
-    Drag R₂ to zero and back and watch its whole band appear and vanish while the others
-    stand still: that is linearity + superposition, the two assumptions UH theory lives on.</div>
+    each band is one rain pulse pushed through the same UH, lagged by when it fell. Drag R₂
+    to zero and back: its whole band vanishes while the others stand still (linearity +
+    superposition). Then shorten Dᵣ: the same rain depths arrive faster, the UH in use
+    gets peakier, and the flood peak climbs.</div>
   </div>
 
   <!-- ============ mode 3: duration ============ -->
@@ -126,11 +134,15 @@
     <h2>Show</h2>
     <label class="chk"><input type="checkbox" id="t-train" checked> Construction: lagged 6-h UHs</label>
     <label class="chk"><input type="checkbox" id="t-cmp6" checked> Original 6-h UH (compare)</label>
+    <label class="chk"><input type="checkbox" id="t-sup" checked> Superposition method (integer multiples)</label>
     <button id="b-build" style="width:100%; margin-top:6px">▶ Replay S-curve summation</button>
     <div class="note"><b>Aha demo:</b> drag D′ from 1 h to 24 h and watch the UH morph:
-    a short-duration UH is tall and peaky (the same 1 cm arrives in a burst); a long one is
-    low and flat. The S-curve makes <i>any</i> duration reachable — lag the curve by D′,
-    subtract, rescale by D/D′. The volume stays exactly 1 cm the whole way: that's the check.</div>
+    short-duration UHs are tall and peaky, long ones low and flat, volume pinned at 1 cm.
+    At D′ = 12, 18, 24 h the <b>superposition method</b> (sum n lagged 6-h UHs, ÷ n) draws
+    its own white dashed curve — it lands exactly on the S-curve result, because
+    superposition IS the S-curve algebra restricted to integer multiples. Now set
+    D′ = 9 h: superposition has no answer, and that is precisely why the S-curve
+    method exists.</div>
   </div>
 </div>
 
@@ -161,6 +173,8 @@
   <div id="ro-apply" style="display:none">
     <h2>Predicted flood</h2>
     <table class="vals">
+      <tr><td>UH in use</td><td id="o-uhr"></td></tr>
+      <tr><td>UH_Dᵣ peak</td><td id="o-uhrpk"></td></tr>
       <tr><td>Total ER</td><td id="o-er2"></td></tr>
       <tr><td>Peak discharge</td><td id="o-pk2"></td></tr>
       <tr><td>Time of peak</td><td id="o-tp2"></td></tr>
@@ -179,6 +193,7 @@
       <tr><td>Time of peak</td><td id="o-tp3"></td></tr>
       <tr><td>(6-h UH peak, for comparison)</td><td id="o-pk6"></td></tr>
       <tr><td>D′-UH volume ÷ A</td><td id="o-v3"></td></tr>
+      <tr><td>Superposition method</td><td id="o-sup"></td></tr>
     </table>
   </div>
 
@@ -226,8 +241,8 @@ const ER_TRUE = 3.0, BF_TRUE = 10;
 const obs = t => ER_TRUE*UH6(t) + BF_TRUE;
 
 /* ================= state ================= */
-const S = {mode:"derive", step:1, bf:10, R:[3,2,0], bf2:10, Dp:12,
-           uh6:true, train:true, cmp6:true,
+const S = {mode:"derive", step:1, bf:10, R:[3,2,0], bf2:10, Dr:6, Dp:12,
+           uh6:true, train:true, cmp6:true, sup:true,
            ease:1, easeT:1, sT:96};
 const TMAX=60, TINT=140, DTI=0.05;               // display span, integration span/step
 
@@ -246,18 +261,30 @@ function recompute(){
     const uhV = integrate(uh,0,TINT)/AREA*100;
     M={drh,V,d,uh,pk,uhV, ok:Math.abs(d-ER_TRUE)<0.05};
   } else if (S.mode==="apply"){
-    const drh = t => S.R[0]*UH6(t)+S.R[1]*UH6(t-6)+S.R[2]*UH6(t-12);
+    const uhr = t => UHd(t,S.Dr);                // the Dᵣ-hour UH, via the S-curve method
+    const drh = t => S.R[0]*uhr(t)+S.R[1]*uhr(t-S.Dr)+S.R[2]*uhr(t-2*S.Dr);
     const tot = t => drh(t)+S.bf2;
     const pk = peakOf(tot,0,TINT);
     const V = integrate(drh,0,TINT);
     const er = S.R[0]+S.R[1]+S.R[2];
-    M={drh,tot,pk,V,er, Vc:er/100*AREA};
+    M={uhr, uhrPk:peakOf(uhr,0,TINT), drh,tot,pk,V,er, Vc:er/100*AREA};
   } else {
     const uhp = t => UHd(t,S.Dp);
     const pk = peakOf(uhp,0,TINT);
     const vol = integrate(uhp,0,TINT)/AREA*100;
     const pk6 = peakOf(UH6,0,TINT);
-    M={uhp,pk,vol,pk6};
+    /* superposition method exists only when D′ is an integer multiple n·D0, n ≥ 2 */
+    const n = S.Dp/D0;
+    const isMult = Math.abs(n-Math.round(n))<1e-9 && Math.round(n)>=2;
+    let sup=null, supPk=null, maxDiff=null;
+    if (isMult){
+      const nn=Math.round(n);
+      sup = t => { let s=0; for(let k=0;k<nn;k++) s+=UH6(t-k*D0); return s/nn; };
+      supPk = peakOf(sup,0,TINT);
+      maxDiff=0;
+      for(let t=0;t<TINT;t+=0.1) maxDiff=Math.max(maxDiff, Math.abs(sup(t)-uhp(t)));
+    }
+    M={uhp,pk,vol,pk6, isMult, n:Math.round(n), sup, supPk, maxDiff};
   }
   updateReadout();
 }
@@ -289,8 +316,15 @@ function updateReadout(){
       b.classList.toggle("done", s<S.step);
     }
   } else if (S.mode==="apply"){
+    $("v-Dr").textContent=S.Dr.toFixed(1)+" h";
+    const fd=x=>x.toFixed(x%1?1:0);
+    $("lb-R1").textContent="Pulse R₁ (0–"+fd(S.Dr)+" h)";
+    $("lb-R2").textContent="Pulse R₂ ("+fd(S.Dr)+"–"+fd(2*S.Dr)+" h)";
+    $("lb-R3").textContent="Pulse R₃ ("+fd(2*S.Dr)+"–"+fd(3*S.Dr)+" h)";
     $("v-R1").textContent=S.R[0].toFixed(1)+" cm"; $("v-R2").textContent=S.R[1].toFixed(1)+" cm";
     $("v-R3").textContent=S.R[2].toFixed(1)+" cm"; $("v-bf2").textContent=S.bf2+" m³/s";
+    $("o-uhr").textContent=S.Dr.toFixed(1)+"-hour UH"+(S.Dr===6?"":" (via S-curve)");
+    $("o-uhrpk").textContent=M.uhrPk.p.toFixed(1)+" m³/s";
     $("o-er2").textContent=M.er.toFixed(1)+" cm";
     $("o-pk2").textContent=M.pk.p.toFixed(1)+" m³/s";
     $("o-tp2").textContent=M.pk.tp.toFixed(1)+" h";
@@ -306,6 +340,10 @@ function updateReadout(){
     $("o-tp3").textContent=M.pk.tp.toFixed(1)+" h";
     $("o-pk6").textContent=M.pk6.p.toFixed(1)+" m³/s";
     $("o-v3").textContent=M.vol.toFixed(2)+" cm "+(Math.abs(M.vol-1)<0.02?"✓":"✗");
+    $("o-sup").textContent = M.isMult
+      ? "n="+M.n+": peak "+M.supPk.p.toFixed(1)+", Δmax "+M.maxDiff.toFixed(2)+" ✓ identical"
+      : "— ("+S.Dp.toFixed(1)+" h not an integer multiple of 6 h)";
+    $("o-sup").style.color = M.isMult ? "var(--ok)" : "var(--dim)";
     $("chip").textContent="UH("+S.Dp.toFixed(1)+" h): peak "+M.pk.p.toFixed(1)+" m³/s — volume still 1 cm";
     $("chip").style.background="var(--violet)";
   }
@@ -327,8 +365,9 @@ $("m-apply").addEventListener("click",()=>setMode("apply"));
 $("m-scurve").addEventListener("click",()=>setMode("scurve"));
 $("b-def").addEventListener("click",()=>{
   if (S.mode==="derive"){ S.step=1; S.bf=10; $("s-bf").value=10; }
-  if (S.mode==="apply"){ S.R=[3,2,0]; S.bf2=10;
-    $("s-R1").value=3; $("s-R2").value=2; $("s-R3").value=0; $("s-bf2").value=10; }
+  if (S.mode==="apply"){ S.R=[3,2,0]; S.bf2=10; S.Dr=6;
+    $("s-R1").value=3; $("s-R2").value=2; $("s-R3").value=0; $("s-bf2").value=10;
+    $("s-Dr").value=6; }
   if (S.mode==="scurve"){ S.Dp=12; $("s-Dp").value=12; S.sT=0; }
   S.ease=0; recompute();
 });
@@ -337,8 +376,9 @@ $("s-bf").addEventListener("input",()=>{ S.bf=+$("s-bf").value; recompute(); });
 [0,1,2].forEach(i=>$("s-R"+(i+1)).addEventListener("input",
   ()=>{ S.R[i]=+$("s-R"+(i+1)).value; recompute(); }));
 $("s-bf2").addEventListener("input",()=>{ S.bf2=+$("s-bf2").value; recompute(); });
+$("s-Dr").addEventListener("input",()=>{ S.Dr=+$("s-Dr").value; recompute(); });
 $("s-Dp").addEventListener("input",()=>{ S.Dp=+$("s-Dp").value; recompute(); });
-["uh6","train","cmp6"].forEach(k=>$("t-"+k).addEventListener("input",
+["uh6","train","cmp6","sup"].forEach(k=>$("t-"+k).addEventListener("input",
   ()=>{ S[k]=$("t-"+k).checked; }));
 $("b-build").addEventListener("click",()=>{ S.sT=0; });
 
@@ -474,29 +514,30 @@ function draw(now){
   }
 
   else if (m==="apply"){
-    /* stacked bands: baseflow, then each pulse's DRH */
+    /* stacked bands: baseflow, then each pulse's DRH (Dᵣ-hour UH, Dᵣ-wide lags) */
     const cols=["rgba(77,184,255,.45)","rgba(245,158,11,.45)","rgba(167,139,250,.45)"];
     const cum=[t=>S.bf2];
     for(let i=0;i<3;i++){
       const prev=cum[i];
-      cum.push(t=>prev(t)+S.R[i]*UH6(t-6*i));
+      cum.push(t=>prev(t)+S.R[i]*M.uhr(t-S.Dr*i));
     }
     fill(()=>0, cum[0], "rgba(52,211,153,.25)");
     for(let i=0;i<3;i++) if (S.R[i]>0) fill(cum[i], cum[i+1], cols[i]);
     plot(M.tot, "#e8edf6", 2.6);
-    if (S.uh6) plot(UH6, "#7788aa", 1.3, [5,4]);
+    if (S.uh6) plot(M.uhr, "#7788aa", 1.3, [5,4]);
     /* ER pulse bars along the top */
     for(let i=0;i<3;i++){
       if (S.R[i]<=0) continue;
-      const x0=xOf(6*i), x1=xOf(6*(i+1)), hb=Math.min(30,S.R[i]/5*30);
+      const x0=xOf(S.Dr*i), x1=xOf(S.Dr*(i+1)), hb=Math.min(30,S.R[i]/5*30);
       ctx.fillStyle=cols[i].replace(".45",".9");
       ctx.fillRect(x0,mT+2,x1-x0-2,hb);
-      label("R"+(i+1)+"="+S.R[i].toFixed(1)+" cm",(x0+x1)/2,mT+hb+14,
+      label("R"+(i+1)+"="+S.R[i].toFixed(1),(x0+x1)/2,mT+hb+14,
             cols[i].replace("rgba(","rgb(").replace(",.45)",")"),"center");
     }
     label("total flood hydrograph", xOf(M.pk.tp+4), yOf(M.pk.p*0.9), "#e8edf6");
     if (S.bf2>0) label("baseflow", xOf(46), yOf(S.bf2/2)+4, "#34d399");
-    if (S.uh6) label("6-h UH (1 cm)", xOf(24), yOf(UH6(24))-8, "#7788aa");
+    if (S.uh6) label(S.Dr.toFixed(1)+"-h UH (1 cm)", xOf(M.uhrPk.tp+10),
+                     yOf(M.uhr(M.uhrPk.tp+10))-8, "#7788aa");
   }
 
   else { /* scurve */
@@ -527,6 +568,20 @@ function draw(now){
       label("UH_"+S.Dp.toFixed(1)+"h = [S(t)−S(t−D′)]·6/D′",
             xOf(M.pk.tp+3), yOf(M.pk.p)-10, "#f59e0b");
       if (S.cmp6) label("6-h UH", xOf(22), yOf(UH6(22))-8, "#7788aa");
+      /* superposition method overlay: only possible at integer multiples of 6 h */
+      if (S.sup && M.isMult){
+        for(let k=0;k<M.n;k++){
+          ctx.globalAlpha=0.5;
+          plot(t=>UH6(t-k*D0)/M.n, "#8fb8d8", 1.1, [2,3]);
+          ctx.globalAlpha=1;
+        }
+        plot(M.sup, "#e8edf6", 1.8, [8,5]);
+        label("superposition: (Σ of "+M.n+" lagged 6-h UHs) ÷ "+M.n+" — identical",
+              xOf(M.pk.tp+3), yOf(M.pk.p)+18, "#e8edf6");
+      } else if (S.sup && !M.isMult){
+        label("superposition method unavailable: "+S.Dp.toFixed(1)+" h ≠ n × 6 h — S-curve required",
+              xOf(20), mT+ph-12, "#9aa7bd");
+      }
     } else {
       label("summing lagged 6-h UHs…  ("+nUH+" so far)", xOf(30), mT+18, "#9aa7bd");
     }
