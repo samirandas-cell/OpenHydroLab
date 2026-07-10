@@ -100,6 +100,15 @@
     response (k↓) — Lecture 10's "influence of urbanization".</div>
   </div>
 
+  <h2>Baseflow model</h2>
+  <div style="display:flex; gap:6px;">
+    <button id="bf-res" class="active" style="flex:1">GW reservoir</button>
+    <button id="bf-uni" style="flex:1">Uniform</button>
+  </div>
+  <div class="note" id="bf-note" style="margin-top:6px">Reservoir: infiltrated water fills
+  a slow groundwater store that drains to the stream — baseflow rises gently after the
+  storm.</div>
+
   <h2>Show</h2>
   <label class="chk"><input type="checkbox" id="t-sep" checked> Baseflow separation</label>
   <label class="chk"><input type="checkbox" id="t-lab" checked> Limb labels &amp; lag time</label>
@@ -116,8 +125,8 @@
 <div id="readout" class="panel">
   <h2 style="margin-top:0">Model</h2>
   <div class="formula">ER = max(i−φ, 0) → Nash cascade (2 linear reservoirs, S = kQ) →
-  Q_direct; infiltration → slow store (k_gw) → baseflow. Drop travel times ~ the cascade's
-  IUH (gamma, n = 2).</div>
+  Q_direct; baseflow: slow store (k_gw) fed by infiltration, or uniform (constant).
+  Drop travel times ~ the cascade's IUH (gamma, n = 2).</div>
   <table class="vals">
     <tr><td>Effective rainfall rate</td><td id="o-er"></td></tr>
     <tr><td>Infiltration rate</td><td id="o-f"></td></tr>
@@ -163,7 +172,7 @@ const cv = $("cv"), ctx = cv.getContext("2d");
 
 /* ================= state ================= */
 const S = {i:30, dur:3, phi:10, A:20, k:4, u:0, t:0, playing:false,
-           sep:true, lab:true, cmp:false};
+           sep:true, lab:true, cmp:false, bf:"res"};
 const PLAY_HRS_PER_S = 1.2;                   // 48 h plays in 40 s — slow enough to watch drops travel
 
 /* ================= hydrological model =================
@@ -191,7 +200,8 @@ function simulate(phiEff, kEff){
     q2 = q1 + (q2-q1)*e1;
     const eg = Math.exp(-DT/KGW), Ig = toQ(f);
     qg = Ig + (qg-Ig)*eg;
-    t.push(tt); er.push(ie); fr.push(f); qd.push(q2); qb.push(qg);
+    t.push(tt); er.push(ie); fr.push(f); qd.push(q2);
+    qb.push(S.bf==="uni" ? q0 : qg);
     volD += q2*DT*3600;
   }
   let qp=0, tp=0;
@@ -247,6 +257,17 @@ $("b-play").addEventListener("click", ()=>{
 });
 $("b-reset").addEventListener("click", ()=>{ S.playing=false; S.t=0; resetParticles();
   $("b-play").classList.remove("active"); });
+const setBF = m => {
+  S.bf = m;
+  $("bf-res").classList.toggle("active", m==="res");
+  $("bf-uni").classList.toggle("active", m==="uni");
+  $("bf-note").textContent = m==="res"
+    ? "Reservoir: infiltrated water fills a slow groundwater store that drains to the stream — baseflow rises gently after the storm."
+    : "Uniform: baseflow held constant at its pre-storm value — the straight-line separation assumption used in Lecture 11 when deriving unit hydrographs.";
+  recompute();
+};
+$("bf-res").addEventListener("click", ()=>setBF("res"));
+$("bf-uni").addEventListener("click", ()=>setBF("uni"));
 $("b-def").addEventListener("click", ()=>{
   Object.assign(S,{i:30,dur:3,phi:10,A:20,k:4,u:0,t:0,playing:false});
   $("s-i").value=30; $("s-dur").value=3; $("s-phi").value=10;
@@ -539,9 +560,9 @@ function draw(now){
   ctx.fillRect(gx+8, gyy+22+(gh2-32)*(1-fl), 42, (gh2-32)*fl);
   ctx.strokeStyle="#2b3650"; ctx.strokeRect(gx+8,gyy+22,42,gh2-32);
   ctx.fillStyle="#9aa7bd"; ctx.font="10px Segoe UI"; ctx.textAlign="left";
-  ctx.fillText("groundwater store", gx+8, gyy+14);
+  ctx.fillText(S.bf==="uni" ? "baseflow: uniform" : "groundwater store", gx+8, gyy+14);
   ctx.fillStyle="#34d399";
-  ctx.fillText("→ baseflow", gx+58, gyy+40);
+  ctx.fillText(S.bf==="uni" ? "→ constant" : "→ baseflow", gx+58, gyy+40);
   ctx.fillText(R.qb[j].toFixed(1)+" m³/s", gx+58, gyy+54);
 
   /* header + clock + scale bar */
