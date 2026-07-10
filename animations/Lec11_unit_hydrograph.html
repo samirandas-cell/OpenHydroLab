@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Lecture 11 — Unit Hydrograph: Superposition &amp; S-Curve</title>
+<title>Lecture 11 — Unit Hydrograph: Derive · Apply · Change Duration</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
   :root{
@@ -17,10 +17,10 @@
     border:1px solid var(--line); border-radius:10px; padding:12px 14px;
     backdrop-filter:blur(6px); font-size:13px; line-height:1.45; z-index:2;}
   #ui{left:12px; top:12px; width:252px; max-height:calc(100% - 24px); overflow-y:auto;}
-  #readout{right:12px; top:12px; width:290px; max-height:calc(100% - 24px); overflow-y:auto;}
+  #readout{right:12px; top:12px; width:295px; max-height:calc(100% - 24px); overflow-y:auto;}
   #actions{left:50%; transform:translateX(-50%); bottom:12px; display:flex; gap:8px; padding:8px;
     flex-wrap:wrap; justify-content:center;}
-  #stage{position:absolute; inset:0; padding:12px 316px 64px 278px; display:flex;}
+  #stage{position:absolute; inset:0; padding:12px 321px 64px 278px; display:flex;}
   #wrap{flex:1; min-height:0; position:relative;}
   canvas.view{width:100%; height:100%; display:block; background:var(--panel);
     border:1px solid var(--line); border-radius:10px;}
@@ -32,10 +32,15 @@
     font-size:12.5px;}
   label.row .val{color:var(--accent); font-variant-numeric:tabular-nums; font-weight:600;}
   input[type=range]{width:100%; accent-color:var(--accent);}
+  .chk{display:flex; align-items:center; gap:7px; margin:6px 0; font-size:12.5px; cursor:pointer;}
+  .chk input{accent-color:var(--accent);}
   button{background:var(--panel2); color:var(--ink); border:1px solid var(--line);
     border-radius:7px; padding:7px 13px; font-size:12.5px; cursor:pointer;}
   button:hover{border-color:var(--accent); color:var(--accent);}
   button.active{background:var(--accent); color:#08111e; border-color:var(--accent); font-weight:600;}
+  button.step{width:100%; text-align:left; margin:4px 0; padding:7px 10px;}
+  button.step.done{border-color:var(--ok); color:var(--ok);}
+  button.step.active{background:var(--crit); border-color:var(--crit); color:#081; color:#0b1220;}
   table.vals{width:100%; border-collapse:collapse; font-variant-numeric:tabular-nums;}
   table.vals td{padding:2.5px 0; font-size:12.5px;}
   table.vals td:first-child{color:var(--dim);}
@@ -45,87 +50,150 @@
   .note{font-size:11px; color:var(--dim); margin-top:8px;}
   #chip{margin-top:8px; padding:8px 10px; border-radius:7px; text-align:center; font-weight:700;
     font-size:13.5px; background:var(--sub); color:#fff;}
+  .given{background:#20304a; border:1px solid #33507a; border-radius:6px; padding:7px 9px;
+    font-size:12px; margin-top:6px;}
   @media (max-width:1150px){
     html,body{overflow-y:auto; height:auto; min-height:100%;}
     body{display:flex; flex-direction:column;}
     .panel{position:static; width:auto; max-height:none; margin:10px 12px 0;}
     #ui{order:1;} #stage{order:2; position:static; padding:10px 12px;}
     #actions{order:3; align-self:center; transform:none;} #readout{order:4; margin-bottom:12px;}
-    #wrap{flex:none; height:460px; width:100%;}
+    #wrap{flex:none; height:520px; width:100%;}
   }
 </style>
 </head>
 <body>
 
 <div id="ui" class="panel">
-  <h1>Unit Hydrograph — Superposition</h1>
-  <div class="sub">CVE2142 · Lecture 11 · 6-h UH of a 423 km² catchment; the DRH is the
-  sum of lagged, scaled copies of the UH (linearity + superposition)</div>
+  <h1>Unit Hydrograph Workbench</h1>
+  <div class="sub">CVE2142 · Lecture 11 · The catchment as a linear system: identify its
+  response (derive), use it (apply), re-express it (S-curve)</div>
 
-  <h2>Effective rainfall pulses (6-h each)</h2>
-  <div>
-    <label class="row">Pulse R₁ (t = 0–6 h) <span class="val" id="v-R1"></span></label>
-    <input type="range" id="s-R1" min="0" max="5" step="0.1" value="3.0">
-  </div>
-  <div>
-    <label class="row">Pulse R₂ (t = 6–12 h) <span class="val" id="v-R2"></span></label>
-    <input type="range" id="s-R2" min="0" max="5" step="0.1" value="2.0">
-  </div>
-  <div>
-    <label class="row">Pulse R₃ (t = 12–18 h) <span class="val" id="v-R3"></span></label>
-    <input type="range" id="s-R3" min="0" max="5" step="0.1" value="0">
-  </div>
-  <div>
-    <label class="row">Baseflow <span class="val" id="v-B"></span></label>
-    <input type="range" id="s-B" min="0" max="60" step="1" value="0">
+  <!-- ============ mode 1: derive ============ -->
+  <div id="ctl-derive">
+    <div class="given">📋 <b>Given:</b> observed storm hydrograph at the gauge
+    (A = 423 km²) and, from the rain gauges, <b>3.0 cm of effective rainfall in 6 h</b>.</div>
+    <h2>Step through the derivation</h2>
+    <button class="step" id="st-1">1 · Separate baseflow</button>
+    <button class="step" id="st-2">2 · Direct-runoff hydrograph</button>
+    <button class="step" id="st-3">3 · Volume → runoff depth d</button>
+    <button class="step" id="st-4">4 · Divide by d → 6-h UH</button>
+    <h2>Your judgment call</h2>
+    <div>
+      <label class="row">Baseflow level <span class="val" id="v-bf"></span></label>
+      <input type="range" id="s-bf" min="0" max="30" step="0.5" value="10">
+    </div>
+    <div class="note" id="aha1"><b>Aha demo:</b> baseflow separation is a judgment call —
+    set it wrong (try 5 m³/s) and step 3's runoff depth no longer reconciles with the
+    3.0 cm the rain gauges measured. The ✗ tells you your separation, not the rain,
+    is at fault.</div>
   </div>
 
-  <h2>Show</h2>
-  <label class="row" style="cursor:pointer"><span>Component DRHs (Rᵢ·UH, lagged)</span>
-    <input type="checkbox" id="t-comp" checked style="accent-color:var(--accent)"></label>
-  <label class="row" style="cursor:pointer"><span>6-h UH (dashed)</span>
-    <input type="checkbox" id="t-uh" checked style="accent-color:var(--accent)"></label>
+  <!-- ============ mode 2: apply ============ -->
+  <div id="ctl-apply" style="display:none">
+    <h2>Effective rainfall pulses (6-h each)</h2>
+    <div>
+      <label class="row">Pulse R₁ (0–6 h) <span class="val" id="v-R1"></span></label>
+      <input type="range" id="s-R1" min="0" max="5" step="0.1" value="3.0">
+    </div>
+    <div>
+      <label class="row">Pulse R₂ (6–12 h) <span class="val" id="v-R2"></span></label>
+      <input type="range" id="s-R2" min="0" max="5" step="0.1" value="2.0">
+    </div>
+    <div>
+      <label class="row">Pulse R₃ (12–18 h) <span class="val" id="v-R3"></span></label>
+      <input type="range" id="s-R3" min="0" max="5" step="0.1" value="0">
+    </div>
+    <div>
+      <label class="row">Baseflow <span class="val" id="v-bf2"></span></label>
+      <input type="range" id="s-bf2" min="0" max="60" step="1" value="10">
+    </div>
+    <h2>Show</h2>
+    <label class="chk"><input type="checkbox" id="t-uh6" checked> 6-h UH (dashed, 1 cm)</label>
+    <div class="note"><b>Aha demo:</b> the total flood is the colored bands <i>stacked</i> —
+    each band is one rain pulse pushed through the same UH, lagged by when it fell.
+    Drag R₂ to zero and back and watch its whole band appear and vanish while the others
+    stand still: that is linearity + superposition, the two assumptions UH theory lives on.</div>
+  </div>
 
-  <div class="note"><b>Aha demo:</b> defaults are <b>Lecture 11, Example 2</b> — successive
-  6-h storms of 3 cm and 2 cm. Drag R₂ to zero and back: the total DRH is literally the two
-  colored curves stacked. Switch to <i>S-curve</i> mode to watch an infinite train of
-  UHs sum to the equilibrium discharge Q_eq = A·(1 cm)/6 h.</div>
+  <!-- ============ mode 3: duration ============ -->
+  <div id="ctl-scurve" style="display:none">
+    <h2>Target duration</h2>
+    <div>
+      <label class="row">New duration D′ <span class="val" id="v-Dp"></span></label>
+      <input type="range" id="s-Dp" min="1" max="24" step="0.5" value="12">
+    </div>
+    <h2>Show</h2>
+    <label class="chk"><input type="checkbox" id="t-train" checked> Construction: lagged 6-h UHs</label>
+    <label class="chk"><input type="checkbox" id="t-cmp6" checked> Original 6-h UH (compare)</label>
+    <button id="b-build" style="width:100%; margin-top:6px">▶ Replay S-curve summation</button>
+    <div class="note"><b>Aha demo:</b> drag D′ from 1 h to 24 h and watch the UH morph:
+    a short-duration UH is tall and peaky (the same 1 cm arrives in a burst); a long one is
+    low and flat. The S-curve makes <i>any</i> duration reachable — lag the curve by D′,
+    subtract, rescale by D/D′. The volume stays exactly 1 cm the whole way: that's the check.</div>
+  </div>
 </div>
 
 <div id="readout" class="panel">
-  <h2 style="margin-top:0">The unit hydrograph</h2>
-  <div class="formula">Q(t) = Σ Rᵢ · u(t − (i−1)·D) + baseflow</div>
+  <h2 style="margin-top:0">The catchment</h2>
   <table class="vals">
+    <tr><td>Area A</td><td>423 km²</td></tr>
     <tr><td>UH duration D</td><td>6 h</td></tr>
-    <tr><td>Catchment area A</td><td>423 km²</td></tr>
-    <tr><td>UH peak</td><td>45 m³/s at 18 h</td></tr>
-    <tr><td>UH volume ÷ A</td><td id="o-uhvol"></td></tr>
+    <tr><td>1 cm over A</td><td>4.23 ×10⁶ m³</td></tr>
   </table>
-  <div class="note" id="uhnote">Volume check: Σu·Δt must equal 1 cm over the catchment —
-  that is what makes it a <i>unit</i> hydrograph.</div>
+  <div class="formula" id="f-mode"></div>
 
-  <h2 id="h-mode">Direct runoff hydrograph</h2>
-  <table class="vals" id="tbl-drh">
-    <tr><td>Total ER depth</td><td id="o-er"></td></tr>
-    <tr><td>DRH peak</td><td id="o-pk"></td></tr>
-    <tr><td>Time of peak</td><td id="o-tpk"></td></tr>
-    <tr><td>Direct-runoff volume</td><td id="o-vol"></td></tr>
-    <tr><td>= depth over A</td><td id="o-dep"></td></tr>
-  </table>
-  <table class="vals" id="tbl-s" style="display:none">
-    <tr><td>Equilibrium Q_eq</td><td id="o-qeq"></td></tr>
-    <tr><td>= A × 1 cm / 6 h</td><td id="o-qeq2"></td></tr>
-    <tr><td>UHs summed so far</td><td id="o-ns"></td></tr>
-  </table>
+  <!-- mode 1 readout -->
+  <div id="ro-derive">
+    <h2>Derivation ledger</h2>
+    <table class="vals">
+      <tr><td>Chosen baseflow</td><td id="o-bfv"></td></tr>
+      <tr><td>DRH volume V</td><td id="o-V"></td></tr>
+      <tr><td>Runoff depth d = V/A</td><td id="o-d"></td></tr>
+      <tr><td>Rain-gauge ER (given)</td><td>3.00 cm</td></tr>
+      <tr><td>Reconciles?</td><td id="o-rec"></td></tr>
+      <tr><td>Derived UH peak</td><td id="o-uhpk"></td></tr>
+      <tr><td>Derived UH volume</td><td id="o-uhv"></td></tr>
+    </table>
+  </div>
+
+  <!-- mode 2 readout -->
+  <div id="ro-apply" style="display:none">
+    <h2>Predicted flood</h2>
+    <table class="vals">
+      <tr><td>Total ER</td><td id="o-er2"></td></tr>
+      <tr><td>Peak discharge</td><td id="o-pk2"></td></tr>
+      <tr><td>Time of peak</td><td id="o-tp2"></td></tr>
+      <tr><td>DRH volume ∫Q_d dt</td><td id="o-v2"></td></tr>
+      <tr><td>= ΣRᵢ × A</td><td id="o-v2c"></td></tr>
+    </table>
+  </div>
+
+  <!-- mode 3 readout -->
+  <div id="ro-scurve" style="display:none">
+    <h2>S-curve &amp; new UH</h2>
+    <table class="vals">
+      <tr><td>Equilibrium Q_eq</td><td id="o-qeq"></td></tr>
+      <tr><td>= A·(1 cm)/6 h</td><td id="o-qeqc"></td></tr>
+      <tr><td>D′-hour UH peak</td><td id="o-pk3"></td></tr>
+      <tr><td>Time of peak</td><td id="o-tp3"></td></tr>
+      <tr><td>(6-h UH peak, for comparison)</td><td id="o-pk6"></td></tr>
+      <tr><td>D′-UH volume ÷ A</td><td id="o-v3"></td></tr>
+    </table>
+  </div>
+
   <div id="chip"></div>
-  <div class="note">UH assumptions: linear response (ordinates ∝ ER depth), time
-  invariance, superposition. Approximate: peaks ±10%, base time ±20% are acceptable.</div>
+  <div class="note" id="honesty">Underlying response: a smooth gamma IUH (Nash cascade,
+  n = 4, k = 3 h) scaled to 423 km². All three modes are computed from this one function,
+  so deriving, applying and re-expressing are exactly consistent — as linear-systems
+  theory says they must be.</div>
 </div>
 
 <div id="actions" class="panel">
-  <button id="m-drh" class="active">DRH mode</button>
-  <button id="m-s">S-curve mode</button>
-  <button id="b-ex2">Example 2 defaults</button>
+  <button id="m-derive" class="active">1 · Derive UH</button>
+  <button id="m-apply">2 · Apply UH</button>
+  <button id="m-scurve">3 · Change duration (S-curve)</button>
+  <button id="b-def">Reset mode</button>
 </div>
 
 <div id="stage"><div id="wrap"><canvas id="cv" class="view"></canvas></div></div>
@@ -135,75 +203,146 @@
 const $ = id => document.getElementById(id);
 const cv = $("cv"), ctx = cv.getContext("2d");
 
-/* ---------- the 6-h unit hydrograph (m³/s per cm of ER) ----------
-   Ordinates at 6-h intervals chosen so that Σu·Δt = 1 cm × 423 km²:
-   Σu = 195.8 m³/s → 195.8 × 21600 s = 4.229×10⁶ m³ ≈ 0.01 m × 423×10⁶ m². */
-const D = 6;                                        // h
-const AREA = 423e6;                                 // m²
-const UH = [0, 8, 25, 45, 38, 28, 20, 14, 9, 5, 2.8, 1, 0];   // m³/s per cm
-const UHend = (UH.length-1)*D;                      // 72 h
-function u(t){                                      // linear interpolation
-  if (t<=0 || t>=UHend) return 0;
-  const k = Math.floor(t/D), f = t/D - k;
-  return UH[k]*(1-f) + UH[k+1]*f;
+/* ================= the catchment as a linear system =================
+   IUH: gamma (Nash cascade n = 4, k = 3 h). Closed-form CDF for integer n:
+     P(t) = 1 − e^(−x)·(1 + x + x²/2 + x³/6),  x = t/k.
+   S-curve (response to continuous ER at 1 cm per 6 h): S(t) = Q_eq · P(t),
+     Q_eq = A·0.01 / (6·3600).
+   Any-duration UH by lag-and-subtract:  UH_D′(t) = [S(t) − S(t−D′)]·(6/D′).
+   The 6-h UH is just UH_6. Volume of UH_D′ = 1 cm for every D′ (telescoping). */
+const AREA = 423e6, D0 = 6, KG = 3;
+const QEQ = AREA*0.01/(D0*3600);                 // 195.83 m³/s
+function Pgam(t){
+  if (t<=0) return 0;
+  const x=t/KG;
+  return 1 - Math.exp(-x)*(1 + x + x*x/2 + x*x*x/6);
 }
+const Scv = t => QEQ*Pgam(t);
+const UHd = (t,Dp) => (Scv(t)-Scv(t-Dp))*(D0/Dp);
+const UH6 = t => UHd(t,D0);
 
-/* ---------- state ---------- */
-const S = {R:[3.0,2.0,0], B:0, mode:"drh", comp:true, uh:true, sT:0};
-function drh(t){ let q=0; for(let i=0;i<3;i++) q += S.R[i]*u(t-i*D); return q; }
-function scurve(t){                                 // Σ u(t−kD), k=0.. (converges: UH finite)
-  let q=0; for(let k=0;k*D<=t;k++) q += u(t-k*D); return q;
-}
-const QEQ = UH.reduce((a,b)=>a+b,0);                // = A·1cm/D by construction
+/* mode-1 "observed" storm: 3 cm of 6-h ER + 10 m³/s baseflow */
+const ER_TRUE = 3.0, BF_TRUE = 10;
+const obs = t => ER_TRUE*UH6(t) + BF_TRUE;
 
-/* ---------- readout ---------- */
-function update(){
-  $("v-R1").textContent=S.R[0].toFixed(1)+" cm"; $("v-R2").textContent=S.R[1].toFixed(1)+" cm";
-  $("v-R3").textContent=S.R[2].toFixed(1)+" cm"; $("v-B").textContent=S.B+" m³/s";
-  const vol = UH.reduce((a,b)=>a+b,0)*D*3600;       // m³ per cm
-  $("o-uhvol").textContent=(vol/AREA*100).toFixed(2)+" cm ✓";
-  if (S.mode==="drh"){
-    let pk=0, tpk=0;
-    for(let t=0;t<=UHend+2*D;t+=0.25){ const q=drh(t); if(q>pk){pk=q;tpk=t;} }
+/* ================= state ================= */
+const S = {mode:"derive", step:1, bf:10, R:[3,2,0], bf2:10, Dp:12,
+           uh6:true, train:true, cmp6:true,
+           ease:1, easeT:1, sT:96};
+const TMAX=60, TINT=140, DTI=0.05;               // display span, integration span/step
+
+/* ================= metrics (recomputed on change) ================= */
+let M={};
+function integrate(fn,a,b){ let v=0; for(let t=a;t<b;t+=DTI) v+=fn(t+DTI/2)*DTI; return v*3600; }
+function peakOf(fn,a,b){ let p=0,tp=0; for(let t=a;t<b;t+=0.05){const q=fn(t); if(q>p){p=q;tp=t;}} return {p,tp}; }
+function recompute(){
+  if (S.mode==="derive"){
+    const bf=S.bf;
+    const drh = t => Math.max(obs(t)-bf, 0);
+    const V = integrate(drh,0,TINT);             // m³
+    const d = V/AREA*100;                        // cm
+    const uh = t => d>1e-6 ? drh(t)/d : 0;
+    const pk = peakOf(uh,0,TINT);
+    const uhV = integrate(uh,0,TINT)/AREA*100;
+    M={drh,V,d,uh,pk,uhV, ok:Math.abs(d-ER_TRUE)<0.05};
+  } else if (S.mode==="apply"){
+    const drh = t => S.R[0]*UH6(t)+S.R[1]*UH6(t-6)+S.R[2]*UH6(t-12);
+    const tot = t => drh(t)+S.bf2;
+    const pk = peakOf(tot,0,TINT);
+    const V = integrate(drh,0,TINT);
     const er = S.R[0]+S.R[1]+S.R[2];
-    $("o-er").textContent=er.toFixed(1)+" cm";
-    $("o-pk").textContent=(pk+S.B).toFixed(1)+" m³/s"+(S.B>0?" (incl. BF)":"");
-    $("o-tpk").textContent=tpk.toFixed(1)+" h";
-    const v = er/100*AREA;
-    $("o-vol").textContent=(v/1e6).toFixed(2)+" ×10⁶ m³";
-    $("o-dep").textContent=er.toFixed(1)+" cm ✓";
-    $("chip").textContent="DRH peak = "+(pk+S.B).toFixed(1)+" m³/s at "+tpk.toFixed(0)+" h";
+    M={drh,tot,pk,V,er, Vc:er/100*AREA};
   } else {
+    const uhp = t => UHd(t,S.Dp);
+    const pk = peakOf(uhp,0,TINT);
+    const vol = integrate(uhp,0,TINT)/AREA*100;
+    const pk6 = peakOf(UH6,0,TINT);
+    M={uhp,pk,vol,pk6};
+  }
+  updateReadout();
+}
+
+/* ================= readout ================= */
+const FORM = {
+  derive:"UH(t) = DRH(t) ÷ d,   d = V_DRH / A   (system identification)",
+  apply:"Q(t) = Σ Rᵢ·u(t−(i−1)D) + baseflow   (convolution / superposition)",
+  scurve:"S(t) = Σ u(t−kD);   UH_D′(t) = [S(t) − S(t−D′)]·D/D′   (step response)"
+};
+function updateReadout(){
+  $("f-mode").textContent = FORM[S.mode];
+  if (S.mode==="derive"){
+    $("v-bf").textContent=S.bf.toFixed(1)+" m³/s";
+    $("o-bfv").textContent=S.bf.toFixed(1)+" m³/s";
+    $("o-V").textContent=S.step>=3?(M.V/1e6).toFixed(2)+" ×10⁶ m³":"—";
+    $("o-d").textContent=S.step>=3?M.d.toFixed(2)+" cm":"—";
+    $("o-rec").textContent=S.step>=3?(M.ok?"✓ yes":"✗ no — adjust baseflow"):"—";
+    $("o-rec").style.color=S.step>=3?(M.ok?"var(--ok)":"var(--sup)"):"";
+    $("o-uhpk").textContent=S.step>=4?M.pk.p.toFixed(1)+" m³/s at "+M.pk.tp.toFixed(1)+" h":"—";
+    $("o-uhv").textContent=S.step>=4?M.uhV.toFixed(2)+" cm ✓":"—";
+    $("chip").textContent = S.step<4 ? "Step "+S.step+" of 4"
+      : (M.ok ? "6-h UH derived — peak "+M.pk.p.toFixed(1)+" m³/s"
+              : "d = "+M.d.toFixed(2)+" cm ≠ 3.00 cm — separation is off");
+    $("chip").style.background = S.step<4 ? "var(--sub)" : (M.ok?"var(--ok)":"var(--sup)");
+    for(let s=1;s<=4;s++){
+      const b=$("st-"+s);
+      b.classList.toggle("active", s===S.step);
+      b.classList.toggle("done", s<S.step);
+    }
+  } else if (S.mode==="apply"){
+    $("v-R1").textContent=S.R[0].toFixed(1)+" cm"; $("v-R2").textContent=S.R[1].toFixed(1)+" cm";
+    $("v-R3").textContent=S.R[2].toFixed(1)+" cm"; $("v-bf2").textContent=S.bf2+" m³/s";
+    $("o-er2").textContent=M.er.toFixed(1)+" cm";
+    $("o-pk2").textContent=M.pk.p.toFixed(1)+" m³/s";
+    $("o-tp2").textContent=M.pk.tp.toFixed(1)+" h";
+    $("o-v2").textContent=(M.V/1e6).toFixed(2)+" ×10⁶ m³";
+    $("o-v2c").textContent=(M.Vc/1e6).toFixed(2)+" ×10⁶ m³ "+(Math.abs(M.V-M.Vc)/Math.max(M.Vc,1)<0.01?"✓":"");
+    $("chip").textContent="Flood peak "+M.pk.p.toFixed(1)+" m³/s at "+M.pk.tp.toFixed(1)+" h";
+    $("chip").style.background="var(--sub)";
+  } else {
+    $("v-Dp").textContent=S.Dp.toFixed(1)+" h";
     $("o-qeq").textContent=QEQ.toFixed(1)+" m³/s";
-    $("o-qeq2").textContent=(AREA*0.01/(D*3600)).toFixed(1)+" m³/s ✓";
-    $("o-ns").textContent=Math.max(0,Math.floor(S.sT/D)+1)+"";
-    $("chip").textContent="S-curve → Q_eq = "+QEQ.toFixed(1)+" m³/s";
+    $("o-qeqc").textContent=(AREA*0.01/(6*3600)).toFixed(1)+" m³/s ✓";
+    $("o-pk3").textContent=M.pk.p.toFixed(1)+" m³/s";
+    $("o-tp3").textContent=M.pk.tp.toFixed(1)+" h";
+    $("o-pk6").textContent=M.pk6.p.toFixed(1)+" m³/s";
+    $("o-v3").textContent=M.vol.toFixed(2)+" cm "+(Math.abs(M.vol-1)<0.02?"✓":"✗");
+    $("chip").textContent="UH("+S.Dp.toFixed(1)+" h): peak "+M.pk.p.toFixed(1)+" m³/s — volume still 1 cm";
+    $("chip").style.background="var(--violet)";
   }
 }
-[0,1,2].forEach(i=>{
-  $("s-R"+(i+1)).addEventListener("input", ()=>{ S.R[i]=+$("s-R"+(i+1)).value; update(); });
-});
-$("s-B").addEventListener("input", ()=>{ S.B=+$("s-B").value; update(); });
-$("t-comp").addEventListener("input", ()=>{ S.comp=$("t-comp").checked; });
-$("t-uh").addEventListener("input", ()=>{ S.uh=$("t-uh").checked; });
-const setMode = m => {
-  S.mode=m; S.sT=0;
-  $("m-drh").classList.toggle("active",m==="drh");
-  $("m-s").classList.toggle("active",m==="s");
-  $("tbl-drh").style.display = m==="drh"?"":"none";
-  $("tbl-s").style.display   = m==="s"?"":"none";
-  $("h-mode").textContent    = m==="drh"?"Direct runoff hydrograph":"S-curve (equilibrium)";
-  update();
-};
-$("m-drh").addEventListener("click",()=>setMode("drh"));
-$("m-s").addEventListener("click",()=>setMode("s"));
-$("b-ex2").addEventListener("click",()=>{
-  S.R=[3,2,0]; S.B=0;
-  $("s-R1").value=3; $("s-R2").value=2; $("s-R3").value=0; $("s-B").value=0;
-  setMode("drh");
-});
 
-/* ---------- drawing ---------- */
+/* ================= events ================= */
+const setMode = m => {
+  S.mode=m; S.ease=0; S.easeT=1;
+  ["derive","apply","scurve"].forEach(k=>{
+    $("m-"+k).classList.toggle("active",k===m);
+    $("ctl-"+k).style.display = k===m?"":"none";
+    $("ro-"+k).style.display  = k===m?"":"none";
+  });
+  if (m==="scurve") S.sT=0;                       // auto-play the summation on entry
+  recompute();
+};
+$("m-derive").addEventListener("click",()=>setMode("derive"));
+$("m-apply").addEventListener("click",()=>setMode("apply"));
+$("m-scurve").addEventListener("click",()=>setMode("scurve"));
+$("b-def").addEventListener("click",()=>{
+  if (S.mode==="derive"){ S.step=1; S.bf=10; $("s-bf").value=10; }
+  if (S.mode==="apply"){ S.R=[3,2,0]; S.bf2=10;
+    $("s-R1").value=3; $("s-R2").value=2; $("s-R3").value=0; $("s-bf2").value=10; }
+  if (S.mode==="scurve"){ S.Dp=12; $("s-Dp").value=12; S.sT=0; }
+  S.ease=0; recompute();
+});
+for(let s=1;s<=4;s++) $("st-"+s).addEventListener("click",()=>{ S.step=s; S.ease=0; recompute(); });
+$("s-bf").addEventListener("input",()=>{ S.bf=+$("s-bf").value; recompute(); });
+[0,1,2].forEach(i=>$("s-R"+(i+1)).addEventListener("input",
+  ()=>{ S.R[i]=+$("s-R"+(i+1)).value; recompute(); }));
+$("s-bf2").addEventListener("input",()=>{ S.bf2=+$("s-bf2").value; recompute(); });
+$("s-Dp").addEventListener("input",()=>{ S.Dp=+$("s-Dp").value; recompute(); });
+["uh6","train","cmp6"].forEach(k=>$("t-"+k).addEventListener("input",
+  ()=>{ S[k]=$("t-"+k).checked; }));
+$("b-build").addEventListener("click",()=>{ S.sT=0; });
+
+/* ================= drawing ================= */
 let last=performance.now();
 function resize(){
   const r = cv.parentElement.getBoundingClientRect(), dpr = devicePixelRatio||1;
@@ -211,119 +350,193 @@ function resize(){
   ctx.setTransform(dpr,0,0,dpr,0,0);
 }
 addEventListener("resize", resize);
+const easeOut = e => 1-Math.pow(1-e,3);
 
-const compCols=["#4db8ff","#f59e0b","#a78bfa"];
 function draw(now){
   const dt=Math.min((now-last)/1000,.05); last=now;
-  if (S.mode==="s"){ S.sT += dt*14; if (S.sT>UHend+8*D) S.sT=0; update(); }
+  if (S.ease<S.easeT) S.ease=Math.min(S.easeT,S.ease+dt*1.4);
+  if (S.mode==="scurve" && S.sT<96) S.sT=Math.min(96,S.sT+dt*16);
+  const e=easeOut(S.ease/S.easeT);
   const W = cv.width/(devicePixelRatio||1), H = cv.height/(devicePixelRatio||1);
   ctx.clearRect(0,0,W,H);
-  const mL=56, mR=16, mT=64, mB=42;
-  const pw=W-mL-mR, ph=H-mT-mB;
-  const tMax = UHend+3*D;                            // 90 h
-  let qMax = 50;
-  if (S.mode==="drh"){
-    for(let t=0;t<=tMax;t+=1) qMax=Math.max(qMax, drh(t)+S.B);
-  } else qMax = QEQ*1.15;
-  qMax = Math.ceil(qMax/50)*50;
-  const xOf=t=>mL+t/tMax*pw, yOf=q=>mT+ph-(q/qMax)*ph;
 
-  /* grid */
+  /* ===== LTI pipeline strip ===== */
+  const stH=58;
+  const node=(x,w,label1,label2,hi,col)=>{
+    ctx.fillStyle= hi ? col : "#1d2638";
+    ctx.strokeStyle= hi ? col : "#2b3650";
+    ctx.beginPath(); ctx.roundRect(x,10,w,38,7); ctx.globalAlpha=hi?0.22:1; ctx.fill();
+    ctx.globalAlpha=1; ctx.stroke();
+    ctx.fillStyle= hi ? col : "#9aa7bd"; ctx.font=(hi?"600 ":"")+"11.5px Segoe UI";
+    ctx.textAlign="center";
+    ctx.fillText(label1, x+w/2, label2?24:32);
+    if (label2) ctx.fillText(label2, x+w/2, 40);
+  };
+  const arrow=(x0,x1,hi,col)=>{
+    ctx.strokeStyle= hi?col:"#42506e"; ctx.lineWidth=hi?2.4:1.6;
+    ctx.beginPath(); ctx.moveTo(x0,29); ctx.lineTo(x1-8,29); ctx.stroke();
+    ctx.fillStyle= hi?col:"#42506e";
+    ctx.beginPath(); ctx.moveTo(x1,29); ctx.lineTo(x1-9,24); ctx.lineTo(x1-9,34);
+    ctx.closePath(); ctx.fill();
+  };
+  const bw=(W-2*24-2*46-40)/3;
+  const m=S.mode;
+  node(24, bw, "effective rainfall", "ER(t)  [cm]", m==="apply", "#4db8ff");
+  arrow(24+bw+4, 24+bw+42, m==="apply", "#4db8ff");
+  node(24+bw+46, bw, "CATCHMENT", m==="derive"?"u(t) = ?":"unit hydrograph u(t)",
+       m==="derive"||m==="scurve", m==="derive"?"#f59e0b":"#a78bfa");
+  arrow(24+2*bw+50, 24+2*bw+88, m==="apply", "#4db8ff");
+  node(24+2*bw+92, bw, "streamflow at gauge", "Q(t)  [m³/s]", m==="derive", "#f59e0b");
+  ctx.fillStyle="#9aa7bd"; ctx.font="11px Segoe UI"; ctx.textAlign="center";
+  ctx.fillText(m==="derive" ? "MODE 1 — system identification: measure Q, recover u  (deconvolution)"
+             : m==="apply"  ? "MODE 2 — prediction: push any storm through u  (convolution)"
+             : "MODE 3 — change of basis: S-curve = step response → u for any duration",
+             W/2, stH-2);
+
+  /* ===== chart ===== */
+  const mL=64, mR=18, mT=stH+26, mB=44;
+  const pw=W-mL-mR, ph=H-mT-mB;
+  let qMax;
+  if (m==="derive") qMax = obs(peakOf(obs,0,60).tp)*1.12;
+  else if (m==="apply") qMax = Math.max(M.pk.p*1.12, 60);
+  else qMax = QEQ*1.18;
+  const xOf=t=>mL+t/TMAX*pw, yOf=q=>mT+ph-(Math.max(q,0)/qMax)*ph;
   ctx.font="11px Segoe UI";
-  for(let t=0;t<=tMax;t+=6){
+  for(let t=0;t<=TMAX;t+=6){
     const x=xOf(t);
-    ctx.strokeStyle = t%12===0 ? "#26314a" : "#1d2740";
-    ctx.beginPath(); ctx.moveTo(x,mT); ctx.lineTo(x,mT+ph); ctx.stroke();
-    if(t%12===0){ ctx.fillStyle="#9aa7bd"; ctx.textAlign="center"; ctx.fillText(t, x, mT+ph+16); }
+    ctx.strokeStyle="#1d2740"; ctx.beginPath(); ctx.moveTo(x,mT); ctx.lineTo(x,mT+ph); ctx.stroke();
+    ctx.fillStyle="#9aa7bd"; ctx.textAlign="center"; ctx.fillText(t, x, mT+ph+16);
   }
-  for(let q=0;q<=qMax;q+=50){
+  const qStep=qMax>300?100:qMax>150?50:qMax>60?20:qMax>25?10:5;
+  for(let q=0;q<=qMax;q+=qStep){
     const y=yOf(q);
-    ctx.strokeStyle="#26314a"; ctx.beginPath(); ctx.moveTo(mL,y); ctx.lineTo(mL+pw,y); ctx.stroke();
-    ctx.fillStyle="#9aa7bd"; ctx.textAlign="right"; ctx.fillText(q, mL-6, y+4);
+    ctx.strokeStyle="#1d2740"; ctx.beginPath(); ctx.moveTo(mL,y); ctx.lineTo(mL+pw,y); ctx.stroke();
+    ctx.fillStyle="#9aa7bd"; ctx.textAlign="right"; ctx.fillText(q.toFixed(0), mL-6, y+4);
   }
   ctx.strokeStyle="#2b3650"; ctx.strokeRect(mL,mT,pw,ph);
   ctx.fillStyle="#c9d6ea"; ctx.textAlign="center";
-  ctx.fillText("time (h)", mL+pw/2, H-8);
-  ctx.save(); ctx.translate(14,mT+ph/2); ctx.rotate(-Math.PI/2);
+  ctx.fillText("time (h)", mL+pw/2, H-10);
+  ctx.save(); ctx.translate(16,mT+ph/2); ctx.rotate(-Math.PI/2);
   ctx.fillText("discharge Q (m³/s)",0,0); ctx.restore();
 
-  /* ER pulse bars along the top (DRH mode) */
-  if (S.mode==="drh"){
-    const bh=34;
-    for(let i=0;i<3;i++){
-      if (S.R[i]<=0) continue;
-      const x0=xOf(i*D), x1=xOf((i+1)*D);
-      const hgt=Math.min(bh, S.R[i]/5*bh);
-      ctx.fillStyle=compCols[i]+"cc";
-      ctx.fillRect(x0, mT-6-hgt, x1-x0-2, hgt);
-      ctx.fillStyle="#e8edf6"; ctx.textAlign="center"; ctx.font="11px Segoe UI";
-      ctx.fillText("R"+(i+1)+" = "+S.R[i].toFixed(1)+" cm", (x0+x1)/2, mT-10-hgt);
-    }
-    ctx.fillStyle="#9aa7bd"; ctx.textAlign="left";
-    ctx.fillText("effective rainfall (6-h pulses)", mL, 16);
-  } else {
-    ctx.fillStyle="#9aa7bd"; ctx.textAlign="left";
-    ctx.fillText("continuous ER at 1 cm per 6 h — an endless train of unit hydrographs", mL, 16);
-  }
-
-  const plot=(fn,col,wd,dash)=>{
+  const plot=(fn,col,wd,dash,tEnd=TMAX)=>{
     ctx.strokeStyle=col; ctx.lineWidth=wd; ctx.setLineDash(dash||[]);
     ctx.beginPath();
-    for(let t=0;t<=tMax;t+=0.5){
+    for(let t=0;t<=tEnd;t+=0.2){
       const y=yOf(Math.min(fn(t),qMax));
       t===0?ctx.moveTo(xOf(t),y):ctx.lineTo(xOf(t),y);
     }
     ctx.stroke(); ctx.setLineDash([]);
   };
+  const fill=(fLo,fHi,col,tEnd=TMAX)=>{
+    ctx.fillStyle=col; ctx.beginPath();
+    ctx.moveTo(xOf(0),yOf(fLo(0)));
+    for(let t=0;t<=tEnd;t+=0.3) ctx.lineTo(xOf(t),yOf(Math.min(fHi(t),qMax)));
+    for(let t=tEnd;t>=0;t-=0.3) ctx.lineTo(xOf(t),yOf(Math.min(fLo(t),qMax)));
+    ctx.closePath(); ctx.fill();
+  };
+  const label=(txt,x,y,col,align="left")=>{
+    ctx.fillStyle=col; ctx.font="600 11px Segoe UI"; ctx.textAlign=align;
+    ctx.fillText(txt,x,y);
+  };
 
-  if (S.mode==="drh"){
-    if (S.uh) plot(t=>u(t), "#7788aa", 1.4, [5,4]);
-    if (S.comp) for(let i=0;i<3;i++){
+  if (m==="derive"){
+    /* observed hydrograph, always */
+    plot(obs, S.step>=4?"#5a6a86":"#e8edf6", S.step>=4?1.4:2.4, S.step>=2?[5,4]:[]);
+    label("observed storm hydrograph", xOf(20), yOf(obs(20))-10, S.step>=2?"#7788aa":"#e8edf6");
+    if (S.step>=1){
+      /* baseflow line + shading of the baseflow portion */
+      const bfLine=t=>Math.min(S.bf,obs(t));
+      fill(()=>0, bfLine, "rgba(52,211,153,.18)");
+      plot(()=>S.bf, "#34d399", 1.6, [5,4]);
+      label("baseflow = "+S.bf.toFixed(1)+" m³/s", xOf(45), yOf(S.bf)-7, "#34d399");
+    }
+    if (S.step>=2){
+      /* DRH lowers onto the axis as e grows (on step 2 entry) */
+      const ee = S.step===2 ? e : 1;
+      const drhA = t => obs(t) - ee*Math.min(S.bf,obs(t));
+      plot(drhA, "#4db8ff", 2.4);
+      label("DRH = observed − baseflow", xOf(14), yOf(drhA(14))-10, "#4db8ff");
+    }
+    if (S.step>=3 && S.step<4){
+      fill(()=>0, M.drh, "rgba(77,184,255,.22)");
+      label("V = "+(M.V/1e6).toFixed(2)+" ×10⁶ m³ → d = "+M.d.toFixed(2)+" cm",
+            xOf(M.pk.tp+3), yOf(M.drh(M.pk.tp)/2), "#c9d6ea");
+    }
+    if (S.step>=4){
+      /* morph DRH → UH by dividing by d */
+      const sc = 1+(M.d-1)*e;
+      const morph = t => M.drh(t)/sc;
+      fill(()=>0, morph, "rgba(245,158,11,.16)");
+      plot(morph, "#f59e0b", 2.6);
+      label("÷ d → 6-h unit hydrograph (1 cm)", xOf(M.pk.tp+3), yOf(morph(M.pk.tp))-10, "#f59e0b");
+    }
+  }
+
+  else if (m==="apply"){
+    /* stacked bands: baseflow, then each pulse's DRH */
+    const cols=["rgba(77,184,255,.45)","rgba(245,158,11,.45)","rgba(167,139,250,.45)"];
+    const cum=[t=>S.bf2];
+    for(let i=0;i<3;i++){
+      const prev=cum[i];
+      cum.push(t=>prev(t)+S.R[i]*UH6(t-6*i));
+    }
+    fill(()=>0, cum[0], "rgba(52,211,153,.25)");
+    for(let i=0;i<3;i++) if (S.R[i]>0) fill(cum[i], cum[i+1], cols[i]);
+    plot(M.tot, "#e8edf6", 2.6);
+    if (S.uh6) plot(UH6, "#7788aa", 1.3, [5,4]);
+    /* ER pulse bars along the top */
+    for(let i=0;i<3;i++){
       if (S.R[i]<=0) continue;
-      plot(t=>S.R[i]*u(t-i*D), compCols[i], 1.6);
+      const x0=xOf(6*i), x1=xOf(6*(i+1)), hb=Math.min(30,S.R[i]/5*30);
+      ctx.fillStyle=cols[i].replace(".45",".9");
+      ctx.fillRect(x0,mT+2,x1-x0-2,hb);
+      label("R"+(i+1)+"="+S.R[i].toFixed(1)+" cm",(x0+x1)/2,mT+hb+14,
+            cols[i].replace("rgba(","rgb(").replace(",.45)",")"),"center");
     }
-    if (S.B>0) plot(()=>S.B, "#34d399", 1.3, [3,3]);
-    plot(t=>drh(t)+S.B, "#e8edf6", 2.6);
-    /* legend */
-    ctx.font="11px Segoe UI"; ctx.textAlign="left";
-    let lx=mL+10, ly=mT+14;
-    const leg=[["total DRH"+(S.B>0?" + baseflow":""),"#e8edf6"]];
-    if (S.comp) for(let i=0;i<3;i++) if(S.R[i]>0) leg.push(["R"+(i+1)+"·UH lag "+(i*D)+" h",compCols[i]]);
-    if (S.uh) leg.push(["6-h UH (1 cm)","#7788aa"]);
-    leg.forEach((L,k)=>{
-      ctx.strokeStyle=L[1]; ctx.lineWidth=2.4;
-      ctx.beginPath(); ctx.moveTo(lx,ly+k*16-4); ctx.lineTo(lx+22,ly+k*16-4); ctx.stroke();
-      ctx.fillStyle="#c9d6ea"; ctx.fillText(L[0], lx+28, ly+k*16);
-    });
-  } else {
-    /* S-curve build-up animation: draw UHs whose start time ≤ S.sT */
-    const nUH = Math.floor(S.sT/D)+1;
-    for(let k=0;k<nUH;k++){
-      ctx.globalAlpha=0.35;
-      plot(t=>u(t-k*D), compCols[k%3], 1.2);
-      ctx.globalAlpha=1;
+    label("total flood hydrograph", xOf(M.pk.tp+4), yOf(M.pk.p*0.9), "#e8edf6");
+    if (S.bf2>0) label("baseflow", xOf(46), yOf(S.bf2/2)+4, "#34d399");
+    if (S.uh6) label("6-h UH (1 cm)", xOf(24), yOf(UH6(24))-8, "#7788aa");
+  }
+
+  else { /* scurve */
+    const nUH = Math.floor(S.sT/D0)+1;
+    if (S.train){
+      for(let k=0;k<Math.min(nUH,10);k++){
+        ctx.globalAlpha=0.3;
+        plot(t=>UH6(t-k*D0), "#5a7ba6", 1.1);
+        ctx.globalAlpha=1;
+      }
     }
-    /* partial S-curve up to sT, full curve dashed */
-    plot(t=>scurve(t), "#42506e", 1.4, [5,4]);
-    ctx.strokeStyle="#e8edf6"; ctx.lineWidth=2.6; ctx.beginPath();
-    for(let t=0;t<=Math.min(S.sT,tMax);t+=0.5){
-      const y=yOf(Math.min(scurve(t),qMax));
-      t===0?ctx.moveTo(xOf(t),y):ctx.lineTo(xOf(t),y);
+    /* partial sum → S-curve (drawn to sT progress) */
+    const Spart = t => { let s=0; for(let k=0;k<nUH;k++) s+=UH6(t-k*D0); return s; };
+    plot(Scv, "#42506e", 1.3, [5,4]);
+    plot(Spart, "#4db8ff", 2.2, [], Math.min(S.sT,TMAX));
+    label("S-curve S(t)", xOf(26), yOf(Scv(26))-9, "#4db8ff");
+    /* equilibrium */
+    plot(()=>QEQ, "#34d399", 1.2, [6,5]);
+    label("Q_eq = "+QEQ.toFixed(1)+" m³/s", mL+8, yOf(QEQ)-6, "#34d399");
+    if (S.sT>=96){
+      /* lagged S-curve, difference band, resulting UH */
+      const SB = t => Scv(t-S.Dp);
+      plot(SB, "#a78bfa", 1.8, [7,4]);
+      label("S(t−D′), lagged "+S.Dp.toFixed(1)+" h", xOf(S.Dp+27), yOf(SB(S.Dp+27))+16, "#a78bfa");
+      fill(SB, Scv, "rgba(167,139,250,.15)");
+      if (S.cmp6) plot(UH6, "#7788aa", 1.3, [5,4]);
+      plot(M.uhp, "#f59e0b", 2.7);
+      label("UH_"+S.Dp.toFixed(1)+"h = [S(t)−S(t−D′)]·6/D′",
+            xOf(M.pk.tp+3), yOf(M.pk.p)-10, "#f59e0b");
+      if (S.cmp6) label("6-h UH", xOf(22), yOf(UH6(22))-8, "#7788aa");
+    } else {
+      label("summing lagged 6-h UHs…  ("+nUH+" so far)", xOf(30), mT+18, "#9aa7bd");
     }
-    ctx.stroke();
-    /* equilibrium line */
-    ctx.setLineDash([6,5]); ctx.strokeStyle="#34d399";
-    ctx.beginPath(); ctx.moveTo(mL,yOf(QEQ)); ctx.lineTo(mL+pw,yOf(QEQ)); ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.fillStyle="#34d399"; ctx.textAlign="left"; ctx.font="600 11px Segoe UI";
-    ctx.fillText("Q_eq = "+QEQ.toFixed(1)+" m³/s", mL+8, yOf(QEQ)-6);
   }
 
   requestAnimationFrame(draw);
 }
 
-/* ---------- boot ---------- */
-resize(); update(); requestAnimationFrame(draw);
+/* ================= boot ================= */
+resize(); recompute(); requestAnimationFrame(draw);
 </script>
 </body>
 </html>
