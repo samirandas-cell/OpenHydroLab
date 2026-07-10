@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Lecture 10 — Storm Hydrograph: from Rainfall to Streamflow</title>
+<title>Lecture 10 — Storm Hydrograph: a Raindrop's Journey to the Gauge</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
   :root{
@@ -53,7 +53,7 @@
     .panel{position:static; width:auto; max-height:none; margin:10px 12px 0;}
     #ui{order:1;} #stage{order:2; position:static; padding:10px 12px;}
     #actions{order:3; align-self:center; transform:none;} #readout{order:4; margin-bottom:12px;}
-    #wrap{flex:none; height:520px; width:100%;}
+    #wrap{flex:none; height:560px; width:100%;}
   }
 </style>
 </head>
@@ -61,8 +61,9 @@
 
 <div id="ui" class="panel">
   <h1>Storm Hydrograph</h1>
-  <div class="sub">CVE2142 · Lecture 10 · Rain falls on a catchment and the stream responds
-  — the hydrograph is computed live from a losses + linear-reservoir routing model</div>
+  <div class="sub">CVE2142 · Lecture 10 · Every runoff drop's travel time to the gauge is
+  drawn from the catchment's unit-hydrograph response — the hydrograph is the arrival-time
+  distribution of the rain</div>
 
   <h2>Storm</h2>
   <div>
@@ -76,8 +77,8 @@
   <div>
     <label class="row">Infiltration φ-index <span class="val" id="v-phi"></span></label>
     <input type="range" id="s-phi" min="0" max="40" step="1" value="10">
-    <div class="note" style="margin-top:2px">Rain below φ soaks in (→ groundwater);
-    rain above φ is effective rainfall (→ direct runoff).</div>
+    <div class="note" style="margin-top:2px">Rain below φ soaks in (→ groundwater →
+    baseflow); rain above φ runs off (→ direct runoff).</div>
   </div>
 
   <h2>Catchment</h2>
@@ -88,14 +89,15 @@
   <div>
     <label class="row">Response time k <span class="val" id="v-k"></span></label>
     <input type="range" id="s-k" min="0.5" max="12" step="0.25" value="4">
-    <div class="note" style="margin-top:2px">Storage constant of each routing reservoir —
-    big/flat/vegetated basins store more (large k); small/steep basins respond fast.</div>
+    <div class="note" style="margin-top:2px">Storage constant of the routing reservoirs.
+    Large, flat, forested basins store more (large k → slow, damped response); small,
+    steep, bare basins respond fast.</div>
   </div>
   <div>
     <label class="row">Urbanization <span class="val" id="v-u"></span></label>
     <input type="range" id="s-u" min="0" max="100" step="5" value="0">
-    <div class="note" style="margin-top:2px">Paving reduces infiltration (φ↓) and speeds
-    the response (k↓) — Lecture 10's "influence of urbanization".</div>
+    <div class="note" style="margin-top:2px">Paving cuts infiltration (φ↓) and speeds the
+    response (k↓) — Lecture 10's "influence of urbanization".</div>
   </div>
 
   <h2>Show</h2>
@@ -103,21 +105,24 @@
   <label class="chk"><input type="checkbox" id="t-lab" checked> Limb labels &amp; lag time</label>
   <label class="chk"><input type="checkbox" id="t-cmp"> Overlay rural baseline (u = 0)</label>
 
-  <div class="note"><b>Aha demo:</b> press <i>Play</i> and watch the stream in the scene rise
-  with the tracing curve — like the Carbondale time-lapse from the lecture. Then slide
-  <i>Urbanization</i> to 80% with the baseline overlay on: same storm, but the peak is
-  higher, earlier and flashier, and the slow baseflow hump shrinks — the paved catchment
-  converts groundwater recharge into flood peak.</div>
+  <div class="note"><b>Aha demo:</b> press <i>Play</i>. Blue drops that beat the φ-index
+  become runoff: watch them gather into rivulets, join the tributaries, and stream down the
+  network to the gauge — the hydrograph rises exactly as they arrive, and keeps falling long
+  after the rain stops because distant drops are still travelling. Then set
+  <i>Urbanization</i> to 80% with the rural baseline on: same storm, but the drops sprint —
+  peak roughly doubles, lag halves.</div>
 </div>
 
 <div id="readout" class="panel">
   <h2 style="margin-top:0">Model</h2>
-  <div class="formula">ER = max(i−φ, 0) → two linear reservoirs (S = kQ) → Q_direct;
-  infiltration → slow reservoir (k_gw) → baseflow</div>
+  <div class="formula">ER = max(i−φ, 0) → Nash cascade (2 linear reservoirs, S = kQ) →
+  Q_direct; infiltration → slow store (k_gw) → baseflow. Drop travel times ~ the cascade's
+  IUH (gamma, n = 2).</div>
   <table class="vals">
     <tr><td>Effective rainfall rate</td><td id="o-er"></td></tr>
     <tr><td>Infiltration rate</td><td id="o-f"></td></tr>
     <tr><td>Effective k (with urban.)</td><td id="o-k"></td></tr>
+    <tr><td>Mean drop travel time 2k</td><td id="o-tt"></td></tr>
   </table>
 
   <h2>Hydrograph features</h2>
@@ -126,6 +131,7 @@
     <tr><td>Time of peak</td><td id="o-tp"></td></tr>
     <tr><td>Lag time (ER centroid → peak)</td><td id="o-lag"></td></tr>
     <tr><td>Baseflow at peak</td><td id="o-bf"></td></tr>
+    <tr><td>Runoff ratio ER/P</td><td id="o-rr"></td></tr>
   </table>
   <div id="chip"></div>
 
@@ -139,7 +145,7 @@
   </table>
   <div class="note">The area under the direct-runoff hydrograph must return exactly the
   effective-rainfall depth — continuity. The readout integrates the computed curve
-  numerically, so you can verify the model conserves mass at any setting.</div>
+  numerically, so the model proves it conserves mass at any setting.</div>
 </div>
 
 <div id="actions" class="panel">
@@ -155,65 +161,59 @@
 const $ = id => document.getElementById(id);
 const cv = $("cv"), ctx = cv.getContext("2d");
 
-/* ---------- state ---------- */
+/* ================= state ================= */
 const S = {i:30, dur:3, phi:10, A:20, k:4, u:0, t:0, playing:false,
            sep:true, lab:true, cmp:false};
+const PLAY_HRS_PER_S = 1.2;                   // 48 h plays in 40 s — slow enough to watch drops travel
 
-/* ---------- model ----------
-   Losses: φ-index. ER(t) = max(i−φeff,0) while raining; F(t) = min(i,φeff).
-   Direct runoff: Nash cascade of 2 linear reservoirs, storage constant keff.
-     Exact step for S=kQ, inflow I const over dt:  Q⁺ = I + (Q−I)·e^(−dt/k)
-   Baseflow: one slow reservoir (k_gw = 40 h) fed by infiltration, starting from
-   a pre-storm recession at Q_gw(0) chosen so baseflow ≈ 0.05 m³/s per km².     */
-const DT = 0.02, TSIM = 96, KGW = 40;              // h
+/* ================= hydrological model =================
+   Losses: φ-index. Direct runoff: Nash cascade of 2 linear reservoirs
+   (exact exponential stepping — unconditionally mass-conserving).
+   Baseflow: slow linear reservoir (k_gw = 40 h) fed by infiltration.   */
+const DT = 0.02, TSIM = 96, KGW = 40, TSTORM = 1;      // h
 function urbanized(){
   return {phi: S.phi*(1 - 0.8*S.u/100), k: Math.max(0.3, S.k*(1 - 0.6*S.u/100))};
 }
 function simulate(phiEff, kEff){
   const n = Math.round(TSIM/DT);
-  const A = S.A*1e6;                               // m²
-  const toQ = mmh => mmh/1000/3600*A;              // mm/h over A → m³/s
-  const q0 = 0.05*S.A;                             // pre-storm baseflow, m³/s
-  let q1=0, q2=0, qg=q0;
+  const A = S.A*1e6;
+  const toQ = mmh => mmh/1000/3600*A;         // mm/h over A → m³/s
+  const q0 = 0.05*S.A;                        // pre-storm baseflow
+  let q1=0, q2=0, qg=q0, volD=0;
   const t=[], er=[], fr=[], qd=[], qb=[];
-  let volD=0;
   for(let j=0;j<=n;j++){
     const tt=j*DT;
-    const raining = tt>=1 && tt<1+S.dur;           // storm starts at t = 1 h
+    const raining = tt>=TSTORM && tt<TSTORM+S.dur;
     const ie = raining ? Math.max(S.i-phiEff,0) : 0;
     const f  = raining ? Math.min(S.i,phiEff)   : 0;
-    /* exact exponential stepping */
-    const e1 = Math.exp(-DT/kEff);
-    const I1 = toQ(ie);
+    const e1 = Math.exp(-DT/kEff), I1 = toQ(ie);
     q1 = I1 + (q1-I1)*e1;
-    q2 = q1 + (q2-q1)*e1;                          // reservoir 2 fed by q1
-    const eg = Math.exp(-DT/KGW);
-    const Ig = toQ(f);
+    q2 = q1 + (q2-q1)*e1;
+    const eg = Math.exp(-DT/KGW), Ig = toQ(f);
     qg = Ig + (qg-Ig)*eg;
     t.push(tt); er.push(ie); fr.push(f); qd.push(q2); qb.push(qg);
-    volD += q2*DT*3600;                            // m³
+    volD += q2*DT*3600;
   }
-  /* features */
   let qp=0, tp=0;
   for(let j=0;j<t.length;j++){ const q=qd[j]+qb[j]; if(q>qp){qp=q;tp=t[j];} }
-  /* ER centroid */
   let m0=0,m1=0;
   for(let j=0;j<t.length;j++){ m0+=er[j]; m1+=er[j]*t[j]; }
-  const tc = m0>0 ? m1/m0 : 1;
-  const erDepth = er.reduce((a,b)=>a+b,0)*DT;      // mm
-  const fDepth  = fr.reduce((a,b)=>a+b,0)*DT;      // mm
-  return {t, er, fr, qd, qb, qp, tp, lag: tp-tc, volD,
-          erDepth, fDepth, chk: volD/(S.A*1e6)*1000};
+  const tc = m0>0 ? m1/m0 : TSTORM;
+  const erDepth = er.reduce((a,b)=>a+b,0)*DT;
+  const fDepth  = fr.reduce((a,b)=>a+b,0)*DT;
+  return {t, er, fr, qd, qb, qp, tp, tc, lag:tp-tc, volD, erDepth, fDepth,
+          chk: volD/(S.A*1e6)*1000};
 }
-let R=null, R0=null;                               // current + rural-baseline runs
+let R=null, R0=null;
 function recompute(){
   const u = urbanized();
   R  = simulate(u.phi, u.k);
   R0 = S.u>0 ? simulate(S.phi, S.k) : null;
   updateReadout(u);
 }
+const idxAt = tt => Math.max(0, Math.min(R.t.length-1, Math.round(tt/DT)));
 
-/* ---------- readout ---------- */
+/* ================= readout ================= */
 function updateReadout(u){
   $("v-i").textContent=S.i+" mm/h"; $("v-dur").textContent=S.dur+" h";
   $("v-phi").textContent=S.phi+" mm/h"; $("v-A").textContent=S.A+" km²";
@@ -221,13 +221,14 @@ function updateReadout(u){
   $("o-er").textContent=Math.max(S.i-u.phi,0).toFixed(1)+" mm/h";
   $("o-f").textContent=Math.min(S.i,u.phi).toFixed(1)+" mm/h";
   $("o-k").textContent=u.k.toFixed(2)+" h";
+  $("o-tt").textContent=(2*u.k).toFixed(1)+" h";
   $("o-qp").textContent=R.qp.toFixed(1)+" m³/s";
   $("o-tp").textContent=R.tp.toFixed(1)+" h";
   $("o-lag").textContent=R.lag.toFixed(1)+" h";
-  const jp=Math.round(R.tp/DT);
-  $("o-bf").textContent=R.qb[jp].toFixed(1)+" m³/s";
-  $("chip").textContent="Q_p = "+R.qp.toFixed(1)+" m³/s at t = "+R.tp.toFixed(1)+" h";
+  $("o-bf").textContent=R.qb[idxAt(R.tp)].toFixed(1)+" m³/s";
   const P=R.erDepth+R.fDepth;
+  $("o-rr").textContent=P>0?(R.erDepth/P*100).toFixed(0)+" %":"—";
+  $("chip").textContent="Q_p = "+R.qp.toFixed(1)+" m³/s at t = "+R.tp.toFixed(1)+" h";
   $("o-P").textContent=P.toFixed(1)+" mm";
   $("o-L").textContent=R.fDepth.toFixed(1)+" mm";
   $("o-ER").textContent=R.erDepth.toFixed(1)+" mm";
@@ -235,130 +236,352 @@ function updateReadout(u){
   $("o-V").textContent=(R.volD/1e6).toFixed(2)+" ×10⁶ m³";
 }
 [["i","s-i"],["dur","s-dur"],["phi","s-phi"],["A","s-A"],["k","s-k"],["u","s-u"]]
-.forEach(([kk,s])=>{
-  $(s).addEventListener("input", ()=>{ S[kk]=+$(s).value; recompute(); });
-});
+.forEach(([kk,s])=>{ $(s).addEventListener("input", ()=>{ S[kk]=+$(s).value; recompute(); }); });
 ["sep","lab","cmp"].forEach(kk=>{
   $("t-"+kk).addEventListener("input", ()=>{ S[kk]=$("t-"+kk).checked; });
 });
 $("b-play").addEventListener("click", ()=>{
-  if (S.t>=48) S.t=0;
+  if (S.t>=48){ S.t=0; resetParticles(); }
   S.playing=!S.playing;
   $("b-play").classList.toggle("active",S.playing);
 });
-$("b-reset").addEventListener("click", ()=>{ S.playing=false; S.t=0;
+$("b-reset").addEventListener("click", ()=>{ S.playing=false; S.t=0; resetParticles();
   $("b-play").classList.remove("active"); });
 $("b-def").addEventListener("click", ()=>{
   Object.assign(S,{i:30,dur:3,phi:10,A:20,k:4,u:0,t:0,playing:false});
   $("s-i").value=30; $("s-dur").value=3; $("s-phi").value=10;
   $("s-A").value=20; $("s-k").value=4; $("s-u").value=0;
-  $("b-play").classList.remove("active"); recompute();
+  resetParticles(); $("b-play").classList.remove("active"); recompute();
 });
 
-/* ---------- drawing ---------- */
-let drops=[], last=performance.now();
+/* ================= the catchment (plan view, normalized [0,1]²) =================
+   Divide: smooth pear-shaped polygon. Network: Horton–Strahler-style main stem
+   plus ordered tributaries, hand-shaped for a natural dendritic look.            */
+function smooth(pts, n=48){                    // Catmull-Rom resample of a polyline
+  const out=[];
+  for(let s=0;s<pts.length-1;s++){
+    const p0=pts[Math.max(0,s-1)], p1=pts[s], p2=pts[s+1],
+          p3=pts[Math.min(pts.length-1,s+2)];
+    const seg=Math.max(2,Math.round(n/(pts.length-1)));
+    for(let j=0;j<seg;j++){
+      const tt=j/seg, t2=tt*tt, t3=t2*tt;
+      out.push({
+        x:0.5*((2*p1.x)+(-p0.x+p2.x)*tt+(2*p0.x-5*p1.x+4*p2.x-p3.x)*t2+(-p0.x+3*p1.x-3*p2.x+p3.x)*t3),
+        y:0.5*((2*p1.y)+(-p0.y+p2.y)*tt+(2*p0.y-5*p1.y+4*p2.y-p3.y)*t2+(-p0.y+3*p1.y-3*p2.y+p3.y)*t3)
+      });
+    }
+  }
+  out.push(pts[pts.length-1]);
+  return out;
+}
+/* watershed divide */
+const DIVIDE = (()=>{
+  const c={x:0.485,y:0.44}, pts=[];
+  for(let a=0;a<=64;a++){
+    const th=a/64*2*Math.PI;
+    const r=0.335*(1+0.16*Math.sin(th*2+0.7)+0.09*Math.sin(th*3+2.1)+0.05*Math.sin(th*5))
+            *(1-0.28*Math.max(0,Math.cos(th-Math.PI/2)));   // pinched toward outlet
+    pts.push({x:c.x+r*Math.cos(th), y:c.y+r*0.92*Math.sin(th)});
+  }
+  return pts;
+})();
+const OUTLET = {x:0.485, y:0.815};
+function inBasin(p){                            // ray casting
+  let inside=false;
+  for(let i=0,j=DIVIDE.length-1;i<DIVIDE.length;j=i++){
+    const a=DIVIDE[i], b=DIVIDE[j];
+    if ((a.y>p.y)!==(b.y>p.y) && p.x < (b.x-a.x)*(p.y-a.y)/(b.y-a.y)+a.x) inside=!inside;
+  }
+  return inside;
+}
+/* main stem (order 3) + tributaries (orders 1–2), heads near the divide */
+const MAIN = smooth([{x:0.47,y:0.135},{x:0.52,y:0.24},{x:0.455,y:0.36},
+                     {x:0.51,y:0.50},{x:0.465,y:0.63},{x:0.50,y:0.73},OUTLET],64);
+const TRIBS = [
+  {o:2, joinAt:0.30, pts:[{x:0.235,y:0.185},{x:0.30,y:0.245},{x:0.38,y:0.27}]},
+  {o:1, joinAt:0.18, pts:[{x:0.645,y:0.145},{x:0.585,y:0.195}]},
+  {o:2, joinAt:0.50, pts:[{x:0.755,y:0.30},{x:0.665,y:0.375},{x:0.575,y:0.43}]},
+  {o:1, joinAt:0.40, pts:[{x:0.225,y:0.42},{x:0.335,y:0.415}]},
+  {o:2, joinAt:0.68, pts:[{x:0.20,y:0.565},{x:0.30,y:0.60},{x:0.395,y:0.615}]},
+  {o:1, joinAt:0.80, pts:[{x:0.71,y:0.60},{x:0.625,y:0.655}]},
+  {o:1, joinAt:0.58, pts:[{x:0.66,y:0.50},{x:0.585,y:0.525}]},
+].map(tr=>{
+  const jIdx=Math.round(tr.joinAt*(MAIN.length-1));
+  const pts=smooth([...tr.pts, MAIN[jIdx]], 26);
+  return {o:tr.o, jIdx, pts};
+});
+/* dense list of channel points with their route to the outlet */
+const NETPTS=[];
+MAIN.forEach((p,i)=>NETPTS.push({p, route:()=>MAIN.slice(i)}));
+TRIBS.forEach(tr=>tr.pts.forEach((p,i)=>
+  NETPTS.push({p, route:()=>[...tr.pts.slice(i), ...MAIN.slice(tr.jIdx)]})));
+
+/* ================= particles (Monte-Carlo rendering of the IUH) ================
+   Each runoff drop: spawn in basin → overland to nearest channel → downstream to
+   the gauge. Its TOTAL travel time is sampled from the Nash-cascade IUH
+   (gamma, shape 2, scale k_eff) — so the swarm arriving at the gauge follows the
+   exact routing the hydrograph curve is computed from.                           */
+let runoff=[], soaks=[], splashes=[], arrivals=[];
+function resetParticles(){ runoff=[]; soaks=[]; splashes=[]; arrivals=[]; }
+const gammaSample = k => -k*Math.log(1-Math.random()) - k*Math.log(1-Math.random());
+function spawnDrop(kEff, isRunoff){
+  let p=null;
+  for(let tries=0;tries<12 && !p;tries++){
+    const c={x:0.13+0.74*Math.random(), y:0.10+0.68*Math.random()};
+    if (inBasin(c)) p=c;
+  }
+  if (!p) return;
+  if (!isRunoff){ soaks.push({p, age:0}); return; }
+  /* nearest channel point */
+  let best=null, bd=1e9;
+  for (const np of NETPTS){
+    const d=(np.p.x-p.x)**2+(np.p.y-p.y)**2;
+    if (d<bd){ bd=d; best=np; }
+  }
+  const path=[p, ...best.route()];
+  let L=0; const cum=[0];
+  for(let i=1;i<path.length;i++){
+    L+=Math.hypot(path[i].x-path[i-1].x, path[i].y-path[i-1].y); cum.push(L);
+  }
+  runoff.push({path, cum, L, tau:Math.max(0.15,gammaSample(kEff)), prog:0, trail:[]});
+}
+function particlePos(pt){
+  const d=pt.prog*pt.L;
+  let i=1; while(i<pt.cum.length-1 && pt.cum[i]<d) i++;
+  const f=(d-pt.cum[i-1])/Math.max(1e-9, pt.cum[i]-pt.cum[i-1]);
+  return {x:pt.path[i-1].x+(pt.path[i].x-pt.path[i-1].x)*f,
+          y:pt.path[i-1].y+(pt.path[i].y-pt.path[i-1].y)*f};
+}
+
+/* ================= drawing ================= */
+let last=performance.now(), rainStreaks=[];
 function resize(){
   const r = cv.parentElement.getBoundingClientRect(), dpr = devicePixelRatio||1;
   cv.width = r.width*dpr; cv.height = r.height*dpr;
   ctx.setTransform(dpr,0,0,dpr,0,0);
 }
 addEventListener("resize", resize);
-const idxAt = tt => Math.max(0, Math.min(R.t.length-1, Math.round(tt/DT)));
 
 function draw(now){
-  const dt=Math.min((now-last)/1000,.05); last=now;
+  const dtReal=Math.min((now-last)/1000,.05); last=now;
+  const dtSim = S.playing ? dtReal*PLAY_HRS_PER_S : 0;
   if (S.playing){
-    S.t += dt*48/24;                               // 48 h plays in ~24 s
+    S.t += dtSim;
     if (S.t>=48){ S.t=48; S.playing=false; $("b-play").classList.remove("active"); }
   }
   const W = cv.width/(devicePixelRatio||1), H = cv.height/(devicePixelRatio||1);
   ctx.clearRect(0,0,W,H);
-  const j = idxAt(S.t);
-  const qNow = R.qd[j]+R.qb[j];
+  const u=urbanized();
+  const j=idxAt(S.t);
+  const qNow=R.qd[j]+R.qb[j];
+  const raining = S.t>=TSTORM && S.t<TSTORM+S.dur;
 
-  /* ===== left: catchment scene ===== */
-  const sw = Math.min(W*0.34, 330);
-  const sx=12, sy=12, sh=H-24;
+  /* ========== LEFT: catchment plan view ========== */
+  const sw=Math.min(W*0.42,520), sx=12, sy=12, sh=H-24;
+  const P2=q=>({x:sx+q.x*sw, y:sy+q.y*sh});     // normalized → pixels
   ctx.save();
   ctx.beginPath(); ctx.roundRect(sx,sy,sw,sh,8); ctx.clip();
-  ctx.fillStyle="#0c1526"; ctx.fillRect(sx,sy,sw,sh);
-  const gy = sy+sh*0.52;                           // ground line
-  /* hills */
-  ctx.fillStyle = S.u>50 ? "#48505c" : "#28503c";
-  ctx.beginPath(); ctx.moveTo(sx,gy);
-  ctx.quadraticCurveTo(sx+sw*0.22,gy-sh*0.30, sx+sw*0.45,gy);
-  ctx.quadraticCurveTo(sx+sw*0.66,gy-sh*0.22, sx+sw*0.88,gy);
-  ctx.lineTo(sx+sw,gy); ctx.lineTo(sx+sw,gy+2); ctx.lineTo(sx,gy+2); ctx.closePath(); ctx.fill();
-  /* urban blocks fade in with u */
+  /* land outside basin */
+  const bgg=ctx.createLinearGradient(sx,sy,sx,sy+sh);
+  bgg.addColorStop(0,"#131c2c"); bgg.addColorStop(1,"#0e1522");
+  ctx.fillStyle=bgg; ctx.fillRect(sx,sy,sw,sh);
+
+  /* basin terrain: hypsometric fill (high dark ridges → light valley floor) */
+  const dPath=()=>{ ctx.beginPath();
+    DIVIDE.forEach((q,i)=>{ const s=P2(q); i===0?ctx.moveTo(s.x,s.y):ctx.lineTo(s.x,s.y);});
+    ctx.closePath(); };
+  dPath();
+  const tg=ctx.createRadialGradient(P2({x:0.485,y:0.60}).x,P2({x:0.485,y:0.60}).y,sh*0.04,
+                                    P2({x:0.485,y:0.42}).x,P2({x:0.485,y:0.42}).y,sw*0.62);
+  tg.addColorStop(0,"#3f6b4a"); tg.addColorStop(0.45,"#335841");
+  tg.addColorStop(0.75,"#2a4839"); tg.addColorStop(1,"#1f3830");
+  ctx.fillStyle=tg; ctx.fill();
+  /* hillshade: NW light */
+  dPath();
+  const hs=ctx.createLinearGradient(sx,sy,sx+sw,sy+sh);
+  hs.addColorStop(0,"rgba(255,255,240,0.10)"); hs.addColorStop(0.5,"rgba(0,0,0,0)");
+  hs.addColorStop(1,"rgba(0,0,20,0.22)");
+  ctx.fillStyle=hs; ctx.fill();
+  /* contour hints: shrunken copies of the divide */
+  const cen={x:0.485,y:0.47};
+  ctx.strokeStyle="rgba(210,230,215,0.10)"; ctx.lineWidth=1;
+  [0.82,0.64,0.46,0.28].forEach(s=>{
+    ctx.beginPath();
+    DIVIDE.forEach((q,i)=>{
+      const m={x:cen.x+(q.x-cen.x)*s, y:cen.y+(q.y-cen.y)*s+0.04*(1-s)};
+      const pp=P2(m); i===0?ctx.moveTo(pp.x,pp.y):ctx.lineTo(pp.x,pp.y);
+    });
+    ctx.closePath(); ctx.stroke();
+  });
+
+  /* urban patches grow with u */
   if (S.u>0){
-    ctx.fillStyle="rgba(154,167,189,"+(0.25+0.6*S.u/100)+")";
-    for(let b=0;b<6;b++){
-      const bx=sx+sw*(0.10+0.13*b), bwd=sw*0.05, bht=sh*(0.05+0.03*((b*7)%3));
-      if (b/6 < S.u/100+0.08) ctx.fillRect(bx, gy-bht-sh*0.06*Math.sin(b), bwd, bht);
+    const patches=[[0.42,0.66],[0.52,0.62],[0.47,0.57],[0.56,0.68],[0.38,0.60],
+                   [0.44,0.50],[0.55,0.52],[0.35,0.52],[0.60,0.60],[0.49,0.44],
+                   [0.40,0.42],[0.58,0.44],[0.33,0.44],[0.52,0.36]];
+    const nShow=Math.round(S.u/100*patches.length);
+    for(let b=0;b<nShow;b++){
+      const pp=P2({x:patches[b][0],y:patches[b][1]});
+      ctx.fillStyle="rgba(140,150,165,0.75)";
+      ctx.beginPath(); ctx.roundRect(pp.x-sw*0.032,pp.y-sh*0.020,sw*0.064,sh*0.040,3); ctx.fill();
+      ctx.strokeStyle="rgba(20,25,35,0.5)"; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(pp.x-sw*0.032,pp.y); ctx.lineTo(pp.x+sw*0.032,pp.y); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(pp.x,pp.y-sh*0.020); ctx.lineTo(pp.x,pp.y+sh*0.020); ctx.stroke();
     }
   }
-  /* soil + groundwater */
-  ctx.fillStyle="#3a3125"; ctx.fillRect(sx,gy,sw,sh*0.30);
-  const gwFrac = Math.min(1, R.qb[j]/(0.05*S.A)/3);
-  ctx.fillStyle="rgba(59,130,246,.30)";
-  ctx.fillRect(sx, gy+sh*0.30*(1-0.4-0.25*gwFrac), sw, sh*0.30*(0.4+0.25*gwFrac));
-  ctx.fillStyle="#9aa7bd"; ctx.font="10px Segoe UI"; ctx.textAlign="left";
-  ctx.fillText("groundwater (feeds baseflow)", sx+8, gy+sh*0.28);
-  ctx.fillStyle="#111927"; ctx.fillRect(sx, gy+sh*0.30, sw, sh);
-  /* stream channel cross-section at right, stage grows with Q */
-  const chX=sx+sw*0.68, chW=sw*0.26, chB=gy+sh*0.02;
-  ctx.fillStyle="#0d1320";
-  ctx.beginPath(); ctx.moveTo(chX,gy-sh*0.16); ctx.lineTo(chX+chW*0.25,chB);
-  ctx.lineTo(chX+chW*0.75,chB); ctx.lineTo(chX+chW,gy-sh*0.16);
-  ctx.lineTo(chX+chW,gy+sh*0.02+2); ctx.lineTo(chX,gy+sh*0.02+2); ctx.closePath(); ctx.fill();
-  const stage = Math.pow(qNow/Math.max(R.qp,1), 0.6);       // visual stage ∝ Q^0.6
-  const wy = chB - stage*(sh*0.16+sh*0.02);
-  ctx.fillStyle="rgba(77,184,255,.75)";
-  ctx.beginPath();
-  const half = t2 => chW*0.25 + (chW*0.25)*(chB-t2)/(sh*0.18);
-  ctx.moveTo(chX+chW/2-half(wy),wy); ctx.lineTo(chX+chW*0.25,chB);
-  ctx.lineTo(chX+chW*0.75,chB); ctx.lineTo(chX+chW/2+half(wy),wy); ctx.closePath(); ctx.fill();
-  ctx.fillStyle="#4db8ff"; ctx.font="600 11px Segoe UI"; ctx.textAlign="center";
-  ctx.fillText("Q = "+qNow.toFixed(1)+" m³/s", chX+chW/2, chB+16);
-  ctx.fillText("stream", chX+chW/2, gy-sh*0.18);
-  /* rain in scene */
-  const rainNow = (S.t>=1 && S.t<1+S.dur) ? S.i : 0;
-  if (Math.random() < rainNow*dt*1.5)
-    drops.push({x:sx+10+Math.random()*(sw-20), y:sy+8, v:300});
-  ctx.strokeStyle="rgba(77,184,255,.8)"; ctx.lineWidth=1.3;
-  drops = drops.filter(d=>{
-    d.y += d.v*dt;
-    if (d.y > gy-4) return false;
-    ctx.beginPath(); ctx.moveTo(d.x,d.y); ctx.lineTo(d.x,d.y+6); ctx.stroke();
+
+  /* stream network — width by Strahler order, main stem swells with discharge */
+  const qRel=Math.min(1.6, qNow/Math.max(R0?R0.qp:R.qp, R.qp)*1.4+0.25);
+  const drawChan=(pts,w)=>{
+    ctx.lineCap="round"; ctx.lineJoin="round";
+    ctx.strokeStyle="rgba(20,40,70,0.9)"; ctx.lineWidth=w+2.2;
+    ctx.beginPath(); pts.forEach((q,i)=>{const s=P2(q); i===0?ctx.moveTo(s.x,s.y):ctx.lineTo(s.x,s.y);}); ctx.stroke();
+    ctx.strokeStyle="#3d9fe0"; ctx.lineWidth=w;
+    ctx.beginPath(); pts.forEach((q,i)=>{const s=P2(q); i===0?ctx.moveTo(s.x,s.y):ctx.lineTo(s.x,s.y);}); ctx.stroke();
+  };
+  TRIBS.forEach(tr=>drawChan(tr.pts, tr.o===1?1.4:2.2));
+  /* main stem in 3 reaches with growing width */
+  drawChan(MAIN.slice(0,22), 2.6*qRel);
+  drawChan(MAIN.slice(21,44), 3.4*qRel);
+  drawChan(MAIN.slice(43), 4.4*qRel);
+
+  /* watershed divide */
+  ctx.setLineDash([7,5]); ctx.strokeStyle="rgba(232,237,246,0.55)"; ctx.lineWidth=1.6;
+  dPath(); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle="rgba(232,237,246,0.6)"; ctx.font="10px Segoe UI"; ctx.textAlign="left";
+  const dl=P2({x:0.16,y:0.20});
+  ctx.fillText("watershed divide", dl.x-4, dl.y-8);
+
+  /* soak markers (infiltrating drops) */
+  soaks=soaks.filter(sk=>{
+    sk.age+=dtSim;
+    if (sk.age>1.2) return false;
+    const pp=P2(sk.p), a=1-sk.age/1.2;
+    ctx.strokeStyle=`rgba(122,103,72,${0.8*a})`; ctx.lineWidth=1.2;
+    ctx.beginPath(); ctx.arc(pp.x,pp.y, 2+5*(1-a), 0, 7); ctx.stroke();
     return true;
   });
-  ctx.fillStyle= rainNow>0 ? "#4db8ff" : "#9aa7bd";
-  ctx.textAlign="left"; ctx.font="11px Segoe UI";
-  ctx.fillText(rainNow>0 ? "raining: "+rainNow+" mm/h" : "dry", sx+8, sy+18);
-  ctx.fillText("t = "+S.t.toFixed(1)+" h", sx+8, sy+34);
+
+  /* spawn drops while raining: split runoff / infiltration by ER fraction */
+  if (raining && S.playing){
+    const ie=Math.max(S.i-u.phi,0), f=Math.min(S.i,u.phi);
+    const total=(S.i)*dtSim*3.4;                 // visual spawn budget ∝ intensity
+    let nsp=Math.floor(total)+(Math.random()<total%1?1:0);
+    for(let s=0;s<nsp && runoff.length<420;s++)
+      spawnDrop(u.k, Math.random() < ie/Math.max(S.i,1e-9));
+  }
+  /* advance + draw runoff drops */
+  runoff=runoff.filter(pt=>{
+    pt.prog += dtSim/pt.tau;
+    if (pt.prog>=1){ arrivals.push({age:0}); return false; }
+    const pp=P2(particlePos(pt));
+    pt.trail.push(pp); if (pt.trail.length>6) pt.trail.shift();
+    ctx.strokeStyle="rgba(120,210,255,0.35)"; ctx.lineWidth=1.2;
+    ctx.beginPath();
+    pt.trail.forEach((q,i)=>i===0?ctx.moveTo(q.x,q.y):ctx.lineTo(q.x,q.y));
+    ctx.stroke();
+    ctx.fillStyle="#8fd6ff";
+    ctx.beginPath(); ctx.arc(pp.x,pp.y,1.7,0,7); ctx.fill();
+    return true;
+  });
+  /* arrival pulses at gauge */
+  const og=P2(OUTLET);
+  arrivals=arrivals.filter(a=>{
+    a.age+=dtReal;
+    if (a.age>0.5) return false;
+    ctx.strokeStyle=`rgba(77,184,255,${0.8*(1-a.age/0.5)})`; ctx.lineWidth=1.6;
+    ctx.beginPath(); ctx.arc(og.x,og.y, 4+a.age*26, 0, 7); ctx.stroke();
+    return true;
+  });
+  /* gauge */
+  ctx.fillStyle="#e8edf6";
+  ctx.beginPath(); ctx.arc(og.x,og.y,4.5,0,7); ctx.fill();
+  ctx.strokeStyle="#0f1420"; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.arc(og.x,og.y,4.5,0,7); ctx.stroke();
+  ctx.font="600 11px Segoe UI"; ctx.textAlign="center"; ctx.fillStyle="#e8edf6";
+  ctx.fillText("gauge", og.x, og.y+18);
+  ctx.fillStyle="#4db8ff";
+  ctx.fillText("Q = "+qNow.toFixed(1)+" m³/s", og.x, og.y+32);
+
+  /* rain streaks (visual density ∝ intensity) */
+  if (raining && S.playing && rainStreaks.length<140 && Math.random()<S.i*dtReal*0.4){
+    let p=null;
+    for(let tr=0;tr<8&&!p;tr++){ const c={x:0.10+0.78*Math.random(),y:0.06+0.72*Math.random()};
+      if (inBasin(c)) p=c; }
+    if (p) rainStreaks.push({p:P2(p), y0:-10-Math.random()*40, age:0});
+  }
+  rainStreaks=rainStreaks.filter(rs=>{
+    rs.age+=dtReal;
+    const fall=rs.age*560, ty=sy+rs.y0+fall;
+    if (ty>rs.p.y){ splashes.push({p:rs.p,age:0}); return false; }
+    ctx.strokeStyle="rgba(150,200,255,0.55)"; ctx.lineWidth=1.1;
+    ctx.beginPath(); ctx.moveTo(rs.p.x+3,ty-9); ctx.lineTo(rs.p.x,ty); ctx.stroke();
+    return true;
+  });
+  splashes=splashes.filter(sp=>{
+    sp.age+=dtReal;
+    if (sp.age>0.25) return false;
+    ctx.strokeStyle=`rgba(160,210,255,${0.7*(1-sp.age/0.25)})`; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.ellipse(sp.p.x,sp.p.y,1.5+sp.age*16,(1.5+sp.age*16)*0.35,0,0,7); ctx.stroke();
+    return true;
+  });
+
+  /* groundwater store inset (bottom-left of scene) */
+  const gx=sx+12, gyy=sy+sh-86, gw2=150, gh2=74;
+  ctx.fillStyle="rgba(15,20,32,0.88)";
+  ctx.beginPath(); ctx.roundRect(gx,gyy,gw2,gh2,6); ctx.fill();
+  ctx.strokeStyle="#2b3650"; ctx.stroke();
+  const Sgw=KGW*3600*R.qb[j];                     // storage = k·Q (m³)
+  const SgwRef=KGW*3600*(0.05*S.A)*3;             // reference for the bar
+  const fl=Math.min(1, Sgw/SgwRef);
+  ctx.fillStyle="#3a3125"; ctx.fillRect(gx+8,gyy+22,42,gh2-32);
+  ctx.fillStyle="rgba(59,130,246,0.75)";
+  ctx.fillRect(gx+8, gyy+22+(gh2-32)*(1-fl), 42, (gh2-32)*fl);
+  ctx.strokeStyle="#2b3650"; ctx.strokeRect(gx+8,gyy+22,42,gh2-32);
+  ctx.fillStyle="#9aa7bd"; ctx.font="10px Segoe UI"; ctx.textAlign="left";
+  ctx.fillText("groundwater store", gx+8, gyy+14);
+  ctx.fillStyle="#34d399";
+  ctx.fillText("→ baseflow", gx+58, gyy+40);
+  ctx.fillText(R.qb[j].toFixed(1)+" m³/s", gx+58, gyy+54);
+
+  /* header + clock + scale bar */
+  ctx.fillStyle="#e8edf6"; ctx.font="600 12px Segoe UI"; ctx.textAlign="left";
+  ctx.fillText("catchment — plan view", sx+12, sy+20);
+  ctx.font="12px Segoe UI";
+  ctx.fillStyle= raining ? "#4db8ff" : "#9aa7bd";
+  ctx.fillText(raining ? "raining  "+S.i+" mm/h" : (S.t<TSTORM?"before the storm":"after the storm — drops still travelling"),
+               sx+12, sy+38);
+  ctx.fillStyle="#e8edf6";
+  ctx.fillText("t = "+S.t.toFixed(1)+" h", sx+12, sy+56);
+  /* scale bar: scene width ≈ sqrt(A/0.55) km across the basin span */
+  const kmPerScene=Math.sqrt(S.A/0.55)/0.74;
+  const px1km=sw/kmPerScene;
+  const bx=sx+sw-24-px1km, by2=sy+sh-16;
+  ctx.strokeStyle="#e8edf6"; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(bx,by2); ctx.lineTo(bx+px1km,by2); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(bx,by2-4); ctx.lineTo(bx,by2+4); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(bx+px1km,by2-4); ctx.lineTo(bx+px1km,by2+4); ctx.stroke();
+  ctx.fillStyle="#9aa7bd"; ctx.font="10px Segoe UI"; ctx.textAlign="center";
+  ctx.fillText("1 km", bx+px1km/2, by2-7);
   ctx.restore();
   ctx.strokeStyle="#2b3650"; ctx.beginPath(); ctx.roundRect(sx,sy,sw,sh,8); ctx.stroke();
 
-  /* ===== right: hyetograph (top) + hydrograph (main) ===== */
-  const px0=sx+sw+16, px1=W-14;
-  const hyH=H*0.16, hyY=18;
-  const hgY=hyY+hyH+26, hgH=H-hgY-44;
+  /* ========== RIGHT: hyetograph + hydrograph ========== */
+  const px0=sx+sw+16, pxE=W-14;
+  const hyH=H*0.15, hyY=20;
+  const hgY=hyY+hyH+30, hgH=H-hgY-46;
   const tMax=48;
-  const xOf=tt=>px0+40+(tt/tMax)*(px1-px0-48);
-  /* hyetograph: bars down from top, φ line splits ER / losses */
+  const xOf=tt=>px0+44+(tt/tMax)*(pxE-px0-52);
   const iMax=Math.max(S.i*1.25,20);
   const yOfI=ii=>hyY+(ii/iMax)*hyH;
-  const u=urbanized();
   ctx.fillStyle="#9aa7bd"; ctx.font="11px Segoe UI"; ctx.textAlign="left";
-  ctx.fillText("hyetograph (rain intensity, plotted downward)", px0+40, hyY-4);
+  ctx.fillText("hyetograph — rain intensity (plotted downward)", px0+44, hyY-6);
   for(let tt=0;tt<tMax;tt+=0.25){
-    const raining = tt>=1 && tt<1+S.dur;
-    if(!raining) continue;
+    const rain2 = tt>=TSTORM && tt<TSTORM+S.dur;
+    if(!rain2) continue;
     const x=xOf(tt), x2=xOf(tt+0.25);
-    /* losses part (below φ) */
     ctx.fillStyle="rgba(122,103,72,.9)";
     ctx.fillRect(x,hyY,x2-x-0.5,yOfI(Math.min(S.i,u.phi))-hyY);
-    /* ER part */
     if (S.i>u.phi){
       ctx.fillStyle="rgba(77,184,255,.85)";
       ctx.fillRect(x,yOfI(u.phi),x2-x-0.5,yOfI(S.i)-yOfI(u.phi));
@@ -368,120 +591,105 @@ function draw(now){
   ctx.beginPath(); ctx.moveTo(xOf(0),yOfI(u.phi)); ctx.lineTo(xOf(tMax),yOfI(u.phi)); ctx.stroke();
   ctx.setLineDash([]);
   ctx.fillStyle="#f59e0b"; ctx.textAlign="right";
-  ctx.fillText("φ = "+u.phi.toFixed(1)+" mm/h", px1-4, yOfI(u.phi)+12);
-  ctx.fillStyle="#7a6748"; ctx.textAlign="left";
-  ctx.fillText("■ losses", px0+40, hyY+hyH+12);
-  ctx.fillStyle="#4db8ff"; ctx.fillText("■ effective rainfall", px0+110, hyY+hyH+12);
+  ctx.fillText("φ = "+u.phi.toFixed(1)+" mm/h", pxE-4, yOfI(u.phi)+12);
+  ctx.fillStyle="#a08055"; ctx.textAlign="left";
+  ctx.fillText("■ losses (infiltration)", px0+44, hyY+hyH+14);
+  ctx.fillStyle="#4db8ff"; ctx.fillText("■ effective rainfall", px0+192, hyY+hyH+14);
 
   /* hydrograph axes */
-  const qMax=Math.max(R.qp, R0?R0.qp:0)*1.12+1;
+  const qMax=(Math.max(R.qp, R0?R0.qp:0)*1.12+1);
   const yOfQ=q=>hgY+hgH-(q/qMax)*hgH;
-  ctx.strokeStyle="#2b3650"; ctx.strokeRect(px0+40,hgY,px1-px0-48,hgH);
-  ctx.font="11px Segoe UI"; ctx.fillStyle="#9aa7bd";
+  ctx.font="11px Segoe UI";
   for(let tt=0;tt<=tMax;tt+=6){
     const x=xOf(tt);
     ctx.strokeStyle="#1d2740"; ctx.beginPath(); ctx.moveTo(x,hgY); ctx.lineTo(x,hgY+hgH); ctx.stroke();
-    ctx.textAlign="center"; ctx.fillText(tt, x, hgY+hgH+16);
+    ctx.textAlign="center"; ctx.fillStyle="#9aa7bd"; ctx.fillText(tt, x, hgY+hgH+16);
   }
   const qStep=qMax>200?100:qMax>80?50:qMax>40?20:qMax>16?10:qMax>8?4:2;
   for(let q=0;q<=qMax;q+=qStep){
     const y=yOfQ(q);
-    ctx.strokeStyle="#1d2740"; ctx.beginPath(); ctx.moveTo(px0+40,y); ctx.lineTo(px1-8,y); ctx.stroke();
-    ctx.textAlign="right"; ctx.fillStyle="#9aa7bd"; ctx.fillText(q.toFixed(0), px0+36, y+4);
+    ctx.strokeStyle="#1d2740"; ctx.beginPath(); ctx.moveTo(px0+44,y); ctx.lineTo(pxE-8,y); ctx.stroke();
+    ctx.textAlign="right"; ctx.fillStyle="#9aa7bd"; ctx.fillText(q.toFixed(0), px0+40, y+4);
   }
+  ctx.strokeStyle="#2b3650"; ctx.strokeRect(px0+44,hgY,pxE-px0-52,hgH);
   ctx.textAlign="center"; ctx.fillStyle="#c9d6ea";
-  ctx.fillText("time since start (h)", (px0+px1)/2, H-12);
-  ctx.save(); ctx.translate(px0+12,hgY+hgH/2); ctx.rotate(-Math.PI/2);
+  ctx.fillText("time since start (h)", (px0+pxE)/2+18, H-14);
+  ctx.save(); ctx.translate(px0+14,hgY+hgH/2); ctx.rotate(-Math.PI/2);
   ctx.fillText("discharge Q (m³/s)",0,0); ctx.restore();
 
-  const plotTo = (jEnd, get, col, wd, dash) => {
-    ctx.strokeStyle=col; ctx.lineWidth=wd; ctx.setLineDash(dash||[]);
+  const step=Math.max(1,Math.round(0.1/DT));
+  const tracePath=(run,get,jEnd)=>{
     ctx.beginPath();
-    const step=Math.max(1,Math.round(0.1/DT));
     for(let jj=0;jj<=jEnd;jj+=step){
-      if (R.t[jj]>tMax) break;
+      if (run.t[jj]>tMax) break;
       const y=yOfQ(get(jj));
-      jj===0?ctx.moveTo(xOf(R.t[jj]),y):ctx.lineTo(xOf(R.t[jj]),y);
+      jj===0?ctx.moveTo(xOf(run.t[jj]),y):ctx.lineTo(xOf(run.t[jj]),y);
     }
-    ctx.stroke(); ctx.setLineDash([]);
   };
 
-  /* rural baseline overlay (full curve, faint) */
+  /* rural baseline (full, dashed) */
   if (S.cmp && R0){
-    ctx.globalAlpha=0.8;
-    const sv=R; // eslint-disable-line
-    ctx.strokeStyle="#34d399"; ctx.lineWidth=1.6; ctx.setLineDash([6,4]);
-    ctx.beginPath();
-    const step=Math.max(1,Math.round(0.1/DT));
-    for(let jj=0;jj<R0.t.length;jj+=step){
-      if (R0.t[jj]>tMax) break;
-      const y=yOfQ(R0.qd[jj]+R0.qb[jj]);
-      jj===0?ctx.moveTo(xOf(R0.t[jj]),y):ctx.lineTo(xOf(R0.t[jj]),y);
-    }
-    ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha=1;
+    ctx.strokeStyle="#34d399"; ctx.lineWidth=1.7; ctx.setLineDash([6,4]);
+    tracePath(R0, jj=>R0.qd[jj]+R0.qb[jj], R0.t.length-1);
+    ctx.stroke(); ctx.setLineDash([]);
     ctx.fillStyle="#34d399"; ctx.textAlign="left"; ctx.font="600 11px Segoe UI";
-    ctx.fillText("rural baseline (u = 0)", px0+48, hgY+14);
+    ctx.fillText("rural baseline (u = 0)", px0+52, hgY+16);
   }
-
-  /* baseflow separation shading up to current time */
+  /* baseflow separation shading up to now */
   if (S.sep){
-    ctx.fillStyle="rgba(52,211,153,.22)";
-    ctx.beginPath();
-    const step=Math.max(1,Math.round(0.1/DT));
-    ctx.moveTo(xOf(0),yOfQ(0));
-    for(let jj=0;jj<=j;jj+=step){ if(R.t[jj]>tMax)break;
-      ctx.lineTo(xOf(R.t[jj]),yOfQ(R.qb[jj])); }
+    ctx.fillStyle="rgba(52,211,153,.20)";
+    ctx.beginPath(); ctx.moveTo(xOf(0),yOfQ(0));
+    for(let jj=0;jj<=j;jj+=step){ if(R.t[jj]>tMax)break; ctx.lineTo(xOf(R.t[jj]),yOfQ(R.qb[jj])); }
     ctx.lineTo(xOf(Math.min(S.t,tMax)),yOfQ(0)); ctx.closePath(); ctx.fill();
-    ctx.fillStyle="rgba(77,184,255,.20)";
-    ctx.beginPath();
-    ctx.moveTo(xOf(0),yOfQ(R.qb[0]));
-    for(let jj=0;jj<=j;jj+=step){ if(R.t[jj]>tMax)break;
-      ctx.lineTo(xOf(R.t[jj]),yOfQ(R.qb[jj]+R.qd[jj])); }
-    for(let jj=j;jj>=0;jj-=step){ if(R.t[jj]>tMax)continue;
-      ctx.lineTo(xOf(R.t[jj]),yOfQ(R.qb[jj])); }
+    const grad=ctx.createLinearGradient(0,hgY,0,hgY+hgH);
+    grad.addColorStop(0,"rgba(77,184,255,.34)"); grad.addColorStop(1,"rgba(77,184,255,.08)");
+    ctx.fillStyle=grad;
+    ctx.beginPath(); ctx.moveTo(xOf(0),yOfQ(R.qb[0]));
+    for(let jj=0;jj<=j;jj+=step){ if(R.t[jj]>tMax)break; ctx.lineTo(xOf(R.t[jj]),yOfQ(R.qb[jj]+R.qd[jj])); }
+    for(let jj=j - (j%step);jj>=0;jj-=step){ if(R.t[jj]>tMax)continue; ctx.lineTo(xOf(R.t[jj]),yOfQ(R.qb[jj])); }
     ctx.closePath(); ctx.fill();
   }
-  /* baseflow line + total hydrograph traced to current t */
-  plotTo(j, jj=>R.qb[jj], "#34d399", 1.6, [4,3]);
-  plotTo(j, jj=>R.qb[jj]+R.qd[jj], "#e8edf6", 2.6);
-  /* moving point */
-  ctx.fillStyle="#4db8ff";
-  ctx.beginPath(); ctx.arc(xOf(Math.min(S.t,tMax)), yOfQ(qNow), 5, 0, 7); ctx.fill();
+  /* baseflow + total curves traced to now */
+  ctx.strokeStyle="#34d399"; ctx.lineWidth=1.6; ctx.setLineDash([4,3]);
+  tracePath(R, jj=>R.qb[jj], j); ctx.stroke(); ctx.setLineDash([]);
+  ctx.strokeStyle="#e8edf6"; ctx.lineWidth=2.6;
+  tracePath(R, jj=>R.qb[jj]+R.qd[jj], j); ctx.stroke();
+  /* moving head with glow */
+  const hx=xOf(Math.min(S.t,tMax)), hy2=yOfQ(qNow);
+  ctx.fillStyle="rgba(77,184,255,0.25)";
+  ctx.beginPath(); ctx.arc(hx,hy2,9,0,7); ctx.fill();
+  ctx.fillStyle="#4db8ff"; ctx.beginPath(); ctx.arc(hx,hy2,4.5,0,7); ctx.fill();
 
-  /* labels: limbs, peak, lag */
+  /* annotations */
   if (S.lab && S.t >= R.tp){
     ctx.font="600 11px Segoe UI";
-    const jr=idxAt(R.tp*0.6);
+    const jr=idxAt(Math.max(0.5,R.tp*0.6));
     ctx.fillStyle="#4db8ff"; ctx.textAlign="right";
-    ctx.fillText("rising limb ↗", xOf(R.t[jr])-4, yOfQ(R.qd[jr]+R.qb[jr])-8);
+    ctx.fillText("rising limb ↗", xOf(R.t[jr])-6, yOfQ(R.qd[jr]+R.qb[jr])-8);
     ctx.fillStyle="#f59e0b"; ctx.textAlign="center";
-    ctx.fillText("peak (crest)", xOf(R.tp), yOfQ(R.qp)-10);
-    const jrec=idxAt(Math.min(R.tp+ (S.t-R.tp)*0.7, tMax));
+    ctx.fillText("peak (crest)", xOf(R.tp), yOfQ(R.qp)-12);
     if (S.t > R.tp+2){
+      const jrec=idxAt(Math.min(R.tp+(S.t-R.tp)*0.7, tMax));
       ctx.fillStyle="#a78bfa"; ctx.textAlign="left";
-      ctx.fillText("recession limb ↘", xOf(R.t[jrec])+6, yOfQ(R.qd[jrec]+R.qb[jrec])-8);
+      ctx.fillText("recession limb ↘", xOf(R.t[jrec])+8, yOfQ(R.qd[jrec]+R.qb[jrec])-8);
     }
     if (S.sep){
       ctx.fillStyle="#34d399"; ctx.textAlign="left";
-      ctx.fillText("baseflow", px0+48, yOfQ(R.qb[idxAt(2)])-6);
+      ctx.fillText("baseflow", px0+52, yOfQ(R.qb[idxAt(2)])-6);
     }
-    /* lag-time bracket */
-    let m0=0,m1=0;
-    for(let jj=0;jj<R.t.length;jj++){ m0+=R.er[jj]; m1+=R.er[jj]*R.t[jj]; }
-    const tc=m0>0?m1/m0:1;
-    const yb=hgY+14;
+    const yb=hgY+16;
     ctx.strokeStyle="#ef4444"; ctx.lineWidth=1.3;
-    ctx.beginPath(); ctx.moveTo(xOf(tc),yb); ctx.lineTo(xOf(R.tp),yb); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(xOf(tc),yb-4); ctx.lineTo(xOf(tc),yb+4); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(xOf(R.tc),yb); ctx.lineTo(xOf(R.tp),yb); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(xOf(R.tc),yb-4); ctx.lineTo(xOf(R.tc),yb+4); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(xOf(R.tp),yb-4); ctx.lineTo(xOf(R.tp),yb+4); ctx.stroke();
     ctx.fillStyle="#ef4444"; ctx.textAlign="center";
-    ctx.fillText("lag "+R.lag.toFixed(1)+" h", (xOf(tc)+xOf(R.tp))/2, yb+14);
+    ctx.fillText("lag "+R.lag.toFixed(1)+" h", (xOf(R.tc)+xOf(R.tp))/2, yb+15);
   }
 
   requestAnimationFrame(draw);
 }
 
-/* ---------- boot ---------- */
+/* ================= boot ================= */
 resize(); recompute(); requestAnimationFrame(draw);
 </script>
 </body>
