@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Lecture 9 — Rainfall Frequency Analysis &amp; IDF Curves</title>
+<title>Lecture 9 — IDF Curves from a Real Gauge (Gumbel) &amp; the Rational Method Bridge</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
   :root{
@@ -16,12 +16,17 @@
   .panel{position:absolute; background:color-mix(in srgb, var(--panel) 92%, transparent);
     border:1px solid var(--line); border-radius:10px; padding:12px 14px;
     backdrop-filter:blur(6px); font-size:13px; line-height:1.45; z-index:2;}
-  #ui{left:12px; top:12px; width:252px; max-height:calc(100% - 24px); overflow-y:auto;}
-  #readout{right:12px; top:12px; width:300px; max-height:calc(100% - 24px); overflow-y:auto;}
-  #stage{position:absolute; inset:0; padding:12px 326px 12px 278px; display:flex;}
+  #ui{left:12px; top:12px; width:262px; max-height:calc(100% - 24px); overflow-y:auto;}
+  #readout{right:12px; top:12px; width:312px; max-height:calc(100% - 24px); overflow-y:auto;}
+  #stage{position:absolute; inset:0; padding:12px 338px 58px 288px; display:flex;}
   #wrap{flex:1; min-height:0; position:relative;}
   canvas.view{width:100%; height:100%; display:block; background:var(--panel);
     border:1px solid var(--line); border-radius:10px;}
+  #nav{position:absolute; left:50%; bottom:12px; transform:translateX(-50%);
+    display:flex; gap:6px; z-index:3;}
+  #nav button{background:var(--panel2); color:var(--dim); border:1px solid var(--line);
+    border-radius:8px; padding:7px 13px; font-size:12.5px; font-weight:600; cursor:pointer;}
+  #nav button.on{background:var(--sub); color:#fff; border-color:var(--sub);}
   h1{font-size:14px; margin-bottom:2px; color:var(--accent);}
   .sub{color:var(--dim); font-size:11px; margin-bottom:10px;}
   h2{font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--dim);
@@ -37,52 +42,63 @@
   .formula{font-family:Cambria,Georgia,serif; font-style:italic; font-size:12.5px;
     color:#c9d6ea; background:var(--panel2); border-radius:6px; padding:7px 9px; margin-top:6px;}
   .note{font-size:11px; color:var(--dim); margin-top:8px;}
+  .note ol{margin:4px 0 0 16px;}
+  .note li{margin:2px 0;}
   #chip{margin-top:8px; padding:8px 10px; border-radius:7px; text-align:center; font-weight:700;
-    font-size:13.5px; background:var(--sub); color:#fff;}
+    font-size:13px; background:var(--sub); color:#fff;}
+  .chips{display:flex; flex-wrap:wrap; gap:4px; margin:5px 0;}
+  .chips button{background:var(--panel2); color:var(--dim); border:1px solid var(--line);
+    border-radius:6px; padding:4px 8px; font-size:12px; font-weight:600; cursor:pointer;}
+  .chips button.on{background:var(--crit); color:#1a1205; border-color:var(--crit);}
+  .btnrow{display:flex; gap:6px; margin-top:6px; flex-wrap:wrap;}
+  .btnrow button, select.ctl{background:var(--panel2); color:var(--ink); border:1px solid var(--line);
+    border-radius:6px; padding:5px 9px; font-size:12px; cursor:pointer;}
+  .btnrow button.primary{background:var(--sub); border-color:var(--sub); color:#fff; font-weight:600;}
+  .btnrow button.gold{background:var(--crit); border-color:var(--crit); color:#1a1205; font-weight:600;}
+  .ok{color:var(--ok);} .warn{color:var(--crit);}
+  label.ck{display:flex; gap:6px; align-items:center; font-size:12px; margin-top:6px; color:var(--dim);}
   @media (max-width:1150px){
     html,body{overflow-y:auto; height:auto; min-height:100%;}
     body{display:flex; flex-direction:column;}
     .panel{position:static; width:auto; max-height:none; margin:10px 12px 0;}
     #ui{order:1;} #stage{order:2; position:static; padding:10px 12px;}
-    #readout{order:3; margin-bottom:12px;}
-    #wrap{flex:none; height:460px; width:100%;}
+    #readout{order:4; margin-bottom:12px;}
+    #nav{order:3; position:static; transform:none; margin:8px auto 0;}
+    #wrap{flex:none; height:520px; width:100%;}
   }
 </style>
 </head>
 <body>
 
 <div id="ui" class="panel">
-  <h1>IDF Curves — Gumbel (EV1)</h1>
-  <div class="sub">CVE2142 · Lecture 9 · Every curve is computed from the Gumbel
-  distribution fitted by the method of moments to a synthetic gauge's annual-maximum
-  statistics</div>
+  <h1>IDF Curves from Raw Rain — Gumbel (EV1)</h1>
+  <div class="sub">CVE2142 · Lecture 9 · Real Met Office gauge — <b>Drumalbin 00987,
+  Lanarkshire</b> (MIDAS-Open hourly rain, 1991–2024). Every number on screen is computed
+  live from the embedded record — nothing is faked.</div>
 
-  <h2>Annual-maximum statistics</h2>
-  <div>
-    <label class="row">Mean 1-h AM depth μ₁ₕ <span class="val" id="v-mu"></span></label>
-    <input type="range" id="s-mu" min="30" max="120" step="1" value="70">
+  <h2>① Extract annual maxima (AM)</h2>
+  <div class="note" style="margin-top:0">How the dataset is prepared, per duration D:
+    <ol>
+      <li>QC the years — keep only ≥90 % complete (<b>27 of 34</b> survive).</li>
+      <li>Slide a D-hour window over the hourly record; keep the <b>wettest position</b>.</li>
+      <li>Intensity = window depth ÷ D. One value per year → the AM series.</li>
+    </ol>
   </div>
-  <div>
-    <label class="row">Duration exponent η <span class="val" id="v-eta"></span></label>
-    <input type="range" id="s-eta" min="0.10" max="0.50" step="0.01" value="0.30">
-    <div class="note" style="margin-top:2px">μ(d) = μ₁ₕ·d^η — how depth grows with duration.</div>
+  <div class="chips" id="durChips"></div>
+  <div class="btnrow">
+    <button id="b-play" class="primary">▶ Play</button>
+    <select id="s-speed" class="ctl">
+      <option value="24">24 h/s</option>
+      <option value="48" selected>48 h/s</option>
+      <option value="120">120 h/s</option>
+    </select>
+    <button id="b-finish">Finish pass</button>
+    <button id="b-all">Extract all 6</button>
   </div>
-  <div>
-    <label class="row">Coeff. of variation Cv <span class="val" id="v-cv"></span></label>
-    <input type="range" id="s-cv" min="0.10" max="0.50" step="0.01" value="0.25">
-  </div>
-  <div>
-    <label class="row">Climate uplift <span class="val" id="v-cc"></span></label>
-    <input type="range" id="s-cc" min="0" max="40" step="1" value="0">
-    <div class="note" style="margin-top:2px">Scales all AM depths — dashed curves show
-    the present-day IDF for comparison.</div>
-  </div>
+  <div class="note">Dry spells fast-forward automatically. The window scan replicates the
+  published extraction exactly — each finished pass is checked against the archived AM value.</div>
 
-  <h2>Design point</h2>
-  <div>
-    <label class="row">Duration d <span class="val" id="v-d"></span></label>
-    <input type="range" id="s-d" min="0" max="100" step="1" value="44">
-  </div>
+  <h2>② Frequency — design point</h2>
   <div>
     <label class="row">Return period T <span class="val" id="v-T"></span></label>
     <input type="range" id="s-T" min="0" max="100" step="1" value="73">
@@ -92,30 +108,67 @@
     <input type="range" id="s-n" min="1" max="100" step="1" value="20">
   </div>
 
-  <div class="note"><b>Aha demo:</b> set T = 50 yr and n = 20 yr: the risk panel shows a
-  "rare" 50-year event still has a <b>33% chance</b> of striking at least once inside the
-  design life (Lecture 9, Example 4). Then push the climate-uplift slider and watch the
-  whole IDF family shift up — the design intensity for the same (d, T) grows.</div>
+  <h2>④ Design catchment — Rational method</h2>
+  <div>
+    <label class="row">Area A <span class="val" id="v-A"></span></label>
+    <input type="range" id="s-A" min="1" max="50" step="0.5" value="10">
+  </div>
+  <div>
+    <label class="row">Runoff coefficient C <span class="val" id="v-C"></span></label>
+    <input type="range" id="s-C" min="0.05" max="0.95" step="0.01" value="0.45">
+  </div>
+  <div>
+    <label class="row">Flow length L <span class="val" id="v-L"></span></label>
+    <input type="range" id="s-L" min="1000" max="10000" step="100" value="4000">
+  </div>
+  <div>
+    <label class="row">Slope S <span class="val" id="v-S"></span></label>
+    <input type="range" id="s-S" min="0.001" max="0.05" step="0.001" value="0.005">
+  </div>
+  <div class="chips" id="TdChips" style="margin-top:8px"></div>
+  <div>
+    <label class="row">Storm duration D <span class="val" id="v-Dd"></span></label>
+    <input type="range" id="s-Dd" min="0" max="100" step="1" value="50">
+  </div>
+  <label class="ck"><input type="checkbox" id="c-lock" checked> lock storm duration D = t<sub>c</sub> (Kirpich)</label>
+
+  <div class="btnrow" style="margin-top:10px">
+    <button id="b-ex4" class="gold">Example 4 defaults</button>
+    <button id="b-design" class="gold">Channel design defaults</button>
+  </div>
+
+  <div class="note"><b>Aha demo:</b> in stage ① play the 1-h pass, then the 24-h pass —
+  the winning windows sit in <b>different storms</b> (an August cloudburst vs a December
+  front): longer windows scoop more depth but lower intensity. Then in stage ④ look at the
+  Q<sub>p</sub>(D) curve: it peaks <b>exactly at D = t<sub>c</sub></b> — shorter storms never
+  wet the whole catchment, longer storms are weaker. That is why the design storm lasts t<sub>c</sub>.</div>
 </div>
 
 <div id="readout" class="panel">
-  <h2 style="margin-top:0">Gumbel fit at duration d</h2>
+  <h2 style="margin-top:0">Dataset — Drumalbin 00987</h2>
+  <table class="vals">
+    <tr><td>Record (hourly)</td><td>1991–2024</td></tr>
+    <tr><td>Usable years (≥90 %)</td><td>27 of 34</td></tr>
+    <tr><td>AM durations</td><td>1·2·3·6·12·24 h</td></tr>
+    <tr><td>Extraction check</td><td id="o-exv">0 / 6 verified</td></tr>
+  </table>
+  <div class="note" style="margin-top:4px">Sub-hourly durations (15–30 min) would need
+  pluviograph data — an hourly gauge cannot resolve them.</div>
+
+  <h2>② Gumbel fit (MoM) at D = <span id="o-D"></span></h2>
   <div class="formula">α = (√6/π)·σ ≈ 0.7797σ,&nbsp; ξ = μ − 0.5772α</div>
   <table class="vals">
-    <tr><td>Mean depth μ(d)</td><td id="o-mu"></td></tr>
-    <tr><td>Std dev σ(d)</td><td id="o-sd"></td></tr>
+    <tr><td>Mean intensity μ</td><td id="o-mu"></td></tr>
+    <tr><td>Std dev σ (n−1)</td><td id="o-sd"></td></tr>
     <tr><td>Scale α</td><td id="o-al"></td></tr>
     <tr><td>Location ξ</td><td id="o-xi"></td></tr>
   </table>
-
-  <h2>Design depth &amp; intensity</h2>
-  <div class="formula">x_T = ξ + α·y_T,&nbsp; y_T = −ln[−ln(1−1/T)]</div>
+  <div class="formula">i_T = ξ + α·y_T,&nbsp; y_T = −ln[−ln(1−1/T)]</div>
   <table class="vals">
     <tr><td>Reduced variate y_T</td><td id="o-yT"></td></tr>
-    <tr><td>Depth x_T</td><td id="o-xT"></td></tr>
-    <tr><td>Intensity i = x_T/d</td><td id="o-i"></td></tr>
+    <tr><td>Design intensity i_T</td><td id="o-iT"></td></tr>
+    <tr><td>Design depth i_T·D</td><td id="o-depth"></td></tr>
   </table>
-  <div id="chip"></div>
 
   <h2>Risk over the design life</h2>
   <div class="formula">P(X≥1) = 1 − (1−p)ⁿ,&nbsp; p = 1/T</div>
@@ -125,161 +178,754 @@
     <tr><td>Exactly twice in n yr</td><td id="o-r2"></td></tr>
     <tr><td>At least once in n yr</td><td id="o-r1p"></td></tr>
   </table>
-  <div class="note">Binomial: P(X=r) = C(n,r)·pʳ(1−p)ⁿ⁻ʳ. With T = 50, n = 20 this
-  reproduces Example 4: 0.272 / (n=15: 0.032) / 0.332.</div>
+  <div class="note">Binomial P(X=r) = C(n,r)·pʳ(1−p)ⁿ⁻ʳ. Example 4 (T=50): n=20 →
+  0.272; twice, n=15 → 0.032; ≥once, n=20 → 0.332.</div>
+
+  <h2>③ Fitted IDF equation (Sherman)</h2>
+  <div class="formula">i = a·T<sup>m</sup> / (D + b)<sup>n</sup></div>
+  <table class="vals">
+    <tr><td>a</td><td id="o-sa"></td></tr>
+    <tr><td>m</td><td id="o-sm"></td></tr>
+    <tr><td>b</td><td id="o-sb"></td></tr>
+    <tr><td>n</td><td id="o-sn"></td></tr>
+    <tr><td>RMSE over 36 points</td><td id="o-rmse"></td></tr>
+  </table>
+
+  <h2>④ Rational method Q<sub>p</sub> = C·i·A/3.6</h2>
+  <div class="formula">t_c = 0.0195·L<sup>0.77</sup>·S<sup>−0.385</sup> min (Kirpich)</div>
+  <table class="vals">
+    <tr><td>Time of conc. t_c</td><td id="o-tc"></td></tr>
+    <tr><td>Storm duration D</td><td id="o-Dd"></td></tr>
+    <tr><td>i(D, T) from IDF</td><td id="o-ides"></td></tr>
+    <tr><td>Peak discharge Q_p</td><td id="o-Qp"></td></tr>
+    <tr><td>SI unit cross-check</td><td id="o-unit"></td></tr>
+    <tr><td>P(≥1 exceed. in n yr)</td><td id="o-riskdes"></td></tr>
+  </table>
+  <div id="chip"></div>
 </div>
 
 <div id="stage"><div id="wrap"><canvas id="cv" class="view"></canvas></div></div>
+<div id="nav">
+  <button data-st="1" class="on">① Extract AM</button>
+  <button data-st="2">② Fit Gumbel</button>
+  <button data-st="3">③ Build IDF</button>
+  <button data-st="4">④ Design Q&#8346;</button>
+</div>
 
 <script>
 "use strict";
 const $ = id => document.getElementById(id);
 const cv = $("cv"), ctx = cv.getContext("2d");
 
-/* ---------- state ---------- */
-const S = {mu:70, eta:0.30, cv:0.25, cc:0, dIdx:44, TIdx:73, n:20};
+/* ================= embedded data — Drumalbin 00987 (MIDAS-Open, OGL) ============= */
+/* Annual-maximum intensities (mm/h) for 27 QC-passing years, six durations.
+   Identical to the published ams_idf.csv of the Statistical Hydrologist's Notebook. */
+const YEARS=[1992,1993,1994,1999,2000,2001,2002,2003,2004,2005,2006,2007,2009,2010,2011,
+  2012,2013,2014,2015,2016,2017,2019,2020,2021,2022,2023,2024];
+const AMS={
+ 1:[7.6,7.6,12.4,7.2,14.8,12.8,7.2,7.2,8.4,7,10.8,8.4,11.6,11.8,9.6,6,7.8,8.4,11,8.8,7.4,8.4,10.4,7,16,8.6,7.4],
+ 2:[5.7,7.3,9.4,4.2,8.5,7.6,5.6,5.6,7.9,5.6,7.3,5.2,6.6,7.5,6,5.6,6.6,5.5,7.6,6.2,5.9,5.8,5.6,5.8,9.3,5.7,6.3],
+ 3:[4.4,6.0667,6.6,3.5333,6,5.4667,4.5333,4.4,7.0667,4.9333,5.2667,4.2667,4.4667,5.2,5.2667,4.4,6.0667,4.4667,5.8,5.8,4.2667,4.6667,4.0667,4.6667,7.8667,4.2667,6.2667],
+ 6:[3,3.3333,4.1,3.2333,3.5,5.2333,3,2.8333,4.1333,3.7333,4.3667,3.2333,3.1,3.3667,3.9333,3.4,4.1,2.9667,3.1,3.5,3.1667,3.4,2.9333,3.5667,5.8333,3.7333,3.8],
+ 12:[2.0333,1.8667,2.5333,2.5167,2.1667,2.8167,1.75,1.8,2.75,2.55,3.2833,2.3333,2.2833,1.7667,2.3333,2.3167,2.9167,2.5167,2.35,1.9333,2.3167,2.5,2.6,3.05,4.15,1.9,2],
+ 24:[1.3333,1.05,1.5583,1.6417,1.125,1.5333,1.4167,0.95,1.9167,1.7833,2.075,1.1917,1.4,1.0333,1.3083,1.375,1.5583,1.8417,1.6917,1.0917,1.5333,1.8167,1.9083,2.0083,2.1333,1.4,1.175]};
+const DUR=[1,2,3,6,12,24];
+const IY2022 = YEARS.indexOf(2022);
 
-/* duration slider is log-spaced 5 min … 24 h; T slider log-spaced 1.01 … 200 */
-const dMin = 5/60, dMax = 24;
-const dOf = idx => dMin*Math.pow(dMax/dMin, idx/100);
-const TOf = idx => 1.25*Math.pow(200/1.25, idx/100);
-const snapT = T => {           // snap near standard return periods for clean teaching values
-  const std=[2,5,10,25,50,100];
-  for (const s of std) if (Math.abs(T-s)/s < 0.06) return s;
-  return T;
-};
+/* 2022 hourly rainfall (mm), run-length encoded: zN = N dry hours, n = missing (NA). */
+const RAIN_RLE="z1,0.2,0.2,z7,0.2,0.2,z6,0.2,1.6,3.6,z23,0.2,z8,0.2,z4,0.2,2,1.4,z1,0.6,0.8,z2,0.4,z62,0.2,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,z1,0.2,z2,0.2,z4,0.2,0.4,0.2,z6,0.4,z2,0.4,z4,1.4,0.2,0.8,z23,0.2,z5,0.6,0.4,z117,0.2,0.2,z68,0.4,0.6,0.2,z4,0.2,z3,0.2,0.6,z181,0.2,z4,0.2,z16,0.2,z34,0.2,z3,0.2,z2,0.2,0.4,z1,0.4,z24,0.4,0.8,3.6,1.2,0.6,z1,0.6,0.6,z21,0.2,z2,0.2,z5,0.2,z22,0.2,0.2,0.4,0.4,z1,0.2,z16,0.2,z15,0.2,0.4,1.8,0.4,z11,0.2,z1,0.8,1.2,1.4,0.2,0.2,0.2,z3,0.2,z7,0.2,z1,0.2,z1,0.2,0.4,0.4,0.6,0.6,1,0.8,0.2,1.4,1.6,0.4,0.8,1,0.8,0.2,0.2,0.4,0.2,z2,0.2,z1,0.8,0.2,0.6,0.8,0.4,0.2,1,1.4,z23,0.2,z1,0.2,0.2,z4,0.2,z2,0.2,0.4,0.8,0.2,z3,0.2,z2,0.2,0.2,z16,0.2,0.6,1,z1,1,0.4,0.8,0.8,z4,0.6,0.2,0.2,0.8,0.6,0.4,z1,0.2,z1,0.2,z3,0.2,z2,0.6,2,1.8,1.6,0.2,z33,0.8,1.4,0.4,z1,0.6,z1,1.2,1.2,z1,0.2,z5,0.2,0.6,0.2,z2,1,0.2,z3,0.2,z9,0.4,2.8,1.8,1,1.6,1.6,2.2,1.8,1,0.6,0.6,0.2,0.4,0.8,1.4,1,2,0.6,0.4,0.2,1,0.2,0.2,0.2,z4,0.2,z15,2.4,2,0.4,0.6,0.6,z1,0.2,z1,0.8,z7,0.2,z1,0.2,1.2,1.6,0.8,1.8,0.6,z5,0.4,z1,2,2.8,2,0.2,z1,0.8,z1,0.4,0.2,z2,0.2,0.2,z3,0.2,z2,0.2,0.2,0.8,2.2,z8,0.2,z8,1,1,0.8,0.2,1.4,1.6,z1,0.4,0.2,z1,0.4,0.2,z1,0.2,z1,0.2,z5,0.2,z1,0.2,0.4,0.4,0.4,0.8,0.4,0.4,1.2,1,z10,0.2,1.6,2.6,2.6,3.4,1.6,0.6,1,1,0.8,1.6,0.2,1,z3,0.4,1,0.4,z1,0.2,z1,0.2,z2,0.4,0.6,2.4,1.2,2.4,1,0.2,z8,0.2,0.4,z11,0.4,z2,1.6,1.2,1.4,0.2,z5,0.2,z1,0.4,0.2,z12,0.4,0.2,0.2,z5,2.8,2,0.8,1.8,0.8,z4,0.2,z12,1.2,0.2,0.2,0.6,0.4,0.8,1.2,0.6,0.6,0.2,z3,0.2,z72,0.2,z2,0.4,z1,0.2,z2,0.2,0.6,0.4,z3,0.2,z1,0.8,z14,0.2,z60,0.8,z4,0.2,z1,0.2,0.2,z8,1.2,1.6,0.2,0.2,z14,0.2,z79,0.8,1.8,1.6,0.2,z3,0.2,z16,0.2,0.2,0.2,0.2,z8,0.2,z16,0.2,z2,0.6,z12,0.4,0.6,0.4,0.6,2,0.4,0.4,0.8,0.6,z1,1,z2,0.2,0.4,0.8,0.8,1.4,0.4,0.4,1.6,0.2,z10,0.2,1,2.6,2.2,0.6,0.4,0.2,0.2,z28,0.2,z2,0.2,2.8,1.8,1,z36,0.4,0.6,0.6,0.6,0.4,0.6,0.4,0.6,z14,0.2,z10,0.2,z207,0.2,z85,0.8,0.6,0.6,0.8,0.2,z5,0.2,z1,0.4,0.2,z23,0.2,z1,0.2,z1,0.2,z1,0.2,0.4,z16,0.6,z8,0.2,z1,0.2,z43,0.6,z25,0.2,z8,0.4,0.6,0.2,0.8,1,0.8,0.4,0.2,0.4,z2,0.4,0.8,1,0.8,0.2,0.2,0.2,0.2,z3,0.2,0.4,0.2,z1,1.4,0.2,z7,0.4,z1,0.2,1.8,0.6,z3,0.8,0.2,z1,0.6,0.2,z2,0.2,z2,0.2,z23,0.2,z76,1,z8,0.2,z2,0.2,z9,0.2,0.6,1.6,1.2,0.4,z1,0.2,0.4,0.2,z4,0.2,z1,0.2,0.2,0.2,0.4,z39,0.2,z69,0.2,0.2,z1,0.2,z3,0.2,z5,0.2,z165,0.2,z125,0.2,0.4,0.4,0.6,z2,0.8,2.8,1.6,0.6,z1,0.2,z2,0.2,z58,0.2,z7,0.2,1.4,1,0.4,z3,0.4,z3,0.6,0.2,z25,0.2,z9,0.2,z1,0.2,0.4,z3,0.2,0.2,1.4,z1,1.4,1.4,0.2,z3,1.4,z68,0.2,z2,0.8,0.6,0.6,0.4,z2,0.8,z2,0.8,z12,0.4,0.4,z2,2,z1,0.2,z2,1.6,z2,0.4,z2,0.2,z8,1.2,0.2,z7,1.4,z5,0.2,z2,0.2,z10,0.6,0.4,0.6,2.2,z1,0.6,0.6,0.2,z1,0.2,0.4,z52,0.2,z2,0.2,z9,0.2,z3,0.4,0.6,0.4,0.2,2.2,0.6,z6,0.2,z8,0.2,z20,0.8,1.2,0.2,z4,0.8,1.2,z16,0.2,0.2,1.4,z1,0.2,z38,0.2,1.8,0.4,0.2,z7,0.6,z10,0.6,z10,0.2,z9,1,0.2,z6,0.6,0.2,0.2,z10,0.2,0.2,0.2,z8,0.6,z17,0.6,z3,0.8,0.2,z11,0.2,z1,0.4,z1,0.2,z3,0.4,0.4,z1,0.2,z4,0.2,0.2,z1,0.2,z2,0.2,z2,0.2,z3,0.2,z3,0.2,z5,0.2,0.2,z73,0.2,z1,0.6,0.2,0.4,z1,0.2,z1,0.4,z8,2,2.2,0.2,z9,0.2,z13,0.4,2.2,0.6,z8,0.8,0.2,z161,0.4,0.6,0.6,1.2,1.6,2.4,0.4,0.2,1.4,z3,0.8,z2,3.4,1.4,z1,1.8,z2,0.2,0.8,z4,0.2,0.2,z16,0.2,z17,6.2,z25,0.2,z1,0.2,0.8,z1,0.2,0.2,z6,2.8,0.4,z1,0.2,z4,0.2,0.2,z1,0.2,z16,0.2,0.2,z88,1,z3,1.2,3.6,0.8,0.2,z35,0.2,z50,0.2,z1,0.4,0.2,z65,0.8,z19,0.4,0.2,z1,1.6,z2,0.6,1.2,z2,0.2,0.4,z15,1,z10,0.2,0.8,0.8,0.2,z1,0.2,z1,0.2,z2,0.4,z1,0.2,z2,2.2,z8,0.4,z1,0.4,0.2,z23,1,z2,0.4,z1,0.4,0.4,0.6,z5,0.2,z3,0.2,0.2,z1,0.6,z19,0.8,0.4,z5,0.2,z1,0.4,z20,8.4,2.6,z11,0.2,z2,1,6.8,1.4,z10,0.6,0.2,z3,0.2,z24,0.2,z5,0.2,z7,0.2,z15,0.2,z20,1,z9,0.2,z59,0.2,z146,0.2,z1,0.2,0.2,z1,0.2,z106,0.2,z76,1.8,z12,0.2,z4,0.2,z3,2,z1,0.2,z2,0.2,z14,4.2,0.2,1.6,0.4,z6,0.2,0.2,0.2,z6,0.8,2.6,0.2,z5,0.2,z2,0.2,z58,0.2,z38,0.2,z2,0.2,0.2,z1,0.4,z29,0.8,z28,0.2,1,0.4,1.6,0.2,z1,0.2,z1,0.2,z1,0.2,0.2,z2,0.6,z27,0.2,0.2,z1,0.4,0.2,z11,0.8,0.8,1.4,0.2,z26,1,0.2,z3,0.2,z217,0.6,z13,0.4,16,0.6,z2,1.6,1,1.4,0.6,z1,0.2,z1,1,1.8,2,z6,2,0.8,0.8,1,z1,0.2,0.2,z1,0.2,z7,0.2,0.2,0.2,z45,0.2,z20,2,2.8,z11,0.8,0.8,0.2,z1,0.4,z24,0.2,z23,0.6,0.2,0.2,1.6,z36,0.2,1.6,4.8,3,1.4,0.4,0.2,0.4,z45,0.2,0.2,z6,3.4,0.2,2,z12,0.2,z117,0.2,z55,0.4,z7,0.2,z2,0.6,1.8,z6,0.8,0.4,z16,0.2,z1,0.2,0.6,3.2,0.4,z29,0.2,8,3.6,0.2,z29,0.8,z1,0.2,z1,0.2,z12,1.8,0.8,5.8,8.4,3.2,4.2,3,0.2,0.2,0.2,z1,0.2,z4,0.2,0.2,0.4,0.6,z54,1.6,2.4,0.8,0.4,0.4,1.8,0.4,0.6,0.2,z103,0.2,z58,1.2,1,z1,0.2,z72,2.2,0.4,z1,0.2,0.4,1,0.4,1,1.6,1.4,0.4,z1,0.2,z33,0.2,z41,0.2,z2,0.2,z1,0.2,0.2,z17,0.6,z43,0.2,z11,0.2,z32,0.4,2.4,5,3.4,5.2,0.4,z5,0.8,3.8,z2,0.4,0.2,3.4,0.2,0.4,1.8,0.4,0.2,0.6,0.2,z1,0.2,z7,0.6,z53,0.2,z4,0.2,0.2,2.2,2,0.8,0.4,1.2,z1,0.2,0.2,z5,0.2,1.2,0.8,0.2,0.8,0.8,0.4,0.2,0.2,0.2,z2,0.2,z1,0.6,0.2,0.6,1,z3,0.6,0.6,z3,0.6,z8,0.2,4,z7,1.2,1.8,z1,0.4,z3,0.2,0.4,0.8,0.2,0.2,0.6,0.4,z2,0.2,0.8,0.4,z2,0.6,3.4,0.4,0.4,z2,0.2,0.2,z32,0.4,z6,0.2,0.2,0.6,1,2,3,2.6,0.8,z8,0.2,z11,0.2,z36,1,z1,0.2,0.6,0.2,z32,0.6,0.4,0.8,z7,0.6,0.8,0.4,1.2,0.4,z2,0.4,z1,0.4,0.2,z11,0.2,z2,0.6,3.8,0.6,z11,0.8,z1,0.4,z1,0.6,0.2,z1,0.2,z1,0.2,0.6,z1,0.2,z12,0.2,z2,0.4,1.2,2.2,z2,0.4,z7,0.6,0.2,z7,0.2,z49,0.2,0.2,z1,0.4,0.6,0.8,0.2,z4,0.2,0.6,0.6,0.4,2.4,2,0.2,0.8,1.2,0.8,0.6,0.4,0.4,0.4,0.2,z1,0.4,z3,0.2,z11,0.4,1,1.2,z10,0.4,1.6,1.2,0.8,1,z11,0.2,z12,0.4,0.4,1.2,1.2,0.6,0.2,0.2,0.2,0.2,0.4,1.2,0.4,0.8,z5,0.2,z40,0.6,0.8,0.2,0.4,0.2,0.8,1,z1,2.8,5.8,2.4,z1,0.2,z19,0.4,0.6,z8,0.2,z1,0.4,z10,0.8,1.2,z10,0.2,z16,1,0.6,z3,0.4,0.2,1,0.2,z15,2,z2,0.2,0.2,0.2,0.2,1,z9,0.2,z1,0.2,z4,0.4,0.8,z1,0.2,z11,0.2,0.6,3.8,2,z2,0.2,z14,0.2,z1,0.4,z9,4.2,1.4,5.4,3.8,4.2,1.6,3.4,0.8,0.8,0.6,0.2,0.6,0.6,z28,0.2,z20,0.2,z5,0.4,0.2,z2,0.2,0.2,z1,0.4,z4,0.2,z10,1.4,4,6.4,5.8,2.4,0.2,0.2,z4,0.2,0.2,z11,0.8,0.6,0.8,0.2,1.4,0.4,0.4,z4,0.2,0.2,0.6,0.2,0.4,z2,0.4,z7,0.2,5.2,2.2,0.4,0.2,z2,0.2,2,z1,0.8,z3,0.2,1.2,z19,0.2,z1,0.2,0.2,z44,0.6,z71,0.4,0.2,z2,0.2,z7,0.2,0.4,0.4,1.2,1.8,2.6,1.6,1.8,0.4,z1,0.4,0.4,0.2,z33,0.8,0.4,0.8,0.4,z1,0.2,0.2,0.2,0.2,1,1.4,1.2,0.2,0.2,z3,0.2,0.6,0.2,0.4,0.4,1,1,0.4,z2,0.2,z2,0.2,z1,0.2,z11,0.2,z21,0.2,3,3.2,3.8,0.6,0.2,z1,0.2,0.6,z1,0.2,z1,1,z9,0.2,z45,0.2,z13,0.6,0.2,z8,0.2,z16,1,1.4,0.6,0.2,z1,0.4,z1,0.2,z1,0.4,z34,0.2,0.2,z1,0.2,z8,0.2,2,0.8,1,z17,0.2,z5,0.4,1.6,z2,0.2,z2,0.2,z51,0.2,z23,0.2,z82,0.2,z38,0.2,z70,0.2,z21,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,z96,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,z12,0.2,0.2,z3,0.2,0.2,z1,1.8,0.2,z19,0.2,z21,0.2,z8,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,z21,0.2,0.8,z1,0.2,z4,0.2,z6,0.2,z15,0.2,1.2,z25,0.4,0.8,1.2,0.8,0.2,z9,0.4,0.8,z6,0.8,2.8,1.8,3,0.6,1.2,0.8,1.6,z5,0.6,z1,0.2,z1,0.4,z2,0.2,z4,0.6,0.6,0.2,z1,2.8,2.4,1.4,z9,0.2,0.6,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,z2,0.2,1.2,0.4,0.6,0.2,0.6,z4,0.6,z7,0.4,0.6,1.6,1.6,z4,0.4,0.6,0.2,z3,0.2,z4,0.2,2.6,4,5,2.2,2.8,3.6,6.4,12.2,5,5,0.8,z4,0.2,0.2,0.2,z1,0.2,z1,0.2,0.4,z2,0.2,1.4,2.2,0.6,z8,0.2,z1,0.6,2.2,1.2,0.4,0.2,0.4,0.4";
+function decodeRain(s){
+  const a=[];
+  for(const t of s.split(",")){
+    if(t[0]==="z"){ for(let k=+t.slice(1);k>0;k--) a.push(0); }
+    else if(t==="n") a.push(NaN);
+    else a.push(+t);
+  }
+  return a;
+}
+const RAIN = decodeRain(RAIN_RLE);            // 8760 hourly values, 2022
+/* prefix sums with NA bookkeeping so incomplete windows are skipped (matches
+   slider::slide_dbl(..., .complete=TRUE) in the published analysis) */
+const PSUM=[0], PNA=[0];
+for(let i=0;i<RAIN.length;i++){
+  PSUM.push(PSUM[i]+(isNaN(RAIN[i])?0:RAIN[i]));
+  PNA.push(PNA[i]+(isNaN(RAIN[i])?1:0));
+}
+function winDepth(iEnd,D){                    // depth of window ending at hour iEnd
+  const a=iEnd-D+1;
+  if(a<0 || PNA[iEnd+1]-PNA[a]>0) return NaN;
+  return PSUM[iEnd+1]-PSUM[a];
+}
+const depthCache={};
+function depthSeries(D){
+  if(depthCache[D]) return depthCache[D];
+  const s=new Float64Array(RAIN.length);
+  for(let i=0;i<RAIN.length;i++) s[i]=winDepth(i,D);
+  return depthCache[D]=s;
+}
 
-/* ---------- physics ---------- */
-const EULER = 0.5772156649;
-function gumbelAt(d){                       // d in hours → {mu,sd,al,xi} in mm
-  const up = 1 + S.cc/100;
-  const mu = S.mu*Math.pow(d,S.eta)*up;
-  const sd = S.cv*mu;
-  const al = Math.sqrt(6)/Math.PI*sd;
-  return {mu, sd, al, xi: mu - EULER*al};
+/* ================= physics: Gumbel MoM, quantiles, Sherman NLS, Rational ========= */
+const EULER=0.5772156649;
+const GUM={};                                  // per-duration {mu,sd,al,xi}
+for(const D of DUR){
+  const x=AMS[D], n=x.length;
+  const mu=x.reduce((a,b)=>a+b,0)/n;
+  const sd=Math.sqrt(x.reduce((a,b)=>a+(b-mu)**2,0)/(n-1));   // n−1, as in R/Excel
+  const al=Math.sqrt(6)*sd/Math.PI;
+  GUM[D]={mu,sd,al,xi:mu-EULER*al,n};
 }
 const yT = T => -Math.log(-Math.log(1-1/T));
-function depth(d,T,uplifted=true){
-  const saved = S.cc; if(!uplifted) S.cc = 0;
-  const g = gumbelAt(d); if(!uplifted) S.cc = saved;
-  return g.xi + g.al*yT(T);
-}
-const intensity = (d,T,up=true) => depth(d,T,up)/d;
+const iGum = (D,T) => GUM[D].xi + GUM[D].al*yT(T);
 function binom(n,r,p){
-  let c=1; for(let i=0;i<r;i++) c = c*(n-i)/(i+1);
+  let c=1; for(let i=0;i<r;i++) c=c*(n-i)/(i+1);
   return c*Math.pow(p,r)*Math.pow(1-p,n-r);
 }
-const fmtDur = d => d<1 ? Math.round(d*60)+" min" : d.toFixed(d<3?1:0)+" h";
 
-/* ---------- readout ---------- */
-function update(){
-  const d = dOf(S.dIdx), T = snapT(TOf(S.TIdx)), n = S.n;
-  $("v-mu").textContent = S.mu+" mm"; $("v-eta").textContent = S.eta.toFixed(2);
-  $("v-cv").textContent = S.cv.toFixed(2); $("v-cc").textContent = "+"+S.cc+" %";
-  $("v-d").textContent = fmtDur(d); $("v-T").textContent = T.toFixed(T<10?1:0)+" yr";
-  $("v-n").textContent = n+" yr";
-  const g = gumbelAt(d), y = yT(T), x = g.xi + g.al*y;
-  $("o-mu").textContent = g.mu.toFixed(1)+" mm";
-  $("o-sd").textContent = g.sd.toFixed(1)+" mm";
-  $("o-al").textContent = g.al.toFixed(2)+" mm";
-  $("o-xi").textContent = g.xi.toFixed(1)+" mm";
-  $("o-yT").textContent = y.toFixed(3);
-  $("o-xT").textContent = x.toFixed(1)+" mm";
-  $("o-i").textContent  = (x/d).toFixed(1)+" mm/h";
-  $("chip").textContent = fmtDur(d)+" · T = "+T.toFixed(0)+" yr  →  "+(x/d).toFixed(0)+" mm/h";
-  const p = 1/T;
-  $("o-p").textContent   = p.toFixed(4);
-  $("o-r1").textContent  = binom(n,1,p).toFixed(3);
-  $("o-r2").textContent  = binom(n,2,p).toFixed(4);
-  $("o-r1p").textContent = (1-Math.pow(1-p,n)).toFixed(3);
-  drawPlot();
+/* Sherman i = a·T^m/(D+b)^n fitted by Levenberg–Marquardt on the 36 Gumbel
+   design intensities — same objective as the published nls() fit. */
+const TSET=[2,5,10,25,50,100];
+const SH=(function fitSherman(){
+  const data=[];
+  for(const D of DUR) for(const T of TSET) data.push({D,T,i:iGum(D,T)});
+  const f=(p,D,T)=>p[0]*Math.pow(T,p[1])/Math.pow(D+p[2],p[3]);
+  let p=[20,0.2,0.5,0.8], lam=1e-3;
+  const res=q=>data.map(d=>f(q,d.D,d.T)-d.i);
+  for(let it=0;it<300;it++){
+    const r=res(p), sse=r.reduce((a,b)=>a+b*b,0);
+    const J=data.map(d=>p.map((_,j)=>{
+      const q=p.slice(), h=Math.max(1e-6,Math.abs(p[j])*1e-6); q[j]+=h;
+      return (f(q,d.D,d.T)-f(p,d.D,d.T))/h;
+    }));
+    const m=4, A=Array.from({length:m},()=>new Array(m+1).fill(0));
+    for(let k=0;k<data.length;k++)
+      for(let a=0;a<m;a++){
+        A[a][m]-=J[k][a]*r[k];
+        for(let b=0;b<m;b++) A[a][b]+=J[k][a]*J[k][b];
+      }
+    for(let a=0;a<m;a++) A[a][a]*=(1+lam);
+    for(let c=0;c<m;c++){
+      let piv=c; for(let rr=c+1;rr<m;rr++) if(Math.abs(A[rr][c])>Math.abs(A[piv][c])) piv=rr;
+      [A[c],A[piv]]=[A[piv],A[c]];
+      for(let rr=0;rr<m;rr++){ if(rr===c)continue;
+        const fac=A[rr][c]/A[c][c];
+        for(let cc=c;cc<=m;cc++) A[rr][cc]-=fac*A[c][cc]; }
+    }
+    const dx=A.map((row,a)=>row[m]/row[a]);
+    const pn=p.map((v,j)=>v+dx[j]);
+    const sn=res(pn).reduce((a,b)=>a+b*b,0);
+    if(sn<sse){ p=pn; lam=Math.max(lam*0.5,1e-12); if(sse-sn<1e-13) break; }
+    else lam*=3;
+  }
+  const rmse=Math.sqrt(res(p).reduce((a,b)=>a+b*b,0)/data.length);
+  return {a:p[0],m:p[1],b:p[2],n:p[3],rmse};
+})();
+function iSherman(D,T){
+  if(D+SH.b<=0.05) return NaN;
+  return SH.a*Math.pow(T,SH.m)/Math.pow(D+SH.b,SH.n);
 }
-["mu","eta","cv","cc","n"].forEach(k=>{
-  $("s-"+k).addEventListener("input", ()=>{ S[k]=+$("s-"+k).value; update(); });
+const kirpichTc = (L,S)=> 0.0195*Math.pow(L,0.77)*Math.pow(S,-0.385)/60;   // hours
+
+/* ================= state ================= */
+const S={ stage:1,
+  TIdx:73, n:20,
+  A:10, C:0.45, L:4000, slope:0.005, Tdes:100, DdIdx:50, lockD:true };
+const ext={ D:1, h:0, playing:false, speed:48, record:NaN, recEnd:-1, done:false, found:{} };
+const TOf = idx => 1.25*Math.pow(200/1.25, idx/100);
+const snapT = T => { const std=[2,5,10,25,50,100];
+  for(const s of std) if(Math.abs(T-s)/s<0.06) return s; return T; };
+const DdOf = idx => 0.5*Math.pow(24/0.5, idx/100);           // design-storm duration slider
+const fmtDur = d => d<1 ? Math.round(d*60)+" min" : (d<3? d.toFixed(1): d.toFixed(0))+" h";
+const Tcol={2:"#34d399",5:"#4db8ff",10:"#3b82f6",25:"#a78bfa",50:"#f59e0b",100:"#ef4444"};
+
+/* ================= extraction engine ================= */
+function resetPass(){
+  ext.h=ext.D-1; ext.record=NaN; ext.recEnd=-1; ext.done=false;
+}
+function stepExtraction(dtReal){
+  const hoursBudget = ext.speed*dtReal;
+  let units = hoursBudget;                     // wet hour costs 1 unit, dry costs 1/30
+  const ds=depthSeries(ext.D);
+  while(units>0 && ext.h<RAIN.length-1){
+    ext.h++;
+    const d=ds[ext.h];
+    if(!isNaN(d) && (isNaN(ext.record)||d>ext.record)){ ext.record=d; ext.recEnd=ext.h; }
+    units -= (d>0 ? 1 : 1/30);
+  }
+  if(ext.h>=RAIN.length-1) finishPass();
+}
+function finishPass(){
+  const ds=depthSeries(ext.D);
+  let best=NaN,bi=-1;
+  for(let i=0;i<ds.length;i++) if(!isNaN(ds[i]) && (isNaN(best)||ds[i]>best)){best=ds[i];bi=i;}
+  ext.record=best; ext.recEnd=bi; ext.h=RAIN.length-1;
+  ext.done=true; ext.playing=false; $("b-play").textContent="▶ Play";
+  const iv=best/ext.D, official=AMS[ext.D][IY2022];
+  ext.found[ext.D]={depth:best,end:bi,i:iv,ok:Math.abs(iv-official)<1e-3};
+  update();
+}
+
+/* ================= UI wiring ================= */
+DUR.forEach(D=>{
+  const b=document.createElement("button");
+  b.textContent=D+" h"; b.dataset.d=D; if(D===1) b.classList.add("on");
+  b.onclick=()=>{ ext.D=D; resetPass();
+    document.querySelectorAll("#durChips button").forEach(x=>x.classList.toggle("on",+x.dataset.d===D));
+    update(); };
+  $("durChips").appendChild(b);
 });
-$("s-d").addEventListener("input", ()=>{ S.dIdx=+$("s-d").value; update(); });
-$("s-T").addEventListener("input", ()=>{ S.TIdx=+$("s-T").value; update(); });
-
-/* ---------- plot ---------- */
-const Ts = [2,5,10,25,50,100];
-const Tcol = {2:"#34d399",5:"#4db8ff",10:"#3b82f6",25:"#a78bfa",50:"#f59e0b",100:"#ef4444"};
-function resize(){
-  const r = cv.parentElement.getBoundingClientRect(), dpr = devicePixelRatio||1;
-  cv.width = r.width*dpr; cv.height = r.height*dpr;
-  ctx.setTransform(dpr,0,0,dpr,0,0);
-  drawPlot();
+TSET.forEach(T=>{
+  const b=document.createElement("button");
+  b.textContent="T="+T; b.dataset.t=T; if(T===100) b.classList.add("on");
+  b.onclick=()=>{ S.Tdes=T;
+    document.querySelectorAll("#TdChips button").forEach(x=>x.classList.toggle("on",+x.dataset.t===T));
+    update(); };
+  $("TdChips").appendChild(b);
+});
+$("b-play").onclick=()=>{
+  if(ext.done) resetPass();
+  ext.playing=!ext.playing;
+  $("b-play").textContent=ext.playing?"❚❚ Pause":"▶ Play";
+};
+$("s-speed").onchange=()=>{ ext.speed=+$("s-speed").value; };
+$("b-finish").onclick=()=>finishPass();
+$("b-all").onclick=()=>{
+  const cur=ext.D;
+  for(const D of DUR){ ext.D=D; finishPass(); }
+  ext.D=cur; resetPass(); ext.done=true; ext.h=RAIN.length-1;
+  ext.record=ext.found[cur].depth; ext.recEnd=ext.found[cur].end;
+  update();
+};
+[["s-T","TIdx"],["s-n","n"],["s-A","A"],["s-C","C"],["s-L","L"],["s-S","slope"],["s-Dd","DdIdx"]]
+.forEach(([id,key])=>{ $(id).addEventListener("input",()=>{ S[key]=+$(id).value; update(); }); });
+$("c-lock").onchange=()=>{ S.lockD=$("c-lock").checked; update(); };
+document.querySelectorAll("#nav button").forEach(b=>{
+  b.onclick=()=>{ S.stage=+b.dataset.st;
+    document.querySelectorAll("#nav button").forEach(x=>x.classList.toggle("on",x===b));
+    update(); };
+});
+$("b-ex4").onclick=()=>{                       // Lecture 9 Example 4: T=50, n=20
+  S.TIdx=73; $("s-T").value=73; S.n=20; $("s-n").value=20;
+  setStage(2);
+};
+$("b-design").onclick=()=>{                    // channel video design case
+  S.A=10; S.C=0.45; S.L=4000; S.slope=0.005; S.Tdes=100; S.lockD=true;
+  $("s-A").value=10; $("s-C").value=0.45; $("s-L").value=4000; $("s-S").value=0.005;
+  $("c-lock").checked=true;
+  document.querySelectorAll("#TdChips button").forEach(x=>x.classList.toggle("on",+x.dataset.t===100));
+  setStage(4);
+};
+function setStage(st){
+  S.stage=st;
+  document.querySelectorAll("#nav button").forEach(x=>x.classList.toggle("on",+x.dataset.st===st));
+  update();
 }
-addEventListener("resize", resize);
+addEventListener("keydown",e=>{
+  if(e.code==="Space" && S.stage===1){ e.preventDefault(); $("b-play").click(); }
+});
 
-function drawPlot(){
-  const W = cv.width/(devicePixelRatio||1), H = cv.height/(devicePixelRatio||1);
-  ctx.clearRect(0,0,W,H);
-  const mL=64, mR=20, mT=34, mB=48;
-  const pw = W-mL-mR, ph = H-mT-mB;
-  const iMin=5, iMax=1500;                          // mm/h, log scale
-  const xOf = d => mL + (Math.log10(d)-Math.log10(dMin))/(Math.log10(dMax)-Math.log10(dMin))*pw;
-  const yOfI = i => mT + (Math.log10(iMax)-Math.log10(i))/(Math.log10(iMax)-Math.log10(iMin))*ph;
+/* ================= readout ================= */
+function update(){
+  const T=snapT(TOf(S.TIdx)), n=S.n, D=ext.D, g=GUM[D];
+  $("v-T").textContent=T.toFixed(T<10?1:0)+" yr";
+  $("v-n").textContent=n+" yr";
+  $("v-A").textContent=S.A.toFixed(1)+" km²";
+  $("v-C").textContent=S.C.toFixed(2);
+  $("v-L").textContent=S.L+" m";
+  $("v-S").textContent=S.slope.toFixed(3);
+  const tc=kirpichTc(S.L,S.slope);
+  const Dd=S.lockD? tc : DdOf(S.DdIdx);
+  $("v-Dd").textContent=S.lockD?"= tc":fmtDur(Dd);
+  $("s-Dd").disabled=S.lockD;
 
-  /* gridlines */
-  ctx.font="11px Segoe UI"; ctx.fillStyle="#9aa7bd";
-  const dTicks=[5/60,10/60,15/60,0.5,1,2,3,6,12,24];
-  ctx.textAlign="center";
-  dTicks.forEach(d=>{
-    const x=xOf(d);
-    ctx.strokeStyle="#222c42"; ctx.beginPath(); ctx.moveTo(x,mT); ctx.lineTo(x,mT+ph); ctx.stroke();
-    ctx.fillText(fmtDur(d), x, mT+ph+16);
+  const nOk=Object.values(ext.found).filter(f=>f.ok).length;
+  $("o-exv").innerHTML=nOk===6?'<span class="ok">6 / 6 ✓ match archive</span>'
+    : nOk+" / 6 verified";
+
+  $("o-D").textContent=D+" h";
+  $("o-mu").textContent=g.mu.toFixed(2)+" mm/h";
+  $("o-sd").textContent=g.sd.toFixed(2)+" mm/h";
+  $("o-al").textContent=g.al.toFixed(3)+" mm/h";
+  $("o-xi").textContent=g.xi.toFixed(3)+" mm/h";
+  const y=yT(T), iT=g.xi+g.al*y;
+  $("o-yT").textContent=y.toFixed(3);
+  $("o-iT").textContent=iT.toFixed(2)+" mm/h";
+  $("o-depth").textContent=(iT*D).toFixed(1)+" mm";
+
+  const p=1/T;
+  $("o-p").textContent=p.toFixed(4);
+  $("o-r1").textContent=binom(n,1,p).toFixed(3);
+  $("o-r2").textContent=binom(n,2,p).toFixed(4);
+  $("o-r1p").textContent=(1-Math.pow(1-p,n)).toFixed(3);
+
+  $("o-sa").textContent=SH.a.toFixed(3);
+  $("o-sm").textContent=SH.m.toFixed(3);
+  $("o-sb").textContent=SH.b.toFixed(3)+" h";
+  $("o-sn").textContent=SH.n.toFixed(3);
+  $("o-rmse").textContent=SH.rmse.toFixed(3)+" mm/h";
+
+  const Deval=Math.max(Dd,0.5);
+  const ides=iSherman(Deval,S.Tdes);
+  const Qp=S.C*ides*S.A/3.6;                                  // mm/h·km² → m³/s
+  const QpSI=S.C*(ides/(1000*3600))*(S.A*1e6);                // base-SI path
+  $("o-tc").textContent=tc.toFixed(2)+" h ("+Math.round(tc*60)+" min)";
+  $("o-Dd").textContent=fmtDur(Dd)+(Dd<1?" ⚠":"");
+  $("o-ides").textContent=ides.toFixed(2)+" mm/h"+(Dd<1?" (extrap.)":"");
+  $("o-Qp").textContent=Qp.toFixed(2)+" m³/s";
+  $("o-unit").innerHTML=Math.abs(Qp-QpSI)<1e-9?'<span class="ok">✓ paths agree</span>':'✗';
+  $("o-riskdes").textContent=(1-Math.pow(1-1/S.Tdes,n)).toFixed(3)+" (n = "+n+" yr)";
+
+  const chip=$("chip");
+  if(S.stage===1){
+    chip.style.background = ext.done ? "var(--ok)" : "var(--sub)";
+    chip.style.color = ext.done ? "#062c1e" : "#fff";
+    chip.textContent = ext.done
+      ? "2022 AM("+D+" h) = "+ext.record.toFixed(1)+" mm → "+(ext.record/D).toFixed(2)+" mm/h "
+        +(ext.found[D]&&ext.found[D].ok?"✓":"")
+      : "scanning 2022 · "+D+" h window";
+  }else if(S.stage===2){
+    chip.style.background="var(--sub)"; chip.style.color="#fff";
+    chip.textContent=D+" h · T = "+T.toFixed(0)+" yr → "+iT.toFixed(1)+" mm/h";
+  }else if(S.stage===3){
+    chip.style.background="var(--sub)"; chip.style.color="#fff";
+    chip.textContent="36 Gumbel points + Sherman surface (RMSE "+SH.rmse.toFixed(2)+" mm/h)";
+  }else{
+    const warn=Dd<1;
+    chip.style.background=warn?"var(--crit)":"var(--ok)";
+    chip.style.color=warn?"#1a1205":"#062c1e";
+    chip.textContent=warn
+      ? "tc < 1 h — below data support, need pluviograph"
+      : "Qp = "+Qp.toFixed(2)+" m³/s at D = tc = "+tc.toFixed(2)+" h";
+  }
+  needsDraw=true;
+}
+
+/* ================= drawing ================= */
+let needsDraw=true;
+const VIEW={W:800,H:520};                     // CSS-pixel size, set by resize()
+function resize(){
+  const r=cv.parentElement.getBoundingClientRect(), dpr=devicePixelRatio||1;
+  if(r.width<10||r.height<10) return;
+  VIEW.W=r.width; VIEW.H=r.height;
+  cv.width=Math.round(r.width*dpr); cv.height=Math.round(r.height*dpr);
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  needsDraw=true;
+}
+addEventListener("resize",resize);
+new ResizeObserver(resize).observe(cv.parentElement);   // panel/media-query relayouts too
+
+const MONTH_H=[0,31,59,90,120,151,181,212,243,273,304,334].map(d=>d*24);
+const MONTH_N=["J","F","M","A","M","J","J","A","S","O","N","D"];
+
+function axisText(t,x,y,align="center",col="#9aa7bd",font="11px Segoe UI"){
+  ctx.font=font; ctx.fillStyle=col; ctx.textAlign=align; ctx.fillText(t,x,y);
+}
+
+/* ---- stage 1: extraction ---- */
+function drawExtract(W,H){
+  const mL=52,mR=18;
+  const pw=W-mL-mR;
+  ctx.fillStyle="#4db8ff"; ctx.font="600 13px Segoe UI"; ctx.textAlign="center";
+  ctx.fillText("① Sliding "+ext.D+"-hour window over the 2022 Drumalbin hourly record",W/2,18);
+
+  /* --- band A: full-year strip --- */
+  const aT=32, aH=H*0.15;
+  const xOfH=h=>mL+h/8759*pw;
+  ctx.strokeStyle="#2b3650"; ctx.strokeRect(mL,aT,pw,aH);
+  MONTH_H.forEach((h,i)=>{
+    const x=xOfH(h);
+    ctx.strokeStyle="#222c42"; ctx.beginPath(); ctx.moveTo(x,aT); ctx.lineTo(x,aT+aH); ctx.stroke();
+    axisText(MONTH_N[i],x+pw/24,aT+aH+12);
   });
-  ctx.textAlign="right";
-  [5,10,20,50,100,200,500,1000].forEach(i=>{
-    const y=yOfI(i);
-    ctx.strokeStyle="#222c42"; ctx.beginPath(); ctx.moveTo(mL,y); ctx.lineTo(mL+pw,y); ctx.stroke();
-    ctx.fillText(i, mL-6, y+4);
-  });
+  const cols=Math.floor(pw);
+  ctx.fillStyle="#3b82f6";
+  for(let c=0;c<cols;c++){
+    const h0=Math.floor(c/cols*8760), h1=Math.max(h0+1,Math.floor((c+1)/cols*8760));
+    let mx=0, na=false;
+    for(let h=h0;h<h1;h++){ const v=RAIN[h]; if(isNaN(v))na=true; else if(v>mx)mx=v; }
+    if(na){ ctx.fillStyle="#39435c"; ctx.fillRect(mL+c,aT,1,3); ctx.fillStyle="#3b82f6"; }
+    if(mx>0) ctx.fillRect(mL+c,aT+aH-mx/16*aH,1,mx/16*aH);
+  }
+  axisText("hourly rain (0–16 mm)",mL+4,aT+11,"left","#5a6a8a","10px Segoe UI");
+  /* cursor + found markers */
+  const xc=xOfH(ext.h);
+  ctx.strokeStyle="#f59e0b"; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(xc,aT-3); ctx.lineTo(xc,aT+aH+3); ctx.stroke(); ctx.lineWidth=1;
+  for(const D of DUR){ const f=ext.found[D]; if(!f) continue;
+    const x=xOfH(f.end);
+    ctx.fillStyle=D===ext.D?"#f59e0b":"#7d8db0";
+    ctx.beginPath(); ctx.moveTo(x,aT-2); ctx.lineTo(x-4,aT-9); ctx.lineTo(x+4,aT-9); ctx.fill();
+  }
+
+  /* --- band B: zoom around the window --- */
+  const bT=aT+aH+26, bH=H*0.30;
+  const span=Math.max(6*ext.D,48);
+  let z0=Math.round(ext.h-span*0.62); z0=Math.max(0,Math.min(z0,8760-span));
+  ctx.strokeStyle="#2b3650"; ctx.strokeRect(mL,bT,pw,bH);
+  /* connect zoom region to strip */
+  ctx.strokeStyle="#39435c"; ctx.setLineDash([3,3]);
+  ctx.beginPath(); ctx.moveTo(xOfH(z0),aT+aH); ctx.lineTo(mL,bT); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(xOfH(z0+span),aT+aH); ctx.lineTo(mL+pw,bT); ctx.stroke();
+  ctx.setLineDash([]);
+  const bw=pw/span;
+  const w0=ext.h-ext.D+1;
+  /* window shading */
+  ctx.fillStyle="rgba(245,158,11,0.14)";
+  const wx0=mL+Math.max(0,(w0-z0))*bw, wx1=mL+Math.min(span,(ext.h+1-z0))*bw;
+  ctx.fillRect(wx0,bT,Math.max(0,wx1-wx0),bH);
+  for(let k=0;k<span;k++){
+    const h=z0+k, v=RAIN[h];
+    if(isNaN(v)){ ctx.fillStyle="#39435c"; ctx.fillRect(mL+k*bw,bT+2,Math.max(1,bw-1),4); continue; }
+    if(v<=0) continue;
+    const inWin=h>=w0&&h<=ext.h;
+    ctx.fillStyle=inWin?"#f59e0b":"#3b82f6";
+    const bh=Math.min(1,v/16)*(bH-16);
+    ctx.fillRect(mL+k*bw,bT+bH-bh,Math.max(1,bw-1),bh);
+  }
+  ctx.strokeStyle="#f59e0b";
+  ctx.strokeRect(wx0,bT,Math.max(0,wx1-wx0),bH);
+  const dNow=winDepth(ext.h,ext.D);
+  axisText("window ["+ext.D+" h]  depth = "+(isNaN(dNow)?"— (missing hrs)":dNow.toFixed(1)+" mm")
+    +(isNaN(dNow)?"":"  →  i = "+(dNow/ext.D).toFixed(2)+" mm/h"),
+    mL+6,bT+14,"left","#e8edf6","600 12px Segoe UI");
+  axisText("zoom: "+span+" h · grey ticks = missing (window skipped)",
+    mL+2,bT+bH+13,"left","#5a6a8a","10px Segoe UI");
+
+  /* --- band C: running depth trace (left) + AM chart (right) --- */
+  const cT=bT+bH+24, cH=H-cT-30;
+  const twL=mL, twW=pw*0.58;
+  ctx.strokeStyle="#2b3650"; ctx.strokeRect(twL,cT,twW,cH);
+  const ds=depthSeries(ext.D);
+  let dmax=0; for(let i=0;i<ds.length;i++) if(!isNaN(ds[i])&&ds[i]>dmax)dmax=ds[i];
+  dmax*=1.12;
+  const xOfT=h=>twL+h/8759*twW, yOfDep=d=>cT+cH-(d/dmax)*(cH-14);
+  ctx.strokeStyle="#4db8ff"; ctx.lineWidth=1.1; ctx.beginPath();
+  let pen=false;
+  const step=Math.max(1,Math.floor(8760/twW));
+  for(let h=0;h<=ext.h;h+=step){
+    const d=ds[h];
+    if(isNaN(d)){pen=false;continue;}
+    const x=xOfT(h),yy=yOfDep(d);
+    pen?ctx.lineTo(x,yy):ctx.moveTo(x,yy); pen=true;
+  }
+  ctx.stroke(); ctx.lineWidth=1;
+  if(!isNaN(ext.record)){
+    const yr=yOfDep(ext.record);
+    ctx.strokeStyle="#f59e0b"; ctx.setLineDash([5,4]);
+    ctx.beginPath(); ctx.moveTo(twL,yr); ctx.lineTo(twL+twW,yr); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle="#f59e0b";
+    ctx.beginPath(); ctx.arc(xOfT(ext.recEnd),yr,4,0,7); ctx.fill();
+    axisText("record "+ext.record.toFixed(1)+" mm",twL+twW-6,yr-6,"right","#f59e0b","600 11px Segoe UI");
+  }
+  axisText("running "+ext.D+"-h depth over 2022",twL+6,cT+13,"left","#5a6a8a","10px Segoe UI");
+
+  /* mini i–D log-log chart */
+  const gL=twL+twW+34, gW=W-mR-gL, gT=cT, gH=cH;
+  ctx.strokeStyle="#2b3650"; ctx.strokeRect(gL,gT,gW,gH);
+  const dlo=0.8,dhi=30, ilo=0.6,ihi=22;
+  const gx=d=>gL+(Math.log10(d)-Math.log10(dlo))/(Math.log10(dhi)-Math.log10(dlo))*gW;
+  const gy=i=>gT+(Math.log10(ihi)-Math.log10(i))/(Math.log10(ihi)-Math.log10(ilo))*gH;
+  DUR.forEach(d=>{ const x=gx(d);
+    ctx.strokeStyle="#222c42"; ctx.beginPath(); ctx.moveTo(x,gT); ctx.lineTo(x,gT+gH); ctx.stroke();
+    axisText(d,x,gT+gH+12); });
+  [1,2,5,10,20].forEach(i=>{ const yy=gy(i);
+    ctx.strokeStyle="#222c42"; ctx.beginPath(); ctx.moveTo(gL,yy); ctx.lineTo(gL+gW,yy); ctx.stroke();
+    axisText(i,gL-4,yy+3,"right"); });
+  /* full 27-yr AMS cloud (the dataset being built) */
+  ctx.fillStyle="rgba(154,167,189,0.30)";
+  for(const D of DUR) for(const v of AMS[D]){ ctx.beginPath(); ctx.arc(gx(D),gy(v),1.6,0,7); ctx.fill(); }
+  /* 2022 official points: hollow until this session's pass reproduces them */
+  for(const D of DUR){
+    const v=AMS[D][IY2022], f=ext.found[D];
+    ctx.beginPath(); ctx.arc(gx(D),gy(v),4.2,0,7);
+    if(f){ ctx.fillStyle=f.ok?"#f59e0b":"#ef4444"; ctx.fill(); }
+    ctx.strokeStyle="#f59e0b"; ctx.stroke();
+  }
+  axisText("AM intensity vs duration — 27 yr × 6 D",gL+gW/2,gT-6,"center","#9aa7bd","10px Segoe UI");
+  axisText("mm/h",gL+4,gT+12,"left","#5a6a8a","10px Segoe UI");
+  axisText("filled = live scan matches the archived 2022 value",gL+gW/2,gT+gH+26,"center","#5a6a8a","10px Segoe UI");
+}
+
+/* ---- stage 2: Gumbel probability plot ---- */
+function drawFit(W,H){
+  const mL=64,mR=26,mT=52,mB=52;
+  const pw=W-mL-mR, ph=H-mT-mB;
+  const D=ext.D, g=GUM[D], T=snapT(TOf(S.TIdx));
+  ctx.fillStyle="#4db8ff"; ctx.font="600 13px Segoe UI"; ctx.textAlign="center";
+  ctx.fillText("② Gumbel probability plot — "+D+"-h AM series ("+g.n+" yr), method of moments",W/2,18);
+
+  const ylo=-2, yhi=6;
+  const imax=(g.xi+g.al*yhi)*1.06, imin=0;
+  const px=y=>mL+(y-ylo)/(yhi-ylo)*pw;
+  const py=i=>mT+ph-(i-imin)/(imax-imin)*ph;
   ctx.strokeStyle="#2b3650"; ctx.strokeRect(mL,mT,pw,ph);
-  ctx.textAlign="center"; ctx.fillStyle="#c9d6ea";
-  ctx.fillText("duration d (log scale)", mL+pw/2, H-8);
+  for(let y=-2;y<=6;y++){ const x=px(y);
+    ctx.strokeStyle="#222c42"; ctx.beginPath(); ctx.moveTo(x,mT); ctx.lineTo(x,mT+ph); ctx.stroke();
+    axisText(y,x,mT+ph+16); }
+  const istep=imax>12?4:(imax>6?2:1);
+  for(let i=0;i<=imax;i+=istep){ const yy=py(i);
+    ctx.strokeStyle="#222c42"; ctx.beginPath(); ctx.moveTo(mL,yy); ctx.lineTo(mL+pw,yy); ctx.stroke();
+    axisText(i,mL-6,yy+4,"right"); }
+  axisText("reduced variate  y = −ln[−ln F]",mL+pw/2,H-12,"center","#c9d6ea");
   ctx.save(); ctx.translate(16,mT+ph/2); ctx.rotate(-Math.PI/2);
-  ctx.fillText("intensity i (mm/h, log scale)",0,0); ctx.restore();
-  ctx.fillStyle="#4db8ff"; ctx.font="600 13px Segoe UI";
-  ctx.fillText("Intensity–Duration–Frequency curves (Gumbel/EV1, method of moments)", mL+pw/2, 18);
+  axisText("AM intensity (mm/h)",0,0,"center","#c9d6ea"); ctx.restore();
+  /* secondary T axis on top */
+  TSET.forEach(t=>{ const x=px(yT(t));
+    ctx.strokeStyle="#39435c"; ctx.beginPath(); ctx.moveTo(x,mT); ctx.lineTo(x,mT-5); ctx.stroke();
+    axisText("T="+t,x,mT-9,"center",Tcol[t],"600 10px Segoe UI"); });
 
-  /* curves */
-  const curve = (T, uplifted, dash) => {
-    ctx.setLineDash(dash?[5,4]:[]);
-    ctx.strokeStyle = Tcol[T]; ctx.lineWidth = dash?1.2:2.2;
-    ctx.globalAlpha = dash?0.65:1;
-    ctx.beginPath();
-    for(let k=0;k<=140;k++){
-      const d = dMin*Math.pow(dMax/dMin, k/140);
-      const i = intensity(d,T,uplifted);
-      if (i<iMin||i>iMax){ if(k===0) ctx.moveTo(xOf(d),yOfI(Math.min(iMax,Math.max(iMin,i)))); continue; }
-      k===0 ? ctx.moveTo(xOf(d),yOfI(i)) : ctx.lineTo(xOf(d),yOfI(i));
+  /* data points: Weibull plotting position F = m/(n+1) */
+  const xs=[...AMS[D]].sort((a,b)=>a-b);
+  ctx.fillStyle="#e8edf6";
+  xs.forEach((v,k)=>{
+    const F=(k+1)/(xs.length+1), yv=-Math.log(-Math.log(F));
+    ctx.beginPath(); ctx.arc(px(yv),py(v),3.4,0,7); ctx.fill();
+  });
+  /* MoM fitted line */
+  ctx.strokeStyle="#f59e0b"; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(px(ylo),py(g.xi+g.al*ylo)); ctx.lineTo(px(yhi),py(g.xi+g.al*yhi)); ctx.stroke();
+  ctx.lineWidth=1;
+  axisText("i = ξ + α·y  (ξ = "+g.xi.toFixed(2)+", α = "+g.al.toFixed(2)+")",
+    px(2.4),py(g.xi+g.al*2.4)+26,"left","#f59e0b","600 12px Segoe UI");
+
+  /* design point construction */
+  const y=yT(T), iT=g.xi+g.al*y;
+  ctx.strokeStyle="#e8edf6"; ctx.setLineDash([4,4]);
+  ctx.beginPath(); ctx.moveTo(px(y),mT+ph); ctx.lineTo(px(y),py(iT)); ctx.lineTo(mL,py(iT)); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle="#4db8ff"; ctx.beginPath(); ctx.arc(px(y),py(iT),5.5,0,7); ctx.fill();
+  ctx.strokeStyle="#0f1420"; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(px(y),py(iT),5.5,0,7); ctx.stroke();
+  ctx.lineWidth=1;
+  const onRight = px(y) > mL+pw*0.55;
+  axisText("T = "+T.toFixed(0)+" yr → y = "+y.toFixed(2)+" → i = "+iT.toFixed(2)+" mm/h",
+    px(y)+(onRight?-9:9),py(iT)-10,onRight?"right":"left","#4db8ff","600 12px Segoe UI");
+  axisText("straight line on Gumbel paper ⇒ the EV1 model fits · points: Weibull F = m/(n+1)",
+    mL+10,mT+16,"left","#5a6a8a","10.5px Segoe UI");
+}
+
+/* ---- stage 3: IDF family ---- */
+function drawIDF(W,H){
+  const mL=64,mR=54,mT=46,mB=52;
+  const pw=W-mL-mR, ph=H-mT-mB;
+  ctx.fillStyle="#4db8ff"; ctx.font="600 13px Segoe UI"; ctx.textAlign="center";
+  ctx.fillText("③ IDF curves — six Gumbel fits (points+solid) and the Sherman equation (dashed)",W/2,18);
+  const dlo=0.5,dhi=30, ilo=0.6,ihi=25;
+  const gx=d=>mL+(Math.log10(d)-Math.log10(dlo))/(Math.log10(dhi)-Math.log10(dlo))*pw;
+  const gy=i=>mT+(Math.log10(ihi)-Math.log10(i))/(Math.log10(ihi)-Math.log10(ilo))*ph;
+  ctx.strokeStyle="#2b3650"; ctx.strokeRect(mL,mT,pw,ph);
+  [0.5,1,2,3,6,12,24].forEach(d=>{ const x=gx(d);
+    ctx.strokeStyle="#222c42"; ctx.beginPath(); ctx.moveTo(x,mT); ctx.lineTo(x,mT+ph); ctx.stroke();
+    axisText(d<1?"30 min":d+" h",x,mT+ph+16); });
+  [1,2,5,10,20].forEach(i=>{ const yy=gy(i);
+    ctx.strokeStyle="#222c42"; ctx.beginPath(); ctx.moveTo(mL,yy); ctx.lineTo(mL+pw,yy); ctx.stroke();
+    axisText(i,mL-6,yy+4,"right"); });
+  axisText("duration D (log)",mL+pw/2,H-12,"center","#c9d6ea");
+  ctx.save(); ctx.translate(16,mT+ph/2); ctx.rotate(-Math.PI/2);
+  axisText("intensity i (mm/h, log)",0,0,"center","#c9d6ea"); ctx.restore();
+  /* sub-hourly no-data zone */
+  ctx.fillStyle="rgba(154,167,189,0.06)";
+  ctx.fillRect(mL,mT,gx(1)-mL,ph);
+  axisText("no sub-hourly data →",gx(1)-6,mT+14,"right","#5a6a8a","10px Segoe UI");
+
+  for(const T of TSET){
+    /* Sherman dashed */
+    ctx.strokeStyle=Tcol[T]; ctx.setLineDash([5,4]); ctx.globalAlpha=0.6; ctx.lineWidth=1.3;
+    ctx.beginPath(); let pen=false;
+    for(let k=0;k<=120;k++){
+      const d=0.6*Math.pow(dhi/0.6,k/120), i=iSherman(d,T);
+      if(isNaN(i)||i<ilo||i>ihi){pen=false;continue;}
+      pen?ctx.lineTo(gx(d),gy(i)):ctx.moveTo(gx(d),gy(i)); pen=true;
     }
     ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha=1;
-  };
-  Ts.forEach(T=>{ if (S.cc>0) curve(T,false,true); curve(T,true,false); });
-
-  /* curve labels */
-  ctx.textAlign="left"; ctx.font="600 11px Segoe UI";
-  Ts.forEach(T=>{
-    const d=dMax, i=intensity(d,T);
-    if (i>=iMin&&i<=iMax){ ctx.fillStyle=Tcol[T]; ctx.fillText("T="+T, xOf(d)-34, yOfI(i)-5); }
-  });
-
-  /* design point marker */
-  const d = dOf(S.dIdx), T = snapT(TOf(S.TIdx)), i = intensity(d,T);
-  const x=xOf(d), y=yOfI(Math.min(iMax,Math.max(iMin,i)));
-  ctx.setLineDash([4,4]); ctx.strokeStyle="#e8edf6"; ctx.lineWidth=1;
-  ctx.beginPath(); ctx.moveTo(x,mT+ph); ctx.lineTo(x,y); ctx.lineTo(mL,y); ctx.stroke();
+    /* Gumbel solid through the 6 fitted durations */
+    ctx.lineWidth=2.2; ctx.beginPath();
+    DUR.forEach((d,k)=>{ const i=iGum(d,T);
+      k===0?ctx.moveTo(gx(d),gy(i)):ctx.lineTo(gx(d),gy(i)); });
+    ctx.stroke(); ctx.lineWidth=1;
+    ctx.fillStyle=Tcol[T];
+    DUR.forEach(d=>{ ctx.beginPath(); ctx.arc(gx(d),gy(iGum(d,T)),3.2,0,7); ctx.fill(); });
+    axisText("T="+T,gx(24)+8,gy(iGum(24,T))+4,"left",Tcol[T],"600 11px Segoe UI");
+  }
+  /* selected (D,T) marker from stage-2 sliders */
+  const T=snapT(TOf(S.TIdx)), D=ext.D, ii=iGum(D,T);
+  ctx.setLineDash([4,4]); ctx.strokeStyle="#e8edf6";
+  ctx.beginPath(); ctx.moveTo(gx(D),mT+ph); ctx.lineTo(gx(D),gy(ii)); ctx.lineTo(mL,gy(ii)); ctx.stroke();
   ctx.setLineDash([]);
-  ctx.fillStyle="#e8edf6"; ctx.beginPath(); ctx.arc(x,y,5,0,7); ctx.fill();
-  ctx.strokeStyle="#0f1420"; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(x,y,5,0,7); ctx.stroke();
-  ctx.font="600 12px Segoe UI"; ctx.textAlign="left";
-  ctx.fillText(i.toFixed(0)+" mm/h", x+9, y-8);
+  ctx.fillStyle="#e8edf6"; ctx.beginPath(); ctx.arc(gx(D),gy(ii),5,0,7); ctx.fill();
+  axisText(ii.toFixed(1)+" mm/h",gx(D)+9,gy(ii)-8,"left","#e8edf6","600 12px Segoe UI");
+  /* design point */
+  const tc=kirpichTc(S.L,S.slope), Dd=S.lockD?tc:DdOf(S.DdIdx);
+  const ides=iSherman(Math.max(Dd,0.5),S.Tdes);
+  if(Dd>=dlo&&Dd<=dhi&&!isNaN(ides)&&ides>=ilo&&ides<=ihi){
+    const x=gx(Dd),yy=gy(ides);
+    ctx.fillStyle="#f59e0b";
+    ctx.beginPath();
+    for(let k=0;k<10;k++){ const r=k%2?3.5:8, a=-Math.PI/2+k*Math.PI/5;
+      k===0?ctx.moveTo(x+r*Math.cos(a),yy+r*Math.sin(a)):ctx.lineTo(x+r*Math.cos(a),yy+r*Math.sin(a)); }
+    ctx.fill();
+    axisText("design (D, T="+S.Tdes+")",x+11,yy+4,"left","#f59e0b","600 11px Segoe UI");
+  }
 }
 
-/* ---------- boot ---------- */
-resize(); update();
+/* ---- stage 4: rational method design ---- */
+const POLY=[[0,-0.02],[0.34,0.16],[0.55,0.55],[0.5,1.0],[0.24,1.34],[-0.1,1.44],
+            [-0.45,1.24],[-0.6,0.85],[-0.5,0.4],[-0.24,0.1]];
+const STEM=[[0,-0.02],[0.03,0.28],[-0.06,0.6],[0.04,0.95],[-0.05,1.28]];
+const TRIB=[[[0.42,0.75],[0.2,0.62],[0.02,0.45]],[[-0.45,1.0],[-0.24,0.9],[-0.02,0.72]]];
+const POLY_AU=(function(){ let a=0;
+  for(let i=0;i<POLY.length;i++){ const[x1,y1]=POLY[i],[x2,y2]=POLY[(i+1)%POLY.length];
+    a+=x1*y2-x2*y1; } return Math.abs(a)/2; })();
+let dashPhase=0;
+function drawDesign(W,H,dtReal){
+  const tc=kirpichTc(S.L,S.slope);
+  const Dd=S.lockD?tc:DdOf(S.DdIdx);
+  const q=Math.min(Dd/tc,1);
+  ctx.fillStyle="#4db8ff"; ctx.font="600 13px Segoe UI"; ctx.textAlign="center";
+  ctx.fillText("④ Rational method — Qp = C·i(D,T)·A / 3.6, design storm lasts tc",W/2,18);
+
+  /* --- left: catchment plan --- */
+  const cw=W*0.46, cx0=14, cy0=34, ch=H-cy0-14;
+  const c=Math.sqrt(S.A/POLY_AU);                    // km per unit
+  const pxU=Math.min(cw/1.45,ch/1.75);               // px per unit
+  const ox=cx0+cw*0.52, oy=cy0+ch*0.9;               // outlet px position
+  const P2=([x,y])=>[ox+x*pxU,oy-y*pxU];
+  /* isochrone bands: 5 radially scaled copies toward the outlet */
+  for(let j=5;j>=1;j--){
+    const f=j/5, contrib=f<=q+1e-9;
+    ctx.beginPath();
+    POLY.forEach((p,k)=>{ const[x,y]=P2([p[0]*f,(p[1]+0.02)*f-0.02]);
+      k===0?ctx.moveTo(x,y):ctx.lineTo(x,y); });
+    ctx.closePath();
+    ctx.fillStyle=contrib?"rgba(245,158,11,0.16)":"rgba(59,130,246,0.10)";
+    ctx.fill();
+    ctx.strokeStyle=contrib?"rgba(245,158,11,0.5)":"#2b3650"; ctx.stroke();
+  }
+  /* divide */
+  ctx.beginPath();
+  POLY.forEach((p,k)=>{ const[x,y]=P2(p); k===0?ctx.moveTo(x,y):ctx.lineTo(x,y); });
+  ctx.closePath(); ctx.strokeStyle="#9aa7bd"; ctx.lineWidth=1.8; ctx.stroke(); ctx.lineWidth=1;
+  /* channels: tributaries then main stem with animated flow dashes */
+  ctx.strokeStyle="#4db8ff";
+  TRIB.forEach(tr=>{ ctx.beginPath();
+    tr.forEach((p,k)=>{ const[x,y]=P2(p); k===0?ctx.moveTo(x,y):ctx.lineTo(x,y); });
+    ctx.stroke(); });
+  ctx.lineWidth=2.6; ctx.setLineDash([7,6]); ctx.lineDashOffset=-dashPhase;
+  ctx.beginPath();
+  [...STEM].reverse().forEach((p,k)=>{ const[x,y]=P2(p); k===0?ctx.moveTo(x,y):ctx.lineTo(x,y); });
+  ctx.stroke(); ctx.setLineDash([]); ctx.lineWidth=1;
+  /* outlet */
+  const[oxp,oyp]=P2(POLY[0]);
+  ctx.fillStyle="#ef4444"; ctx.beginPath(); ctx.arc(oxp,oyp,5,0,7); ctx.fill();
+  axisText("outlet",oxp,oyp+16,"center","#ef4444","600 11px Segoe UI");
+  /* scale bar */
+  const pxKm=pxU/c;
+  let bar=1; while(bar*pxKm<60) bar*=2; while(bar*pxKm>150) bar/=2;
+  const bx=cx0+10, by=cy0+ch-10;
+  ctx.strokeStyle="#e8edf6"; ctx.beginPath(); ctx.moveTo(bx,by); ctx.lineTo(bx+bar*pxKm,by); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(bx,by-4); ctx.lineTo(bx,by+4);
+  ctx.moveTo(bx+bar*pxKm,by-4); ctx.lineTo(bx+bar*pxKm,by+4); ctx.stroke();
+  axisText(bar+" km",bx+bar*pxKm/2,by-7,"center","#e8edf6","600 10px Segoe UI");
+  axisText("A = "+S.A.toFixed(1)+" km² (drawn to scale)",cx0+10,cy0+12,"left","#9aa7bd","11px Segoe UI");
+  axisText("contributing after D = "+(q*100).toFixed(0)+" % of area",cx0+10,cy0+28,"left","#f59e0b","600 11px Segoe UI");
+  axisText("amber isochrone bands reach the outlet within D · drop travel divide→outlet = tc = "
+    +tc.toFixed(2)+" h",cx0+10,cy0+ch+9,"left","#5a6a8a","10px Segoe UI");
+  axisText("channel path schematic — L = "+(S.L/1000).toFixed(1)+" km drives Kirpich",
+    cx0+10,cy0+44,"left","#5a6a8a","10px Segoe UI");
+
+  /* --- right: Qp(D) curve --- */
+  const mL2=cx0+cw+58, mR2=22, mT2=52, mB2=56;
+  const pw=W-mL2-mR2, ph=H-mT2-mB2;
+  const dlo=0.5,dhi=24;
+  let Qmax=0;
+  const Qof=d=>{ const i=iSherman(Math.max(d,0.5),S.Tdes);
+    return S.C*i*S.A/3.6*Math.min(d/tc,1); };
+  for(let k=0;k<=140;k++){ const d=dlo*Math.pow(dhi/dlo,k/140); const v=Qof(d); if(v>Qmax)Qmax=v; }
+  Qmax*=1.15;
+  const gx=d=>mL2+(Math.log10(d)-Math.log10(dlo))/(Math.log10(dhi)-Math.log10(dlo))*pw;
+  const gy=v=>mT2+ph-v/Qmax*ph;
+  ctx.strokeStyle="#2b3650"; ctx.strokeRect(mL2,mT2,pw,ph);
+  [0.5,1,2,3,6,12,24].forEach(d=>{ const x=gx(d);
+    ctx.strokeStyle="#222c42"; ctx.beginPath(); ctx.moveTo(x,mT2); ctx.lineTo(x,mT2+ph); ctx.stroke();
+    axisText(d<1?"30m":d+"h",x,mT2+ph+15); });
+  const qs=Qmax>16?5:(Qmax>8?2:1);
+  for(let v=0;v<=Qmax;v+=qs){ const yy=gy(v);
+    ctx.strokeStyle="#222c42"; ctx.beginPath(); ctx.moveTo(mL2,yy); ctx.lineTo(mL2+pw,yy); ctx.stroke();
+    axisText(v,mL2-6,yy+4,"right"); }
+  axisText("storm duration D (log)",mL2+pw/2,H-16,"center","#c9d6ea");
+  ctx.save(); ctx.translate(mL2-40,mT2+ph/2); ctx.rotate(-Math.PI/2);
+  axisText("peak discharge Qp (m³/s)",0,0,"center","#c9d6ea"); ctx.restore();
+  axisText("Qp(D) = C · i(D,T="+S.Tdes+") · A/3.6 · min(D/tc, 1)",mL2+pw/2,mT2-8,"center","#9aa7bd","11px Segoe UI");
+  /* curve: solid where D≥1 h (data-supported), dotted below */
+  const seg=(dashed)=>{
+    ctx.beginPath(); let pen=false;
+    for(let k=0;k<=140;k++){
+      const d=dlo*Math.pow(dhi/dlo,k/140);
+      if(dashed!==(d<1)){pen=false;continue;}
+      const v=Qof(d); if(isNaN(v)){pen=false;continue;}
+      pen?ctx.lineTo(gx(d),gy(v)):ctx.moveTo(gx(d),gy(v)); pen=true;
+    }
+    ctx.setLineDash(dashed?[2,4]:[]); ctx.strokeStyle=dashed?"#7d8db0":"#4db8ff";
+    ctx.lineWidth=2.2; ctx.stroke(); ctx.setLineDash([]); ctx.lineWidth=1;
+  };
+  seg(true); seg(false);
+  /* rising limb annotations */
+  axisText("area still filling ↑",gx(Math.min(Math.max(tc*0.4,0.6),3)),gy(Qof(tc)*0.45),"center","#5a6a8a","10px Segoe UI");
+  axisText("intensity fading ↓",gx(Math.min(tc*4,16)),gy(Qof(Math.min(tc*4,16)))-12,"center","#5a6a8a","10px Segoe UI");
+  /* peak at tc */
+  if(tc>=dlo&&tc<=dhi){
+    const xt=gx(tc), Qp=Qof(tc);
+    ctx.setLineDash([4,4]); ctx.strokeStyle="#f59e0b";
+    ctx.beginPath(); ctx.moveTo(xt,mT2+ph); ctx.lineTo(xt,gy(Qp)); ctx.lineTo(mL2,gy(Qp)); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle="#f59e0b"; ctx.beginPath(); ctx.arc(xt,gy(Qp),5.5,0,7); ctx.fill();
+    ctx.strokeStyle="#0f1420"; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(xt,gy(Qp),5.5,0,7); ctx.stroke();
+    ctx.lineWidth=1;
+    axisText("peak at D = tc → Qp = "+Qp.toFixed(2)+" m³/s",xt+9,gy(Qp)-10,"left","#f59e0b","600 12px Segoe UI");
+  }
+  /* current D marker if unlocked */
+  if(!S.lockD&&Dd>=dlo&&Dd<=dhi){
+    const v=Qof(Dd);
+    ctx.fillStyle="#e8edf6"; ctx.beginPath(); ctx.arc(gx(Dd),gy(v),4.5,0,7); ctx.fill();
+    axisText("D = "+fmtDur(Dd)+" → "+v.toFixed(2)+" m³/s",gx(Dd)+8,gy(v)+16,"left","#e8edf6","600 11px Segoe UI");
+  }
+  if(tc<1) axisText("⚠ tc < 1 h: shortest AM duration is 1 h — needs pluviograph data",
+    mL2+10,mT2+16,"left","#f59e0b","600 10.5px Segoe UI");
+  else axisText("dotted branch (D < 1 h): extrapolated below data support",
+    mL2+10,mT2+16,"left","#5a6a8a","10px Segoe UI");
+}
+
+/* ================= main loop ================= */
+let lastT=performance.now();
+function frame(now){
+  const dt=Math.min(0.05,(now-lastT)/1000); lastT=now;
+  if(S.stage===1&&ext.playing&&!ext.done){ stepExtraction(dt); needsDraw=true; }
+  if(S.stage===4){ dashPhase=(dashPhase+dt*26)%13; needsDraw=true; }
+  if(needsDraw){
+    needsDraw=false;
+    const W=VIEW.W, H=VIEW.H;
+    ctx.clearRect(0,0,W,H);
+    if(S.stage===1) drawExtract(W,H);
+    else if(S.stage===2) drawFit(W,H);
+    else if(S.stage===3) drawIDF(W,H);
+    else drawDesign(W,H,dt);
+    if(S.stage===1&&ext.playing) needsDraw=true;
+  }
+  requestAnimationFrame(frame);
+}
+
+/* ================= boot ================= */
+resetPass(); resize(); update();
+requestAnimationFrame(frame);
+
+/* console self-checks (visible in devtools; the on-screen ✓s use the same numbers) */
+(function(){
+  const g=GUM[1];
+  console.log("[check] Gumbel 1h: xi=%s (pub 8.1714)  alpha=%s (pub 1.9873)",
+    g.xi.toFixed(4), g.al.toFixed(4));
+  console.log("[check] i(1h,100yr) Gumbel = %s (pub 17.3131)", iGum(1,100).toFixed(4));
+  const tc=kirpichTc(4000,0.005), i=iSherman(tc,100), Qp=0.45*i*10/3.6;
+  console.log("[check] tc=%s h (pub 1.4838)  i_des=%s (pub 13.2766)  Qp=%s (pub 16.5958)",
+    tc.toFixed(4), i.toFixed(4), Qp.toFixed(4));
+})();
 </script>
 </body>
 </html>
