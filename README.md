@@ -18,7 +18,7 @@ verified by hand against worked textbook examples before release.
 
 | File | Concept | Notes |
 |---|---|---|
-| `animations/Lec1_open_channel_geometry.html` | Channel geometry (A, P, R, T, D), velocity profile, Froude number / wave propagation | 3D (Three.js via CDN — needs internet on first load) |
+| `animations/Lec1_open_channel_geometry.html` | Channel geometry (A, P, R, T, D) for four section shapes; selectable velocity-profile models with α, β computed by numerical integration (self-checking, reproduces α = 2, β = 4/3 for the linear profile); Reynolds & Froude classification; plan-view wave demo — ripples spread at c = √(gD) while advected at V, showing the upstream news front (c − V) in subcritical flow and the Froude wedge sin θ = 1/Fr in supercritical flow. Lecture Examples 1 & 3 as one-click presets. **[Full guide](docs/open_channel_geometry_guide.md)** — theory, description, classroom use | 3D (Three.js via CDN — needs internet on first load) |
 | `animations/Lec2_manning_uniform_flow.html` | Manning uniform flow: normal & critical depth solvers, mild–steep slope classification | 2D, fully offline |
 | `animations/Lab1_specific_energy_critical_depth.html` | Specific energy diagram, alternate depths, critical depth, sluice gate & choking | 2D, fully offline |
 | `animations/Lab2_hydraulic_jump.html` | Hydraulic jump: sequent depths (momentum), all five jump types, energy loss vs theory | 2D, fully offline |
