@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>OpenChannelLab — Interactive Open-Channel Hydraulics Animations</title>
-<meta name="description" content="Free, physics-accurate, interactive single-file animations for teaching open-channel hydraulics: specific energy, critical depth, hydraulic jumps, Manning uniform flow, and gradually varied flow profiles.">
+<title>OpenHydroLab — Interactive Hydraulics &amp; Hydrology Animations</title>
+<meta name="description" content="Free, physics-accurate, interactive single-file animations for teaching hydraulics and hydrology: storm hydrographs, the unit hydrograph, and rainfall frequency / IDF analysis, with more in development.">
 <style>
   :root {
     --blue: #003865;      /* University Blue */
@@ -36,66 +36,20 @@
 </head>
 <body>
 <header>
-  <h1>OpenChannelLab</h1>
-  <p class="tag">Physics-accurate, interactive animations for teaching open-channel hydraulics</p>
+  <h1>OpenHydroLab</h1>
+  <p class="tag">Physics-accurate, interactive animations for teaching hydraulics &amp; hydrology</p>
 </header>
 <main>
   <p>
-    OpenChannelLab is a free library of single-file, interactive HTML animations for
-    undergraduate open-channel hydraulics. Every number on screen is computed live from the
+    OpenHydroLab is a free library of single-file, interactive HTML animations for
+    undergraduate hydraulics and hydrology. Every number on screen is computed live from the
     real governing equations — no faked motion. Each animation runs in any modern browser,
     needs no installation, and can be projected in class or explored by students at home.
   </p>
 
   <section>
-    <h2>Open-channel hydraulics</h2>
+    <h2>Hydrology</h2>
     <div class="grid">
-      <div class="card">
-        <h3>Channel Geometry &amp; Froude Number <span class="badge">3D</span></h3>
-        <p>Channel cross-section shapes with live A, P, R, T, D; selectable velocity profiles
-           with α and β integrated numerically (self-checking); plan-view stone-ripple demo
-           where ripples spread at c = √(gD) while advected at V — subcritical flow shows the
-           upstream "news front" at c − V, supercritical folds into the Froude wedge
-           sin θ = 1/Fr (the open-channel Mach cone). Lecture Examples 1–3 built in.</p>
-        <a class="launch" href="animations/Lec1_open_channel_geometry.html">Launch</a>
-      </div>
-      <div class="card">
-        <h3>Manning Uniform Flow <span class="badge">2D · offline</span></h3>
-        <p>Normal- and critical-depth solvers for the Manning equation, with a mild–steep
-           slope classification chart. Explore how roughness, slope and discharge set y<sub>n</sub>.</p>
-        <a class="launch" href="animations/Lec2_manning_uniform_flow.html">Launch</a>
-      </div>
-      <div class="card">
-        <h3>Specific Energy &amp; Critical Depth <span class="badge">2D · offline</span></h3>
-        <p>The specific-energy diagram live-linked to a sluice-gate flow: alternate depths,
-           critical depth, and choking, with E–y curve and flow rendered side by side.</p>
-        <a class="launch" href="animations/Lab1_specific_energy_critical_depth.html">Launch</a>
-      </div>
-      <div class="card">
-        <h3>Hydraulic Jump <span class="badge">2D · offline</span></h3>
-        <p>Momentum-based sequent depths, all five jump types, and energy loss, plotted
-           against the theoretical curves as upstream Froude number varies.</p>
-        <a class="launch" href="animations/Lab2_hydraulic_jump.html">Launch</a>
-      </div>
-      <div class="card">
-        <h3>Gradually Varied Flow Profiles <span class="badge">2D · offline</span></h3>
-        <p>Numerical integration of dy/dx = (S₀ − S<sub>f</sub>)/(1 − Fr²) with automatic
-           classification of all twelve profile types (M/S/C/H/A × zones), including
-           multi-kilometre backwater curves.</p>
-        <a class="launch" href="animations/Lec5_gvf_profiles.html">Launch</a>
-      </div>
-    </div>
-  </section>
-
-  <section>
-    <h2>Hydrology &amp; groundwater</h2>
-    <div class="grid">
-      <div class="card">
-        <h3>Water Balance of a Lake <span class="badge">2D · offline</span></h3>
-        <p>The water-budget equation animated: inflow, outflow, rainfall and evaporation
-           drive the lake level; run a month and watch storage close the balance.</p>
-        <a class="launch" href="animations/Lec6_water_balance.html">Launch</a>
-      </div>
       <div class="card">
         <h3>Rainfall Frequency &amp; IDF Curves <span class="badge">2D · offline</span></h3>
         <p>Raw gauge to design discharge on real data (Drumalbin, 27 yr hourly): slide the
@@ -103,12 +57,6 @@
            family with a Sherman equation, then bridge to the rational method — Q&#8346;(D)
            peaks exactly at t꜀.</p>
         <a class="launch" href="animations/Lec9_idf_frequency.html">Launch</a>
-      </div>
-      <div class="card">
-        <h3>Rational Method <span class="badge">2D · offline</span></h3>
-        <p>Q&#8346; = 0.278·C·i·A over a mixed-land-use catchment: composite runoff
-           coefficient, IDF-derived intensity at t꜀, and a one-click urbanization demo.</p>
-        <a class="launch" href="animations/Lec10_rational_method.html">Launch</a>
       </div>
       <div class="card">
         <h3>Storm Hydrograph <span class="badge">2D · offline</span></h3>
@@ -125,16 +73,13 @@
            and watch the UH morph while its volume stays exactly 1 cm.</p>
         <a class="launch" href="animations/Lec11_unit_hydrograph.html">Launch</a>
       </div>
-      <div class="card">
-        <h3>Steady Flow to a Well <span class="badge">2D · offline</span></h3>
-        <p>Thiem (confined) and Dupuit–Thiem (unconfined) cones of depression drawn from
-           the equations, with Darcy vs seepage velocity and travel-time readouts.</p>
-        <a class="launch" href="animations/Lec12_well_drawdown.html">Launch</a>
-      </div>
     </div>
     <p class="note">
-      More animations are in development: weirs and sluice gates, channel transitions,
-      Thiessen polygons, and unsteady well drawdown (Theis).
+      In final verification, released as they are confirmed: channel geometry &amp; the
+      Froude number (3D), Manning uniform flow, specific energy &amp; critical depth,
+      hydraulic jump, gradually varied flow profiles, water balance, the rational method,
+      and steady flow to a well. Also in development: weirs and sluice gates, channel
+      transitions, Thiessen polygons, and unsteady well drawdown (Theis).
     </p>
   </section>
 
@@ -142,25 +87,25 @@
     <h2>Physics integrity</h2>
     <p>
       Each animation is built to a strict rule: every displayed quantity is computed from the
-      governing equation (continuity, energy, momentum, Manning, the GVF equation), and results
-      are verified by hand against worked textbook examples before release. These are teaching
-      instruments, not illustrations.
+      governing equation (continuity, energy, momentum, Manning, the unit-hydrograph and
+      frequency-analysis relations), and results are verified by hand against worked
+      examples before release. These are teaching instruments, not illustrations.
     </p>
   </section>
 
   <section>
     <h2>Use &amp; citation</h2>
     <p>
-      Free for teaching and research under the MIT License. If you use OpenChannelLab in
+      Free for teaching and research under the MIT License. If you use OpenHydroLab in
       teaching or a publication, please cite it:
     </p>
-    <pre class="cite">Das, S. (2026). OpenChannelLab: interactive, physics-accurate animations
-for teaching open-channel hydraulics. Zenodo. DOI: (added on first release)</pre>
+    <pre class="cite">Das, S. (2026). OpenHydroLab: interactive, physics-accurate animations
+for teaching hydraulics and hydrology. Zenodo. DOI: (added on first release)</pre>
   </section>
 </main>
 <footer>
   Developed by Samiran Das, University of Glasgow (Singapore) ·
-  <a href="https://github.com/USERNAME/OpenChannelLab">Source on GitHub</a> · MIT License
+  <a href="https://github.com/samirandas-cell/OpenHydroLab">Source on GitHub</a> · MIT License
 </footer>
 </body>
 </html>

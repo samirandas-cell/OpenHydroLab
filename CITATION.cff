@@ -1,6 +1,6 @@
 cff-version: 1.2.0
-message: "If you use OpenChannelLab, please cite it as below."
-title: "OpenChannelLab: interactive, physics-accurate animations for teaching open-channel hydraulics"
+message: "If you use OpenHydroLab, please cite it as below."
+title: "OpenHydroLab: interactive, physics-accurate animations for teaching hydraulics and hydrology"
 type: software
 authors:
   - family-names: Das
@@ -8,14 +8,15 @@ authors:
     affiliation: "University of Glasgow, Singapore"
     # orcid: "https://orcid.org/XXXX-XXXX-XXXX-XXXX"  # TODO: add ORCID
 version: 1.0.0
-date-released: 2026-07-08
+date-released: 2026-07-14
 license: MIT
-repository-code: "https://github.com/USERNAME/OpenChannelLab"
+repository-code: "https://github.com/samirandas-cell/OpenHydroLab"
 # doi: 10.5281/zenodo.XXXXXXX  # TODO: added automatically at first Zenodo release
 keywords:
+  - hydrology
   - open-channel hydraulics
   - engineering education
   - interactive simulation
-  - specific energy
-  - hydraulic jump
-  - gradually varied flow
+  - unit hydrograph
+  - IDF curves
+  - frequency analysis

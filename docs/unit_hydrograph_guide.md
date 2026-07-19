@@ -1,6 +1,6 @@
 # The Unit Hydrograph Workbench — Theory, Description, and User Guide
 
-**Tool:** `animations/Lec11_unit_hydrograph.html` (OpenChannelLab)
+**Tool:** `animations/Lec11_unit_hydrograph.html` (OpenHydroLab)
 **Course context:** CVE2142 Hydraulics & Hydrology, Lecture 11 (Unit Hydrograph and Flood Estimation)
 **Author:** Samiran Das, University of Glasgow (Singapore)
 **Requirements:** any modern browser; fully offline; no installation.
@@ -239,7 +239,7 @@ drag the pulse sliders; switch to *3 · Change duration* and drag D′.
   (Δt = 0.05 h over 140 h) and displayed as self-checks.
 - Stable element ids (`o-*`, `v-*`, `chip`) make the readouts scriptable for automated
   verification and future classroom telemetry.
-- Part of **OpenChannelLab** (MIT License). Please cite the library (see `CITATION.cff`)
+- Part of **OpenHydroLab** (MIT License). Please cite the library (see `CITATION.cff`)
   if used in teaching or publications.
 
 ## 7. References

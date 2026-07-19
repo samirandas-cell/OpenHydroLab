@@ -1,6 +1,6 @@
 # The Storm Hydrograph Animation — Theory, Description, and User Guide
 
-**Tool:** `animations/Lec10_storm_hydrograph.html` (OpenChannelLab)
+**Tool:** `animations/Lec10_storm_hydrograph.html` (OpenHydroLab)
 **Course context:** CVE2142 Hydraulics & Hydrology, Lecture 10 (Rainfall–Runoff Methods and Hydrograph)
 **Author:** Samiran Das, University of Glasgow (Singapore)
 **Requirements:** any modern browser; fully offline; no installation.
@@ -234,7 +234,7 @@ peaks, and recedes over nearly two days. The full 48-hour event plays in about 4
 - Single self-contained HTML file, 2D canvas, no libraries, fully offline.
 - Time step Δt = 0.02 h with exact exponential stepping — mass-conserving at any setting
   (verified by the built-in continuity check).
-- Part of **OpenChannelLab** (MIT License). Please cite the library (see `CITATION.cff`)
+- Part of **OpenHydroLab** (MIT License). Please cite the library (see `CITATION.cff`)
   if used in teaching or publications.
 
 ## 7. References
