@@ -48,6 +48,23 @@
   </p>
 
   <section>
+    <h2>Open-channel hydraulics</h2>
+    <div class="grid">
+      <div class="card">
+        <h3>Channel Geometry &amp; Froude Number <span class="badge">3D</span></h3>
+        <p>Channel cross-section shapes with live A, P, R, T, D; selectable velocity profiles
+           with α and β integrated numerically (self-checking); plan-view stone-ripple demo
+           where ripples spread at c = √(gD) while advected at V — subcritical flow shows the
+           upstream "news front" at c − V, supercritical folds into the Froude wedge
+           sin θ = 1/Fr, the open-channel Mach cone.</p>
+        <a class="launch" href="animations/channel_geometry.html">Launch</a>
+      </div>
+    </div>
+    <p class="note">Needs internet on first load (3D library via CDN); all other animations
+    are fully offline.</p>
+  </section>
+
+  <section>
     <h2>Hydrology</h2>
     <div class="grid">
       <div class="card">
@@ -75,8 +92,8 @@
       </div>
     </div>
     <p class="note">
-      In final verification, released as they are confirmed: channel geometry &amp; the
-      Froude number (3D), Manning uniform flow, specific energy &amp; critical depth,
+      In final verification, released as they are confirmed: Manning uniform flow,
+      specific energy &amp; critical depth,
       hydraulic jump, gradually varied flow profiles, water balance, the rational method,
       and steady flow to a well. Also in development: weirs and sluice gates, channel
       transitions, Thiessen polygons, and unsteady well drawdown (Theis).
