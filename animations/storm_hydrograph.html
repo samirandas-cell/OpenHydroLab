@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Lecture 10 — Storm Hydrograph: a Raindrop's Journey to the Gauge</title>
+<title>Storm Hydrograph: a Raindrop's Journey to the Gauge</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
   :root{
@@ -61,7 +61,7 @@
 
 <div id="ui" class="panel">
   <h1>Storm Hydrograph</h1>
-  <div class="sub">CVE2142 · Lecture 10 · Every runoff drop's travel time to the gauge is
+  <div class="sub">OpenHydroLab · Every runoff drop's travel time to the gauge is
   drawn from the catchment's unit-hydrograph response — the hydrograph is the arrival-time
   distribution of the rain</div>
 
@@ -97,7 +97,7 @@
     <label class="row">Urbanization <span class="val" id="v-u"></span></label>
     <input type="range" id="s-u" min="0" max="100" step="5" value="0">
     <div class="note" style="margin-top:2px">Paving cuts infiltration (φ↓) and speeds the
-    response (k↓) — Lecture 10's "influence of urbanization".</div>
+    response (k↓) — the classic influence of urbanization.</div>
   </div>
 
   <h2>Baseflow model</h2>
@@ -263,7 +263,7 @@ const setBF = m => {
   $("bf-uni").classList.toggle("active", m==="uni");
   $("bf-note").textContent = m==="res"
     ? "Reservoir: infiltrated water fills a slow groundwater store that drains to the stream — baseflow rises gently after the storm."
-    : "Uniform: baseflow held constant at its pre-storm value — the straight-line separation assumption used in Lecture 11 when deriving unit hydrographs.";
+    : "Uniform: baseflow held constant at its pre-storm value — the straight-line separation assumption used when deriving unit hydrographs.";
   recompute();
 };
 $("bf-res").addEventListener("click", ()=>setBF("res"));

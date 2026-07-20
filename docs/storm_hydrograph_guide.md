@@ -1,7 +1,7 @@
 # The Storm Hydrograph Animation — Theory, Description, and User Guide
 
-**Tool:** `animations/Lec10_storm_hydrograph.html` (OpenHydroLab)
-**Course context:** CVE2142 Hydraulics & Hydrology, Lecture 10 (Rainfall–Runoff Methods and Hydrograph)
+**Tool:** `animations/storm_hydrograph.html` (OpenHydroLab)
+**Course context:** undergraduate hydraulics & hydrology (rainfall–runoff methods and the hydrograph)
 **Author:** Samiran Das, University of Glasgow (Singapore)
 **Requirements:** any modern browser; fully offline; no installation.
 
@@ -107,7 +107,7 @@ itself; that is a natural extension.)*
    pre-storm value of 0.05 m³/s per km² and rises gently after the storm — the realistic
    delayed groundwater response.
 2. **Uniform (constant).** Baseflow is held at its pre-storm value throughout. This is
-   exactly the **straight-line baseflow-separation assumption** used in Lecture 11 when
+   exactly the **straight-line baseflow-separation assumption** used in the unit-hydrograph topic when
    deriving unit hydrographs from observed storm hydrographs. Toggling between the two
    modes shows students precisely what the straight-line simplification ignores.
 
@@ -202,7 +202,7 @@ peaks, and recedes over nearly two days. The full 48-hour event plays in about 4
    to about 4 h. Discuss drainage design consequences (and connect to the rational
    method's C coefficient).
 6. **Baseflow assumptions (2 min).** Switch the baseflow model to *Uniform* and back.
-   Point out that Lecture 11's unit-hydrograph derivation assumes exactly the flat line —
+   Point out that the standard unit-hydrograph derivation assumes exactly the flat line —
    and show what that assumption hides.
 
 ### Questions to set students
@@ -245,5 +245,5 @@ peaks, and recedes over nearly two days. The full 48-hour event plays in about 4
   response.* Water Resources Research 15(6), 1409–1420.
 - Chow, V.T., Maidment, D.R. & Mays, L.W. (1988). *Applied Hydrology.* McGraw-Hill.
   (Chapters 5–7: hydrographs, unit hydrographs, lumped routing.)
-- Das, S. CVE2142 *Hydraulics and Hydrology* Lecture 10 notes, University of Glasgow
+- Das, S. *Hydraulics and Hydrology* lecture notes, University of Glasgow
   (Singapore).

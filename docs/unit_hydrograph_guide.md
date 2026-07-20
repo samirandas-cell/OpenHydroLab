@@ -1,7 +1,7 @@
 # The Unit Hydrograph Workbench — Theory, Description, and User Guide
 
-**Tool:** `animations/Lec11_unit_hydrograph.html` (OpenHydroLab)
-**Course context:** CVE2142 Hydraulics & Hydrology, Lecture 11 (Unit Hydrograph and Flood Estimation)
+**Tool:** `animations/unit_hydrograph.html` (OpenHydroLab)
+**Course context:** undergraduate hydraulics & hydrology (unit hydrograph and flood estimation)
 **Author:** Samiran Das, University of Glasgow (Singapore)
 **Requirements:** any modern browser; fully offline; no installation.
 
@@ -250,5 +250,5 @@ drag the pulse sliders; switch to *3 · Change duration* and drag D′.
   114–121. (The gamma-cascade IUH used as this tool's foundation.)
 - Chow, V.T., Maidment, D.R. & Mays, L.W. (1988). *Applied Hydrology.* McGraw-Hill.
   (Ch. 7: UH derivation, S-curve, superposition.)
-- Das, S. CVE2142 *Hydraulics and Hydrology* Lecture 11 notes, University of Glasgow
+- Das, S. *Hydraulics and Hydrology* lecture notes, University of Glasgow
   (Singapore).

@@ -1,6 +1,6 @@
 # Rainfall Frequency & IDF Curves — full guide
 
-`animations/Lec9_idf_frequency.html` · CVE2142 Lecture 9 · 2D canvas, single file, fully offline
+`animations/idf_frequency.html` · 2D canvas, single file, fully offline
 
 ## 1. Purpose
 
@@ -186,4 +186,4 @@ Licence.
 - Sherman, C.W. (1931). Frequency and intensity of excessive rainfalls at Boston.
   *Transactions ASCE*, 95, 951–960.
 - Met Office (2024). MIDAS-Open: UK hourly rainfall data. CEDA Archive.
-- CVE2142 Lecture 9 notes (S. Das), University of Glasgow Singapore.
+- Das, S. Hydraulics & Hydrology lecture notes, University of Glasgow (Singapore).
