@@ -54,12 +54,6 @@
     #readout{width:236px; font-size:12px;}
   }
 </style>
-<script type="importmap">
-{"imports":{
-  "three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
-  "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
-}}
-</script>
 </head>
 <body>
 <canvas id="c"></canvas>
@@ -78,29 +72,29 @@
 
   <h2>Geometry</h2>
   <div id="ctl-b">
-    <label class="row">Bottom width b <span class="val" id="v-b"></span></label>
+    <label for="s-b" class="row">Bottom width b <span class="val" id="v-b"></span></label>
     <input type="range" id="s-b" min="0.5" max="8" step="0.1" value="3">
   </div>
   <div id="ctl-m">
-    <label class="row">Side slope m (mH:1V) <span class="val" id="v-m"></span></label>
+    <label for="s-m" class="row">Side slope m (mH:1V) <span class="val" id="v-m"></span></label>
     <input type="range" id="s-m" min="0.25" max="3" step="0.05" value="1.5">
   </div>
   <div id="ctl-d">
-    <label class="row">Diameter d <span class="val" id="v-d"></span></label>
+    <label for="s-d" class="row">Diameter d <span class="val" id="v-d"></span></label>
     <input type="range" id="s-d" min="1" max="4" step="0.1" value="2.5">
   </div>
   <div>
-    <label class="row">Flow depth y <span class="val" id="v-y"></span></label>
+    <label for="s-y" class="row">Flow depth y <span class="val" id="v-y"></span></label>
     <input type="range" id="s-y" min="0.1" max="4" step="0.05" value="1.2">
   </div>
   <div>
-    <label class="row">Bed slope S₀ <span class="val" id="v-S0"></span></label>
+    <label for="s-S0" class="row">Bed slope S₀ <span class="val" id="v-S0"></span></label>
     <input type="range" id="s-S0" min="0" max="0.06" step="0.001" value="0.01">
   </div>
 
   <h2>Flow</h2>
   <div>
-    <label class="row">Mean velocity V <span class="val" id="v-V"></span></label>
+    <label for="s-V" class="row">Mean velocity V <span class="val" id="v-V"></span></label>
     <input type="range" id="s-V" min="0.1" max="8" step="0.05" value="1">
   </div>
   <label class="row" style="margin-top:8px">Velocity profile model</label>
@@ -176,10 +170,12 @@
   <button id="b-pause">⏸ Pause</button>
 </div>
 
-<script type="module">
-import * as THREE from 'three';
-import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
-
+<!-- Physics layer — a classic script, so every binding below lives in the global scope
+     and can be exercised directly: by the verification suite at machine precision, and
+     by anyone inspecting the model from the browser console. Nothing here needs
+     Three.js, so it is deliberately kept out of the rendering module that follows. -->
+<script>
+'use strict';
 /* ---------------- constants & state ---------------- */
 const G = 9.81;          // m/s²
 const NU = 1e-6;         // kinematic viscosity of water (m²/s), 20 °C
@@ -238,6 +234,24 @@ function profileIntegrals(name){          // Simpson's rule, n = 400 panels
   return { mean:s1*h, beta:s2*h, alpha:s3*h };   // normalized by V, V², V³
 }
 
+/* the rendering layer continues in the script below, which reads the bindings above */
+</script>
+
+<!-- Three.js r160, vendored under animations/vendor/three/ rather than loaded from a CDN
+     so this laboratory runs with no network connection like the other seven. Loaded as
+     CLASSIC scripts, not ES modules: browsers block module imports from a file:// origin
+     under CORS, so an ES-module build would fail the moment the .html is opened straight
+     from disk — which is how most students will use it. Both files attach to the global
+     THREE. See animations/vendor/three/README.md for provenance and how to update. -->
+<script src="./vendor/three/three.min.js"></script>
+<script src="./vendor/three/OrbitControls.js"></script>
+
+<!-- Rendering layer. Also a classic script, so it runs in order after the two above and
+     can see the physics bindings declared earlier. -->
+<script>
+'use strict';
+const OrbitControls = THREE.OrbitControls;
+
 /* ---------------- three.js scaffold ---------------- */
 const canvas = document.getElementById('c');
 const renderer = new THREE.WebGLRenderer({canvas, antialias:true});
@@ -295,6 +309,13 @@ document.getElementById('b-pause').onclick = ()=>{
 };
 
 /* ---------------- text label sprites ---------------- */
+/* Vertical pitch of the centre-line label stack, in world units. Label sprites are sized
+   in world units and so keep a fixed pixel size while the section itself shrinks, which
+   means offsets tuned at one geometry collapse into each other at another. This is the
+   floor: a little over one label height (0.48 world units at 26 px). Bank offsets scale
+   with T on top of their own floors. */
+const XS_GAP = 0.62;
+
 function makeLabel(text, color='#e8edf6', px=30){
   const cv = document.createElement('canvas');
   const ctx = cv.getContext('2d');
@@ -311,6 +332,7 @@ function makeLabel(text, color='#e8edf6', px=30){
   const sp = new THREE.Sprite(new THREE.SpriteMaterial({map:tex, depthTest:false, transparent:true}));
   const S = 0.011;
   sp.scale.set(cv.width*S, cv.height*S, 1);
+  sp.userData.text = text;      // lets the label-overlap test name what collided
   return sp;
 }
 
@@ -403,11 +425,21 @@ function buildStatic(){
 
   /* --- longitudinal annotations: datum + slope --- */
   const dashMat = new THREE.LineDashedMaterial({color:0x8899bb, dashSize:.35, gapSize:.22});
+  const datumZ = -(hyd.T/2+0.02);
   const datum = new THREE.Line(new THREE.BufferGeometry().setFromPoints(
-    [new THREE.Vector3(0,0,hyd.T/2+0.02), new THREE.Vector3(L,0,hyd.T/2+0.02)]), dashMat);
+    [new THREE.Vector3(0,0,datumZ), new THREE.Vector3(L,0,datumZ)]), dashMat);
   datum.computeLineDistances(); staticG.add(datum);
+
+  /* The slope annotation joins the bottom of the centre-line label stack (T, b, P, S₀)
+     rather than floating out over a bank. That placement is safe by construction: every
+     label in the stack sits at the same station and the same z, so perspective maps them
+     to one screen column with their world-space gaps preserved in order. Floating it over
+     a bank instead — which earlier versions did — put it in a different plane from the
+     section labels, and the projection then slid it onto whichever of them happened to
+     line up at a given T and y; the short side-slope label m disappeared under it
+     completely. tests/software/label-layout.spec.mjs pins this down across the range. */
   const sl = makeLabel(`S₀ = ${state.S0.toFixed(3)}  (drop ${(state.S0*L).toFixed(2)} m over ${L} m)`, '#c9d6ea', 26);
-  sl.position.set(L*0.72, bedElev(L*0.72)-0.55, hyd.T/2+0.05);
+  sl.position.set(XS, bedElev(XS)-XS_GAP*3.3, 0);
   staticG.add(sl);
 
   buildCrossSection();
@@ -447,12 +479,16 @@ function buildCrossSection(){
   xsG.add(chord);
 
   const lab = (t,x,y,z,col='#e8edf6',px=26)=>{ const sp=makeLabel(t,col,px); sp.position.set(x,y,z); xsG.add(sp); };
-  lab(`T = ${f2(hyd.T)} m`, XS, e+s.y+0.32, 0, '#54c2ff');
-  lab(`y = ${f2(s.y)} m`, XS, e+s.y*0.5, -(hyd.T/2+1.1), '#e8edf6');
-  if (s.shape==='rect'||s.shape==='trap') lab(`b = ${f2(s.b)} m`, XS, e-0.38, 0, '#ffd166');
-  if (s.shape==='trap'||s.shape==='tri') lab(`m = ${f2(s.m)}`, XS, e+s.y*0.55, (hyd.T/2+1.0), '#ffd166');
-  if (s.shape==='circ') lab(`d = ${f2(s.d)} m`, XS, e-0.38, 0, '#ffd166');
-  lab(`P (wetted perimeter) = ${f2(hyd.P)} m`, XS, e-0.85, 0, '#ffd166', 23);
+
+  const bankZ = hyd.T/2 + Math.max(1.45, hyd.T*0.25);       // far bank, for the depth label
+  const nearZ = hyd.T/2 + Math.max(2.00, hyd.T*0.32);       // near bank, for the side slope
+
+  lab(`T = ${f2(hyd.T)} m`, XS, e+s.y+XS_GAP, 0, '#54c2ff');
+  lab(`y = ${f2(s.y)} m`, XS, e+s.y*0.5, -bankZ, '#e8edf6');
+  if (s.shape==='rect'||s.shape==='trap') lab(`b = ${f2(s.b)} m`, XS, e-XS_GAP*0.75, 0, '#ffd166');
+  if (s.shape==='trap'||s.shape==='tri') lab(`m = ${f2(s.m)}`, XS, e+s.y+XS_GAP*0.35, nearZ, '#ffd166');
+  if (s.shape==='circ') lab(`d = ${f2(s.d)} m`, XS, e-XS_GAP*0.75, 0, '#ffd166');
+  lab(`P (wetted perimeter) = ${f2(hyd.P)} m`, XS, e-XS_GAP*2.0, 0, '#ffd166', 23);
 
   // depth dimension line
   const dl = new THREE.Line(new THREE.BufferGeometry().setFromPoints(

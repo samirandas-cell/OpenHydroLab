@@ -100,34 +100,34 @@
 
   <h2>② Frequency — design point</h2>
   <div>
-    <label class="row">Return period T <span class="val" id="v-T"></span></label>
+    <label for="s-T" class="row">Return period T <span class="val" id="v-T"></span></label>
     <input type="range" id="s-T" min="0" max="100" step="1" value="73">
   </div>
   <div>
-    <label class="row">Design life n <span class="val" id="v-n"></span></label>
+    <label for="s-n" class="row">Design life n <span class="val" id="v-n"></span></label>
     <input type="range" id="s-n" min="1" max="100" step="1" value="20">
   </div>
 
   <h2>④ Design catchment — Rational method</h2>
   <div>
-    <label class="row">Area A <span class="val" id="v-A"></span></label>
+    <label for="s-A" class="row">Area A <span class="val" id="v-A"></span></label>
     <input type="range" id="s-A" min="1" max="50" step="0.5" value="10">
   </div>
   <div>
-    <label class="row">Runoff coefficient C <span class="val" id="v-C"></span></label>
+    <label for="s-C" class="row">Runoff coefficient C <span class="val" id="v-C"></span></label>
     <input type="range" id="s-C" min="0.05" max="0.95" step="0.01" value="0.45">
   </div>
   <div>
-    <label class="row">Flow length L <span class="val" id="v-L"></span></label>
+    <label for="s-L" class="row">Flow length L <span class="val" id="v-L"></span></label>
     <input type="range" id="s-L" min="1000" max="10000" step="100" value="4000">
   </div>
   <div>
-    <label class="row">Slope S <span class="val" id="v-S"></span></label>
+    <label for="s-S" class="row">Slope S <span class="val" id="v-S"></span></label>
     <input type="range" id="s-S" min="0.001" max="0.05" step="0.001" value="0.005">
   </div>
   <div class="chips" id="TdChips" style="margin-top:8px"></div>
   <div>
-    <label class="row">Storm duration D <span class="val" id="v-Dd"></span></label>
+    <label for="s-Dd" class="row">Storm duration D <span class="val" id="v-Dd"></span></label>
     <input type="range" id="s-Dd" min="0" max="100" step="1" value="50">
   </div>
   <label class="ck"><input type="checkbox" id="c-lock" checked> lock storm duration D = t<sub>c</sub> (Kirpich)</label>

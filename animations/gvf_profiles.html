@@ -85,27 +85,27 @@
     <option value="tri">Triangular</option>
   </select>
   <div id="ctl-b">
-    <label class="row">Bottom width b <span class="val" id="v-b"></span></label>
+    <label for="s-b" class="row">Bottom width b <span class="val" id="v-b"></span></label>
     <input type="range" id="s-b" min="0.5" max="60" step="0.1" value="5">
   </div>
   <div id="ctl-m" class="hidden">
-    <label class="row">Side slope m (mH:1V) <span class="val" id="v-m"></span></label>
+    <label for="s-m" class="row">Side slope m (mH:1V) <span class="val" id="v-m"></span></label>
     <input type="range" id="s-m" min="0.25" max="3" step="0.05" value="1.5">
   </div>
-  <label class="row">Manning n <span class="val" id="v-n"></span></label>
+  <label for="s-n" class="row">Manning n <span class="val" id="v-n"></span></label>
   <input type="range" id="s-n" min="0.010" max="0.045" step="0.001" value="0.015">
 
   <h2>Flow &amp; bed slope</h2>
-  <label class="row">Discharge Q (log scale) <span class="val" id="v-Q"></span></label>
+  <label for="s-Q" class="row">Discharge Q (log scale) <span class="val" id="v-Q"></span></label>
   <input type="range" id="s-Q" min="-0.7" max="2.6" step="0.001" value="1">
-  <label class="row">Bed slope S₀ (signed log) <span class="val" id="v-S0"></span></label>
+  <label for="s-S0" class="row">Bed slope S₀ (signed log) <span class="val" id="v-S0"></span></label>
   <input type="range" id="s-S0" min="-300" max="300" step="0.001" value="130.5">
   <div class="note" style="margin-top:2px">Centre = 0 (horizontal, H); left of centre =
   adverse (A). Both have no normal depth.</div>
   <button id="b-sweepS" class="small">▶ Sweep S₀ (adverse → mild → steep)</button>
 
   <h2>Control section</h2>
-  <label class="row">Control depth y₀ <span class="val" id="v-y0"></span></label>
+  <label for="s-y0" class="row">Control depth y₀ <span class="val" id="v-y0"></span></label>
   <input type="range" id="s-y0" min="0.02" max="10" step="0.01" value="1.8">
   <div class="note" id="ctrlNote"></div>
 
@@ -122,7 +122,7 @@
   every time — only the bed slope and the control depth change.</div>
 
   <h2>Direct-step method</h2>
-  <label class="row">Number of steps N <span class="val" id="v-N"></span></label>
+  <label for="s-N" class="row">Number of steps N <span class="val" id="v-N"></span></label>
   <input type="range" id="s-N" min="0" max="7" step="1" value="2">
   <label class="chk"><input type="checkbox" id="t-step" checked> Show the direct-step staircase</label>
 

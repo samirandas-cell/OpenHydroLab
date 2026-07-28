@@ -80,7 +80,7 @@
     <button class="step" id="st-4">4 · Divide by d → 6-h UH</button>
     <h2>Your judgment call</h2>
     <div>
-      <label class="row">Baseflow level <span class="val" id="v-bf"></span></label>
+      <label for="s-bf" class="row">Baseflow level <span class="val" id="v-bf"></span></label>
       <input type="range" id="s-bf" min="0" max="30" step="0.5" value="10">
     </div>
     <div class="note" id="aha1"><b>Aha demo:</b> baseflow separation is a judgment call —
@@ -93,26 +93,26 @@
   <div id="ctl-apply" style="display:none">
     <h2>Storm pattern</h2>
     <div>
-      <label class="row">Pulse duration Dᵣ <span class="val" id="v-Dr"></span></label>
+      <label for="s-Dr" class="row">Pulse duration Dᵣ <span class="val" id="v-Dr"></span></label>
       <input type="range" id="s-Dr" min="1" max="12" step="0.5" value="6">
       <div class="note" style="margin-top:2px">Changing Dᵣ automatically switches to the
       Dᵣ-hour UH (built by the S-curve method of mode 3) — a UH may only be applied to
       pulses of <i>its own</i> duration.</div>
     </div>
     <div>
-      <label class="row"><span id="lb-R1">Pulse R₁</span> <span class="val" id="v-R1"></span></label>
+      <label for="s-R1" class="row"><span id="lb-R1">Pulse R₁</span> <span class="val" id="v-R1"></span></label>
       <input type="range" id="s-R1" min="0" max="5" step="0.1" value="3.0">
     </div>
     <div>
-      <label class="row"><span id="lb-R2">Pulse R₂</span> <span class="val" id="v-R2"></span></label>
+      <label for="s-R2" class="row"><span id="lb-R2">Pulse R₂</span> <span class="val" id="v-R2"></span></label>
       <input type="range" id="s-R2" min="0" max="5" step="0.1" value="2.0">
     </div>
     <div>
-      <label class="row"><span id="lb-R3">Pulse R₃</span> <span class="val" id="v-R3"></span></label>
+      <label for="s-R3" class="row"><span id="lb-R3">Pulse R₃</span> <span class="val" id="v-R3"></span></label>
       <input type="range" id="s-R3" min="0" max="5" step="0.1" value="0">
     </div>
     <div>
-      <label class="row">Baseflow <span class="val" id="v-bf2"></span></label>
+      <label for="s-bf2" class="row">Baseflow <span class="val" id="v-bf2"></span></label>
       <input type="range" id="s-bf2" min="0" max="60" step="1" value="10">
     </div>
     <h2>Show</h2>
@@ -128,7 +128,7 @@
   <div id="ctl-scurve" style="display:none">
     <h2>Target duration</h2>
     <div>
-      <label class="row">New duration D′ <span class="val" id="v-Dp"></span></label>
+      <label for="s-Dp" class="row">New duration D′ <span class="val" id="v-Dp"></span></label>
       <input type="range" id="s-Dp" min="1" max="24" step="0.5" value="12">
     </div>
     <h2>Show</h2>

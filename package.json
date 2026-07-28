@@ -1,0 +1,21 @@
+{
+  "name": "openhydrolab",
+  "version": "1.0.0-rc.1",
+  "description": "Interactive, physics-accurate browser laboratories for teaching hydraulics and hydrology",
+  "type": "module",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "serve": "node tools/serve.mjs",
+    "test": "playwright test",
+    "test:physics": "playwright test tests/physics",
+    "test:software": "playwright test tests/software",
+    "test:chromium": "playwright test --project=chromium",
+    "validate": "playwright test && node tools/summarise-validation.mjs",
+    "install-browsers": "playwright install --with-deps chromium firefox webkit"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.48.0",
+    "three": "^0.160.0"
+  }
+}

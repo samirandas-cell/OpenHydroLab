@@ -20,7 +20,7 @@ bibliography: paper.bib
 
 # Summary
 
-OpenHydroLab is a library of interactive, single-file HTML animations for teaching
+OpenHydroLab is a library of interactive, self-contained HTML animations for teaching
 undergraduate hydraulics and hydrology. Each animation computes every displayed quantity
 live from the governing equations — continuity, specific energy, momentum, the Manning
 equation, the gradually-varied-flow (GVF) equation, and the unit-hydrograph and
@@ -50,7 +50,9 @@ aimed at design rather than learning (e.g., HEC-RAS), or scattered applets that 
 their governing equations. OpenHydroLab fills this gap with instruments that are
 (a) open source and free, (b) verifiable — the equations are in readable JavaScript and
 each module is checked against worked textbook examples [@chow1959], and (c) deployable
-anywhere, including low-bandwidth settings, because each module is one offline HTML file.
+anywhere, including low-bandwidth settings, because every module runs offline from local
+files and requests nothing from a third-party host — a property enforced by the
+automated test suite rather than merely asserted.
 
 <!-- TODO: 1–2 sentences on classroom use to date (CVE2142 Hydraulics & Hydrology,
 University of Glasgow Singapore, cohort size) and planned evaluation. -->
