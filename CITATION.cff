@@ -5,10 +5,10 @@ type: software
 authors:
   - family-names: Das
     given-names: Samiran
-    affiliation: "University of Glasgow, Singapore"
-    # orcid: "https://orcid.org/XXXX-XXXX-XXXX-XXXX"  # TODO: add ORCID
+    affiliation: "James Watt School of Engineering, University of Glasgow (Singapore campus)"
+    orcid: "https://orcid.org/0000-0002-3814-534X"
 version: 1.0.0
-date-released: 2026-07-14
+date-released: 2026-07-28
 license: MIT
 repository-code: "https://github.com/samirandas-cell/OpenHydroLab"
 # doi: 10.5281/zenodo.XXXXXXX  # TODO: added automatically at first Zenodo release

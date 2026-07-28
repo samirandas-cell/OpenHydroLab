@@ -9,7 +9,7 @@ tags:
   - JavaScript
 authors:
   - name: Samiran Das
-    orcid: 0000-0000-0000-0000  # TODO: real ORCID
+    orcid: 0000-0002-3814-534X
     affiliation: 1
 affiliations:
   - name: "James Watt School of Engineering, University of Glasgow (Singapore campus)"
