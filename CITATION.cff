@@ -11,7 +11,14 @@ version: 1.0.0
 date-released: 2026-07-28
 license: MIT
 repository-code: "https://github.com/samirandas-cell/OpenHydroLab"
-# doi: 10.5281/zenodo.XXXXXXX  # TODO: added automatically at first Zenodo release
+doi: 10.5281/zenodo.21635798
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.21635798
+    description: "Archived snapshot of version 1.0.0"
+  - type: doi
+    value: 10.5281/zenodo.21635797
+    description: "Concept DOI — resolves to the latest version"
 keywords:
   - hydrology
   - open-channel hydraulics

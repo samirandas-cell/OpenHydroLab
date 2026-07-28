@@ -1,5 +1,7 @@
 # OpenHydroLab
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21635797.svg)](https://doi.org/10.5281/zenodo.21635797)
+
 Physics-accurate, interactive HTML animations for teaching undergraduate hydraulics and
 hydrology. Every module runs offline in any modern browser with nothing to install and
 no third-party host to reach — seven are a single self-contained file, and the 3D
@@ -69,8 +71,18 @@ tests are left failing until they are closed.
 
 ## Citing
 
-If you use OpenHydroLab in teaching or research, please cite the archived release
-(DOI added at first Zenodo release) — see `CITATION.cff`.
+If you use OpenHydroLab in teaching or research, please cite the archived release — see
+`CITATION.cff` for the full record.
+
+- **This version (1.0.0):** [10.5281/zenodo.21635798](https://doi.org/10.5281/zenodo.21635798)
+- **All versions:** [10.5281/zenodo.21635797](https://doi.org/10.5281/zenodo.21635797)
+
+Cite the version DOI to pin the exact code your results depend on; cite the concept DOI to
+point readers at whatever the current release is.
+
+> Das, S. (2026). *OpenHydroLab: interactive, physics-accurate animations for teaching
+> hydraulics and hydrology* (Version 1.0.0) [Computer software].
+> https://doi.org/10.5281/zenodo.21635798
 
 ## Contributing
 

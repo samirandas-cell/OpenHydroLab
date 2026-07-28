@@ -42,6 +42,11 @@ appropriate for the Special Issue, particularly under the themes "Design, develo
 integration of technologies in STEM education" and "Systems and processes leading to
 technological tools for STEM education".
 
+The software described is already public and citable: the verified release is archived at
+https://doi.org/10.5281/zenodo.21635798 under an MIT licence, together with its
+verification protocol and the generated validation dataset, so any reviewer can reproduce
+the reported figures directly.
+
 The title and a 250-word abstract follow. Thank you for your time.
 
 Yours sincerely,
