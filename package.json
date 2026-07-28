@@ -12,6 +12,8 @@
     "test:software": "playwright test tests/software",
     "test:chromium": "playwright test --project=chromium",
     "validate": "playwright test && node tools/summarise-validation.mjs",
+    "paper": "node tools/manuscript-tables.mjs",
+    "paper:check": "node tools/manuscript-tables.mjs --check",
     "install-browsers": "playwright install --with-deps chromium firefox webkit"
   },
   "devDependencies": {
