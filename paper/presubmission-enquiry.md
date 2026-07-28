@@ -12,6 +12,13 @@ Guest Editors: Dr. Kadir Kozan (Florida State University), Dr. Ahmed Ashraf Butt
 below to the *Education Sciences* Editorial Office (educsci@mdpi.com), copying the Guest
 Editors is not required.
 
+**Status (2026-07-28): optional, not blocking.** Samiran has published in an MDPI Special
+Issue with coupons before and accepts both the APC exposure and the scope risk; if the
+paper is rejected on scope, the plan is to add the expert-evaluation survey and submit to
+*Computer Applications in Engineering Education* (Wiley, SCIE, free to publish). The
+enquiry below is therefore kept ready to send but is **not** a gate on drafting the
+manuscript. The abstract doubles as the manuscript's working abstract.
+
 ---
 
 ## Email
@@ -107,5 +114,6 @@ trade-offs. No learning-outcome claim is made.
   fallback is to add an expert-evaluation instrument (a panel of hydraulics/hydrology
   instructors rating physics fidelity and instructional usability) and resubmit — or to
   move to *Computer Applications in Engineering Education* (Wiley, free to publish).
-- **Before sending:** confirm with the Editorial Office that the MDPI coupons cover this
-  Special Issue, their expiry, and whether they stack against the CHF 2000 APC.
+- **APC.** Settled: coupons have covered an MDPI Special Issue for this author before, and
+  any shortfall against the CHF 2000 APC will be paid directly. Not a blocker; no need to
+  clear it with the Editorial Office in advance.
