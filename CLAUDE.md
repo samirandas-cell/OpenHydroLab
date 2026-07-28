@@ -98,29 +98,20 @@ and Citing section, and `paper/paper.md` under a new Software availability secti
 `paper/presubmission-enquiry.md` holds the 254-word enquiry abstract, the email, and the
 journal/SI selection rationale.
 
-**The Zenodo trap.** `.zenodo.json` **completely overrides `CITATION.cff`** for GitHub
-release archiving — the carefully validated CFF file is ignored. The first `.zenodo.json`
-had `"license": "MIT"` (Zenodo wants lowercase `"mit"`) and a `related_identifiers` entry
-using `scheme` where the schema expects `resource_type`; either would have failed the
-release. Caught before publishing, which cost one force-moved tag instead of a re-release.
-If a metadata field matters, it must be in `.zenodo.json`, not only in `CITATION.cff`.
+**Gotcha.** The first `.zenodo.json` would have failed the release; caught before
+publishing, at the cost of one force-moved tag. Written up as a standing rule under
+*What NOT to do* above.
 
-**Special issue confirmed.** *Education Sciences*, Section STEM Education, SI "The Role of
-Technology in STEM Education: Opportunities and Challenges"
-(<https://www.mdpi.com/journal/education/special_issues/2Z5P5LP271>), deadline
-**2026-12-31**, editors Kozan (FSU), Butt (Oklahoma), **Anwar (Texas A&M Engineering — the
-natural handling editor)**, Yu (JMU). It explicitly invites design-based research and lists
-"systems and processes leading to technological tools for STEM education" as a theme, which
-is a direct licence for a verification-protocol paper carrying no learning claim. All seven
-pages of open SIs were checked; the nearest alternative ("21st Century Science Classrooms",
-deadline 2026-09-01) wants the classroom-integration evidence this paper deliberately omits.
-
-**Decisions.** Submit **without** the expert-review survey; if the SI declines on scope,
-add an expert-evaluation instrument and go to CAEE (Wiley, free to publish). APC settled —
-coupons have covered an MDPI SI for this author before and any shortfall is paid directly,
-so the presubmission enquiry is kept ready but is **not** a gate on drafting. Of the three
-papers in the SI so far, all are empirical or review; this would be its first
-design-and-artifact paper — the known risk, accepted.
+**Decisions.** Target SI confirmed open and a good fit — it invites design-based research
+and lists "systems and processes leading to technological tools for STEM education", which
+is a direct licence for a verification-protocol paper with no learning claim. Editors
+Kozan (FSU), Butt (Oklahoma), **Anwar (Texas A&M Engineering — the likely handling
+editor)**, Yu (JMU). All seven pages of open SIs were checked; the nearest alternative
+("21st Century Science Classrooms", deadline 2026-09-01) wants the classroom-integration
+evidence this paper deliberately omits. Submitting **without** the expert-review survey and
+accepting the scope risk: all three papers in the SI so far are empirical or review, so
+this would be its first design-and-artifact paper. APC settled, so the enquiry is ready to
+send but is **not** a gate on drafting.
 
 **Next.** Draft the Education Sciences manuscript. `paper/paper.md` is still the JOSE-era
 stub: Summary needs its design paragraph, and Statement of Need, Learning objectives /
