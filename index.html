@@ -41,17 +41,18 @@
 </header>
 <main>
   <p>
-    OpenHydroLab is a free library of single-file, interactive HTML animations for
-    undergraduate hydraulics and hydrology. Every number on screen is computed live from the
-    real governing equations — no faked motion. Each animation runs in any modern browser,
-    needs no installation, and can be projected in class or explored by students at home.
+    OpenHydroLab is a free library of interactive HTML animations for undergraduate
+    hydraulics and hydrology. Every number on screen is computed live from the
+    real governing equations — no faked motion. Each animation runs offline in any modern
+    browser, needs no installation, and can be projected in class or explored by students
+    at home.
   </p>
 
   <section>
     <h2>Open-channel hydraulics</h2>
     <div class="grid">
       <div class="card">
-        <h3>Channel Geometry &amp; Froude Number <span class="badge">3D</span></h3>
+        <h3>Channel Geometry &amp; Froude Number <span class="badge">3D · offline</span></h3>
         <p>Channel cross-section shapes with live A, P, R, T, D; selectable velocity profiles
            with α and β integrated numerically (self-checking); plan-view stone-ripple demo
            where ripples spread at c = √(gD) while advected at V — subcritical flow shows the
@@ -99,8 +100,10 @@
         <a class="launch" href="animations/gvf_profiles.html">Launch</a>
       </div>
     </div>
-    <p class="note">Needs internet on first load (3D library via CDN); all other animations
-    are fully offline.</p>
+    <p class="note">All animations run fully offline, with no installation and no
+    third-party host. Seven are single self-contained files. The 3D laboratory
+    (Channel Geometry) additionally needs the <code>animations/vendor/three/</code> folder
+    kept alongside it — copy that folder too if you are moving the file on its own.</p>
   </section>
 
   <section>
@@ -154,7 +157,14 @@
       teaching or a publication, please cite it:
     </p>
     <pre class="cite">Das, S. (2026). OpenHydroLab: interactive, physics-accurate animations
-for teaching hydraulics and hydrology. Zenodo. DOI: (added on first release)</pre>
+for teaching hydraulics and hydrology (v1.0.0). Zenodo.
+https://doi.org/10.5281/zenodo.21635798</pre>
+    <p>
+      That is the version DOI, which always resolves to v1.0.0 exactly — use it when you
+      need the release you actually ran. To cite the project as a whole, use the concept
+      DOI <a href="https://doi.org/10.5281/zenodo.21635797">10.5281/zenodo.21635797</a>,
+      which always resolves to the newest release.
+    </p>
   </section>
 </main>
 <footer>

@@ -36,8 +36,10 @@ transitions, Thiessen polygons, unsteady well drawdown (Theis).
 
 ## Using in your course
 
-Open `index.html` (or the live site) and launch any animation — or copy a single
-animation file onto a USB stick / VLE; each one is standalone. Suggested uses:
+Open `index.html` (or the live site) and launch any animation — or copy an animation file
+onto a USB stick / VLE. Seven of the eight are standalone single files; the 3D one
+(`channel_geometry.html`) needs `animations/vendor/three/` copied alongside it. All eight
+run fully offline, with no installation and no third-party host. Suggested uses:
 
 - **Lecture demonstrations** — project and vary parameters live while deriving the theory.
 - **Pre-lab / pre-tutorial preparation** — each animation reproduces worked lecture

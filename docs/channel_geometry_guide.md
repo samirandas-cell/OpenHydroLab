@@ -1,7 +1,8 @@
 # Open-Channel Geometry, Velocity Distribution & the Froude Number — Guide
 
-Animation: `animations/channel_geometry.html` (3D, Three.js via CDN — needs
-internet on first load; everything else is self-contained in the single file).
+Animation: `animations/channel_geometry.html` (3D. Runs fully offline: Three.js is
+vendored under `animations/vendor/three/`, so keep that folder alongside the file if you
+move it. Everything else is self-contained.)
 
 Supports an introductory open-channel hydraulics lecture, typically the sections 3–7.
 
@@ -150,8 +151,10 @@ wrong for the linear profile, and by how much?
 
 ## 6. Technical notes
 
-Single self-contained HTML file; Three.js 0.160.0 loaded from the jsdelivr CDN
-(internet needed on first load, cached afterwards). SI units, g = 9.81 m/s²,
+One HTML file plus a vendored copy of Three.js 0.160.0 under
+`animations/vendor/three/`, shipped as classic scripts so the page also works when opened
+directly from disk over `file://`. No CDN and no network access at any point; the folder
+must travel with the file. SI units, g = 9.81 m/s²,
 ν = 10⁻⁶ m²/s. All readouts have stable element ids (`o-*`, `v-*`, `chip`) and a
 `window.LAB` hook (state, forced render, manual sim tick) for scripted verification and
 telemetry. MIT license — cite via `CITATION.cff`.

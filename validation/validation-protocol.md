@@ -66,8 +66,13 @@ across the swept range or they do not.
 
 Conservation is not a property of one lucky parameter set. Volume closure, momentum
 residual, the specific-energy identity and normal-depth inversion are each swept across
-the control ranges (81 storm parameter sets, 81 channel states, 21 jump states, 9 gate
-settings) and the **worst** error over the sweep is what gets recorded.
+the control ranges (99 storm parameter sets, 81 Manning normal-depth states, 64
+channel-geometry states, 21 jump states, 9 gate settings) and the **worst** error over the
+sweep is what gets recorded.
+
+These sizes are the ones the tests actually execute; each is recorded in the `source`
+field of the corresponding case in `results/validation-results.json`, which is the
+authority if this document and the dataset ever disagree.
 
 ### 1.5 Tolerances
 
@@ -133,9 +138,20 @@ Run against all three browser engines:
 Recorded here rather than hidden, because a validation protocol that only reports
 successes is not evidence of anything:
 
-None open. The whole suite passes on Chromium, Firefox and WebKit.
+The whole suite passes on Chromium, Firefox and WebKit, but passing is not the same as
+covering. What the suite does **not** establish:
 
-This section exists to be filled in, not to stay empty: anything the suite cannot
+- **Cross-device behaviour.** Testing runs on three engines on a desktop-class machine at
+  three viewport sizes. Touch interaction on small screens and behaviour on low-powered
+  hardware are unverified.
+- **Assistive technology beyond the automated checks.** The suite verifies
+  accessible-name computation and keyboard operability. It has not been exercised with a
+  real screen reader, and no WCAG conformance claim is made on the strength of it.
+- **Numerical behaviour outside the swept control ranges.** The sweeps in §1.4 cover the
+  ranges the interfaces expose; nothing is claimed beyond them.
+
+These are the same limitations stated in the manuscript (§4.4); the two must be kept in
+step. This section exists to be filled in, not to stay empty: anything the suite cannot
 currently establish belongs here rather than in a footnote.
 
 ### Closed
