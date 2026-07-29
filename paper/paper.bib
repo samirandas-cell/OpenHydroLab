@@ -1,8 +1,32 @@
 % OpenHydroLab — bibliography for the Education Sciences manuscript.
 %
-% VERIFY BEFORE SUBMISSION: every entry below was written from the author's reading
-% knowledge, not resolved against a live index in the drafting session. Check each
-% volume, issue, page range and DOI against the publisher record before submitting.
+% VERIFY BEFORE SUBMISSION — PARTIALLY DONE (2026-07-28).
+%
+% The 15 entries carrying a DOI were checked against the Crossref record: every DOI
+% resolves, and author count, year, volume, issue and page range match, with one
+% correction applied (smith2016software was missing its corporate fourth author).
+%
+% Four more were then confirmed against the Crossref book index and OSTI, and now carry
+% a DOI: oberkampf2010verification, chaudhry2008open, gumbel1958statistics,
+% salari2000code (OSTI 759450, report number SAND2000-1444 confirmed, June 2000).
+%
+% Two of the historical papers were then verified against page scans on the Internet
+% Archive: sherman1932streamflow (vol 108 no. 14, 7 April 1932, pp. 501-505 — title
+% corrected, see below) and kirpich1940time (vol 10 no. 6, June 1940, p. 362, confirmed
+% from that issue's table of contents and the article itself; entry was already correct).
+%
+% STILL UNVERIFIED (5): roache1998verification, chow1959 and henderson1966open have no
+% Crossref record of any type — pre-DOI books needing a title page or library catalogue.
+% wcag21 and hecras are living documents whose version and date must be read off the
+% page on the day of submission.
+%
+% UNRESOLVED (2), needing a human with library access:
+%   manning1891flow — the Internet Archive holds many volumes of the ICE Ireland
+%     Transactions but not vol. 20 (1891). The page range 161-207 is also disputed
+%     across the secondary literature; decide once and be consistent.
+%   nash1957form — IAHS Red Book vol. 45; iahs.info/redbooks/a045/ soft-404s to a
+%     generic page and the hydrologie.org mirror is gone. Needs the printed Red Book.
+% See paper/references/index.html.
 
 % ---------------------------------------------------------------- educational simulation
 
@@ -120,15 +144,20 @@
   author    = {Oberkampf, William L. and Roy, Christopher J.},
   publisher = {Cambridge University Press},
   address   = {Cambridge, UK},
-  year      = {2010}
+  year      = {2010},
+  isbn      = {9780521113601},
+  doi       = {10.1017/CBO9780511760396}
 }
 
 @techreport{salari2000code,
   title       = {Code Verification by the Method of Manufactured Solutions},
   author      = {Salari, Kambiz and Knupp, Patrick},
   institution = {Sandia National Laboratories},
+  address     = {Albuquerque, NM},
   number      = {SAND2000-1444},
-  year        = {2000}
+  month       = jun,
+  year        = {2000},
+  doi         = {10.2172/759450}
 }
 
 @article{peng2011reproducible,
@@ -166,7 +195,7 @@
 
 @article{smith2016software,
   title   = {Software citation principles},
-  author  = {Smith, Arfon M. and Katz, Daniel S. and Niemeyer, Kyle E.},
+  author  = {Smith, Arfon M. and Katz, Daniel S. and Niemeyer, Kyle E. and {FORCE11 Software Citation Working Group}},
   journal = {PeerJ Computer Science},
   volume  = {2},
   pages   = {e86},
@@ -206,7 +235,9 @@
   edition   = {2},
   publisher = {Springer},
   address   = {New York},
-  year      = {2008}
+  year      = {2008},
+  isbn      = {9780387301747},
+  doi       = {10.1007/978-0-387-68648-6}
 }
 
 @article{chanson2009development,
@@ -229,11 +260,15 @@
   year    = {1891}
 }
 
+% Title verified against the scan of the issue itself (Internet Archive
+% sim_enr_1932-04-07_108_14): the printed headline is "Streamflow from Rainfall by
+% Unit-Graph Method" — no "the" before "unit-graph", which the draft had added.
 @article{sherman1932streamflow,
-  title   = {Streamflow from rainfall by the unit-graph method},
+  title   = {Streamflow from rainfall by unit-graph method},
   author  = {Sherman, LeRoy K.},
   journal = {Engineering News-Record},
   volume  = {108},
+  number  = {14},
   pages   = {501--505},
   year    = {1932}
 }
@@ -264,7 +299,8 @@
   author    = {Gumbel, Emil J.},
   publisher = {Columbia University Press},
   address   = {New York},
-  year      = {1958}
+  year      = {1958},
+  doi       = {10.7312/gumb92958}
 }
 
 @article{kirpich1940time,
