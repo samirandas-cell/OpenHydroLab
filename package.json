@@ -1,6 +1,6 @@
 {
   "name": "openhydrolab",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Interactive, physics-accurate browser laboratories for teaching hydraulics and hydrology",
   "type": "module",
   "private": true,
