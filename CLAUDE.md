@@ -85,7 +85,61 @@ and WebKit (141 physics + 264 software runs); writes `validation/results/`
   release — the metadata is read from the *tag's* snapshot, so a fix afterwards means
   moving the tag or cutting a new one.
 
+- **Never assume Zenodo will archive a release just because the tag is pushed.** Zenodo
+  archives on GitHub **Release publication**, not on tag push, and enabling the repo
+  archives only *future* releases — a release published before the toggle went on is
+  invisible to it forever. Worse, a failed attempt leaves a half-built record on the
+  concept, and every later event for that tag returns **HTTP 409**; the only escape is a
+  tag Zenodo has never seen. Check the per-release **Errors** tab at
+  <https://zenodo.org/account/settings/github/> — it names the real cause, which in our
+  case was `Record 'N' has no file '...zip'`, i.e. their file transfer, not our metadata.
+- **Never trust a contact address, count or identifier taken from this repo's own files
+  without re-verifying it.** `presubmission-enquiry.md` carried `educsci@mdpi.com`; the
+  real address is `education@mdpi.com` (`EducSci_MDPI` is only the journal's social
+  handle). The log likewise said the bibliography had 27 entries; it has 28. Both errors
+  were repeated downstream before being caught.
+
 ## Log
+
+### 2026-07-29 — bibliography verified, review fixes applied, v1.0.2 cut (archiving blocked)
+
+**Delivered.** `paper/paper.bib` verified: all 15 DOI entries resolve with year, volume,
+issue, pages and author count matching Crossref; 4 more DOIs added from the Crossref book
+index and OSTI; 2 historical papers confirmed against Internet Archive page scans.
+**21 of 28 verified.** Three corrections: `smith2016software` was missing its corporate
+fourth author (FORCE11 Software Citation Working Group); `sherman1932streamflow` had an
+inserted "the" in its title (printed headline is "Streamflow from Rainfall by Unit-Graph
+Method"); 4 book/report DOIs confirmed rather than guessed. `paper/references/index.html`
+is the working link index for the remaining lookups.
+
+Codex's repo-level blockers fixed: `package-lock.json` version drift, the dead
+`npm run validate` script, the protocol's wrong sweep counts (it claimed "81 storm, 81
+channel"; the dataset runs **99 storm, 81 Manning, 64 channel, 21 jump, 9 gate**), the
+"Known gaps: None open" claim, and the stale "needs a CDN on first load" text on the site,
+README, guide and Zenodo description — Three.js has been vendored since the verification
+work, so all eight labs are offline; the real caveat is that `channel_geometry.html` needs
+`animations/vendor/three/` beside it.
+
+**Decisions.** `CITATION.cff` now carries the **concept** DOI as its primary `doi:` — a
+release cannot contain its own version DOI, since Zenodo mints it at publication and reads
+the file from the tag snapshot, so a version DOI there is stale by construction.
+`npm run validate` now runs the suite *and* `paper:check`, so "validate" means the whole
+claim chain. v1.0.1 was retired and v1.0.2 cut because Zenodo wedged on the v1.0.1 tag.
+Presubmission enquiry sent to `education@mdpi.com`.
+
+**Gotchas.** Two wrong facts in this repo's own files propagated before being caught — see
+the two new standing rules above. Also: an identical re-run produces a ~1,200-line diff in
+`validation-results.json` purely from parallel-execution ordering, which obscures real
+changes; sorting cases before writing would make the archive byte-stable.
+
+**Not done.** **Zenodo holds no v1.0.2 record.** Their GitHub integration failed three
+times (`has no file`), and manual upload of the 452 KB archive also fails — a Zenodo
+storage-layer fault, not ours (`cffconvert` validates, `.zenodo.json` parses, GitHub
+serves the zip at HTTP 200). A manual new-version **draft with correct metadata is saved**
+on Zenodo and needs only the file. `paper.md` §6 still pins version 1.0.0 and its version
+DOI.
+
+**Next.** Finish the manuscript's outstanding corrections (see below).
 
 ### 2026-07-28 — Education Sciences manuscript, first complete draft
 
