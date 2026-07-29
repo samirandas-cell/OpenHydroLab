@@ -9,7 +9,7 @@ Guest Editors: Dr. Kadir Kozan (Florida State University), Dr. Ahmed Ashraf Butt
 
 **Route.** The Special Issue page states: "For planned papers, a title and short abstract
 (about 250 words) can be sent to the Editorial Office for assessment." Send the message
-below to the *Education Sciences* Editorial Office (educsci@mdpi.com), copying the Guest
+below to the *Education Sciences* Editorial Office (education@mdpi.com); copying the Guest
 Editors is not required.
 
 **Status (2026-07-28): optional, not blocking.** Samiran has published in an MDPI Special
@@ -23,73 +23,91 @@ manuscript. The abstract doubles as the manuscript's working abstract.
 
 ## Email
 
-**To:** educsci@mdpi.com
-**Subject:** Presubmission enquiry — planned paper for the Special Issue "The Role of Technology in STEM Education: Opportunities and Challenges"
+**To:** education@mdpi.com
+(Verified 2026-07-29 against the journal contact page. NOT `educsci@mdpi.com` — an earlier
+draft of this file carried that address and it is wrong; `EducSci_MDPI` is the journal's
+social-media handle, which is most likely where the mistake came from.)
+**Subject:** Presubmission enquiry — Special Issue "The Role of Technology in STEM Education: Opportunities and Challenges"
 
-Dear Editorial Office,
+Dear *Education Sciences* Editorial Office,
 
-I am writing to ask whether the planned paper below would be considered in scope for the
-Special Issue "The Role of Technology in STEM Education: Opportunities and Challenges"
-(Section: STEM Education; Guest Editors Kozan, Butt, Anwar and Yu; deadline 31 December
-2026).
+I am considering submitting the paper below to the Special Issue "The Role of Technology
+in STEM Education: Opportunities and Challenges" (Section: STEM Education; Guest Editors
+Kozan, Butt, Anwar and Yu; deadline 31 December 2026), and would appreciate your advice on
+whether it suits the collection.
 
-The paper is a design-and-technical-validation study of an open-source simulation suite
-for undergraduate hydraulics and hydrology. I should be explicit about its scope: it
-reports the design rationale and a reproducible verification of the instrument, and makes
-no claim about learning outcomes. A classroom evaluation is planned as a separate later
-study. I would be grateful to know whether the Guest Editors regard that scope as
-appropriate for the Special Issue, particularly under the themes "Design, development, and
-integration of technologies in STEM education" and "Systems and processes leading to
-technological tools for STEM education".
+The paper reports the design and technical validation of an open-source simulation suite
+for undergraduate hydraulics and hydrology. Its contribution is a reproducible process for
+verifying the calculations, software operation and offline delivery of educational
+simulations. It reports no student data and makes no claim about learning outcomes; a
+classroom evaluation is planned as a separate later study.
 
-The software described is already public and citable: the verified release is archived at
-https://doi.org/10.5281/zenodo.21635798 under an MIT licence, together with its
-verification protocol and the generated validation dataset, so any reviewer can reproduce
-the reported figures directly.
+The paper appears to fit the themes "design, development, and integration of technologies
+in STEM education" and "systems and processes leading to technological tools for STEM
+education". Because its evidence is technical and computational rather than about classroom
+effectiveness, I would be grateful if you could confirm whether the Guest Editors would
+consider that scope appropriate.
 
-The title and a 250-word abstract follow. Thank you for your time.
+The software, verification protocol and validation dataset are public under an MIT licence
+at https://doi.org/10.5281/zenodo.21635798, so any reviewer can reproduce the reported
+figures directly.
 
-Yours sincerely,
-Dr. Samiran Das
-Assistant Professor, Civil Engineering
-James Watt School of Engineering, University of Glasgow (Singapore campus)
+The proposed title and abstract follow. Thank you for your time.
+
+Kind regards,
+Dr Samiran Das
+Assistant Professor in Civil Engineering
+James Watt School of Engineering
+University of Glasgow, Singapore
 samiran.das@glasgow.ac.uk · ORCID: 0000-0002-3814-534X
 
 ---
 
 ## Title
 
-**Verifiable by Construction: Designing and Validating an Open, Offline Simulation Suite
+**Designed for Verification: Developing and Validating an Open, Offline Simulation Suite
 for Undergraduate Hydraulics and Hydrology**
 
-## Abstract (250 words)
+<!-- Title changed 2026-07-28 from "Verifiable by Construction: Designing and Validating…".
+     paper/paper.md must be reconciled to match before submission. -->
 
-Educational simulations are widely used in STEM teaching, yet the numbers they display are
-rarely verified in public, and the technology they represent is treated as an artifact
-rather than the process that produced it. We report the design and technical
-validation of OpenHydroLab, an open-source suite of eight interactive laboratories
-covering open-channel hydraulics (channel geometry, Manning uniform flow, specific energy
-and choking, hydraulic jumps, gradually varied flow) and engineering hydrology (storm and
-unit hydrographs, IDF and frequency analysis). Three design commitments distinguish the
-suite: every displayed quantity is computed live from the governing equation rather than
-animated to look plausible; each module is a single self-contained page that runs offline
-from a local file with no installation and no third-party host, deployable in
-low-bandwidth and restricted-network settings; and the governing equations are exposed in
-readable source rather than hidden behind a compiled interface.
+## Abstract (~255 words)
 
-The central contribution is the verification process itself. Every reference value in our
-protocol is derived independently of the code — from a closed-form solution, a
-conservation identity, a hand-checkable textbook calculation, or an independent
-reimplementation — and tolerances are justified per case rather than widened to pass. The
-protocol runs as an automated suite of 405 tests yielding 354 numerical comparisons across
-three browser engines, regenerating the reported validation dataset on each run. Applying
-it to a mature codebase exposed six defects, including a first-order routing step
-documented as exact.
+Interactive simulations are widely used in STEM teaching, but instructors and students are
+rarely shown how the numbers on screen were checked. This paper presents OpenHydroLab, an
+open-source suite of eight browser-based laboratories for undergraduate hydraulics and
+hydrology, together with the process used to verify it. The laboratories cover channel
+geometry, uniform flow, specific energy and choking, hydraulic jumps, gradually varied
+flow, storm hydrographs, unit hydrographs, and rainfall frequency analysis.
 
-We argue the protocol is transferable to educational simulation generally, and discuss its
-trade-offs. No learning-outcome claim is made.
+Three requirements shaped the design: every displayed quantity is computed from the
+governing equation rather than animated to look plausible; each laboratory is a
+self-contained page that runs offline from a local file, with no installation and no
+third-party host; and the governing equations remain visible in readable source. The
+verification protocol follows from those commitments. Each reference value was derived
+independently of the code — from a closed-form solution, a conservation identity, a
+hand-checkable textbook calculation, or a separate implementation — with tolerances
+justified case by case rather than widened to pass, and controls exercised across their
+operating ranges, not only at default settings.
 
-<!-- Word count of the abstract body: 254 (excluding the title). Recheck after any edit. -->
+The released validation dataset contains 118 distinct numerical cases evaluated in
+Chromium, Firefox and WebKit, giving 354 comparison records, alongside 88 software,
+offline-delivery and accessibility checks repeated across the three engines. Applying the
+protocol to code already in teaching use exposed six defects, including a routing step
+documented in the source as exact but in fact first-order, and a laboratory that failed
+when opened directly from disk.
+
+The contribution is the verification process rather than evidence of learning
+effectiveness: no student data were collected and no learning-outcome claim is made.
+
+<!-- Abstract body: ~255 words. The SI page asks for "about 250". Recheck after any edit —
+     over-running a stated limit in the enquiry undercuts a paper about following a
+     specified protocol. Counts are load-bearing and verified against
+     validation/results/validation-results.json: 118 distinct cases, 354 comparison
+     records (118 x 3 engines), 88 software checks x 3 engines = 264 runs. Do NOT cite the
+     405 headline here — it is 141 physics runs + 264 software runs, which the dataset
+     does not present as one number. If an editor queries the 88, the unambiguous form is
+     "264 software, offline-delivery and accessibility runs (88 checks x 3 engines)". -->
 
 ---
 
