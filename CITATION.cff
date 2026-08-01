@@ -14,13 +14,16 @@ repository-code: "https://github.com/samirandas-cell/OpenHydroLab"
 # The concept DOI is the primary identifier because a release cannot contain
 # its own version DOI: Zenodo mints that only when the release is published,
 # and it reads this file's snapshot from the tag. The concept DOI always
-# resolves to the newest release, so it is never stale. The v1.0.1 version DOI
-# is added to `identifiers` in the commit after the release is published.
+# resolves to the newest release, so it is never stale. Each version DOI is
+# added to `identifiers` in the commit after that release is published.
 doi: 10.5281/zenodo.21635797
 identifiers:
   - type: doi
     value: 10.5281/zenodo.21635797
     description: "Concept DOI — resolves to the latest version"
+  - type: doi
+    value: 10.5281/zenodo.21665643
+    description: "Archived snapshot of version 1.0.2"
   - type: doi
     value: 10.5281/zenodo.21635798
     description: "Archived snapshot of version 1.0.0"
