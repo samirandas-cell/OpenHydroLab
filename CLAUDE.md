@@ -14,8 +14,8 @@ on scope, add an expert-evaluation instrument and go to CAEE (Wiley, SCIE, free 
 publish), which is also the natural home for the later classroom study. JOSE is closed to
 submissions.
 
-**Cite as:** version DOI [10.5281/zenodo.21635798](https://doi.org/10.5281/zenodo.21635798)
-(v1.0.0) · concept DOI
+**Cite as:** version DOI [10.5281/zenodo.21665643](https://doi.org/10.5281/zenodo.21665643)
+(v1.0.2) · concept DOI
 [10.5281/zenodo.21635797](https://doi.org/10.5281/zenodo.21635797) (latest).
 
 ## Layout
@@ -132,12 +132,14 @@ the two new standing rules above. Also: an identical re-run produces a ~1,200-li
 `validation-results.json` purely from parallel-execution ordering, which obscures real
 changes; sorting cases before writing would make the archive byte-stable.
 
-**Not done.** **Zenodo holds no v1.0.2 record.** Their GitHub integration failed three
-times (`has no file`), and manual upload of the 452 KB archive also fails — a Zenodo
-storage-layer fault, not ours (`cffconvert` validates, `.zenodo.json` parses, GitHub
-serves the zip at HTTP 200). A manual new-version **draft with correct metadata is saved**
-on Zenodo and needs only the file. `paper.md` §6 still pins version 1.0.0 and its version
-DOI.
+**Resolved 2026-07-31.** Zenodo's storage fault cleared and v1.0.2 published as
+**10.5281/zenodo.21665643** (record 21665643); the concept DOI now resolves to it. The
+published archive was **downloaded and inspected**, not assumed: it contains
+`tools/manuscript-tables.mjs`, the protocol, the validation dataset, all eight
+laboratories and the vendored Three.js — so the reproducibility instruction in §6 is now
+true of the archive it cites. The DOI is wired through `paper.md` §6 and the Data
+Availability Statement, the suggested citation, `CITATION.cff`, the README badge section,
+`index.html` and the enquiry file.
 
 **Next.** Finish the manuscript's outstanding corrections (see below).
 
