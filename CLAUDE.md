@@ -85,6 +85,14 @@ and WebKit (141 physics + 264 software runs); writes `validation/results/`
   release — the metadata is read from the *tag's* snapshot, so a fix afterwards means
   moving the tag or cutting a new one.
 
+- **Never run a subset of the Playwright suite without restoring `validation/results/`
+  afterwards.** `tools/validation-reporter.mjs` is registered as a reporter in
+  `playwright.config.mjs`, so *every* run rewrites the dataset — and a subset
+  (`--project=chromium`, a single spec) writes a **truncated** one. Running just the
+  software specs silently replaced the 354-case dataset with `caseCount: 0`, which would
+  have taken the manuscript's whole evidence base with it. Either run the full `npm test`,
+  or `git checkout -- validation/results/` immediately after, and confirm with
+  `npm run paper:check`.
 - **Never assume Zenodo will archive a release just because the tag is pushed.** Zenodo
   archives on GitHub **Release publication**, not on tag push, and enabling the repo
   archives only *future* releases — a release published before the toggle went on is
