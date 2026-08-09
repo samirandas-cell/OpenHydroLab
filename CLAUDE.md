@@ -1,8 +1,8 @@
 # OpenHydroLab — project context
 
-Open-source interactive browser laboratories for teaching undergraduate hydraulics and
-hydrology. Eight modules, each a self-contained page that computes every displayed
-quantity from the governing equations and runs offline with nothing to install.
+Open-source interactive browser laboratories for teaching undergraduate fluid mechanics,
+hydraulics and hydrology. Ten modules, each a self-contained page that computes every
+displayed quantity from the governing equations and runs offline with nothing to install.
 
 **Publication target:** MDPI *Education Sciences*, Section STEM Education, Special Issue
 "The Role of Technology in STEM Education: Opportunities and Challenges"
@@ -21,7 +21,7 @@ submissions.
 ## Layout
 
 ```
-animations/      the eight laboratories, plus vendor/three (classic scripts, r160)
+animations/      the ten laboratories, plus vendor/three (classic scripts, r160)
 docs/            one guide per module, 7 sections each
 tests/physics/   47 specs × 3 engines, emitting 118 verification cases per engine
 tests/software/  load, self-containment, file://, accessibility, label layout
@@ -109,6 +109,90 @@ and WebKit (141 physics + 264 software runs); writes `validation/results/`
 
 ## Log
 
+### 2026-08-09 — fluid mechanics section opened: hydrostatic forces, 2D and 3D
+
+**Delivered.** Two modules and a new landing-page section, **Fluid mechanics**, placed
+before open-channel hydraulics because statics is taught first.
+`hydrostatic_forces.html` — the pressure prism as a diagram linked to a true-scale section;
+horizontal / vertical / inclined on one continuous θ slider; curved surfaces via F_x on the
+projection and F_v = γV. `hydrostatic_forces_3d.html` — the prism built as an orbitable
+solid, four plate shapes whose A, ȳ and I_xc are re-derived from the shape's own chord
+width and checked against the standard table on screen, and a real cylindrical gate.
+Both carry a **generated worked-solution panel**: formula, substitution with the current
+slider values, result, and a plain-English line per step, with `◀ ▶` walking the steps
+while the drawing dims everything the step is not about. Guides written for both. Suite now
+520 tests, **534 numerical comparisons, 0 failing**.
+
+**The teaching idea.** One statement carries the whole topic: the resultant is the *volume*
+of the pressure prism and the centre of pressure is its *centroid*. Horizontal → rectangular
+prism → CP on the centroid; vertical breaking the surface → triangle → 2L/3; inclined
+interpolates. Writing Δy as `I_xc sinθ/(h_c A)` instead of `I_xc/(y_c A)` removes the
+θ → 0 singularity, so one expression covers all three and the slider can sweep through
+horizontal — while `y_c = h_c/sinθ` is still displayed running off to infinity, which is
+the point worth saying out loud.
+
+**The curved-surface result.** Traction on a circular arc is radial, so `r × p n = 0`
+pointwise about the centre of curvature: a Tainter gate carries zero hydrostatic moment on
+its pivot at any head. Shown as a *cancellation* of two large opposing moments rather than
+an absence, and geometrically — the two components' lines of action meet at P\*, and the
+resultant drawn from P\* is seen to pass through the pivot, because the resultant of two
+forces passes through their intersection.
+
+**Defects found while building.** (1) A top-level `const CSS` in the 2D module shadowed the
+standard `window.CSS` global, breaking `CSS.escape` in the accessibility probe on all three
+engines — the suite caught it, renamed to `ROOTCSS`. (2) The resultant was first drawn
+arriving from the dry side. (3) `chipLabel` and `hatch` set `ctx.globalAlpha` absolutely, so
+dimmed captions kept full-strength backgrounds once step emphasis existed — they now
+multiply the inherited alpha. (4) Scenes letterboxed in portrait viewports until the slack
+world dimension was grown (capped) and the drawing centred.
+
+**Decisions.** 3D labels are HTML divs projected each frame with a collision pass, not
+sprites — fixed pixel size by construction, taggable so a step can hide a subset, and
+measurable by `getBoundingClientRect()` rather than a re-implemented projection. Zero
+overlaps across four shapes and two modes. The fluid-side toggle (real vs imaginary volume)
+stays 2D-only; the four plate shapes stay 3D-only.
+
+**Next.** `paper/paper.md` still says "eight laboratories" throughout — abstract, Statement
+of Need, and Table 1 all need the count and the fluid-mechanics row. Deliberately not
+touched here: it is an editorial pass on a manuscript, not a mechanical find-and-replace.
+
+### 2026-08-02 — manuscript corrections closed; paper.md submission-ready
+
+**Delivered.** All five outstanding manuscript items in `paper/paper.md`. (1) The YAML
+title now reads "Designed for Verification: Developing and Validating an Open, Offline
+Simulation Suite…", matching the sent enquiry — the old "Verifiable by Construction"
+variant is gone. (2) The Acknowledgments TODO is resolved with a **generic**
+acknowledgment of the Glasgow (Singapore) hydraulics and hydrology students; no
+individual is named, so no permission is outstanding. (3) `finkelstein2005when` is now
+cited in the Introduction (controlled physics comparisons where a simulation substituted
+for equipment outperformed it) — the bib-vs-citation cross-check reports **0 uncited of
+28**. (4) A back-matter **Use of Generative AI** section discloses Claude Code's role
+across module code, tests, guides and manuscript drafting, with the author's
+responsibility scope stated. (5) MDPI back matter completed: Author Contributions (CRediT,
+single author), Informed Consent "Not applicable", a corresponding-author designation with
+the full postal affiliation, and the abstract converted to
+Background/Objectives–Methods–Results–Conclusions. `npm run paper:check` passes and no
+TODO markers remain.
+
+**Decisions.** Postal affiliation printed as *James Watt School of Engineering, University
+of Glasgow (Singapore campus), 1 Punggol Coast Road, Singapore 828608, Singapore*
+(confirmed by the author this session; nothing in the repo carried a street address).
+Acknowledgments deliberately generic — naming colleagues requires permission that has not
+been sought, and MDPI prints the section verbatim. A fifth **limitation** was added to
+§4.4 stating that module and test code share an author and were both LLM-assisted, and
+that the protocol's independence requirement therefore binds the *derivation* (the
+recorded closed form, identity or textbook source), not the typist; independent
+reimplementation by a second party is named as the stronger evidence not yet available.
+Making that explicit is better than letting a reviewer find it.
+
+**Gotcha.** The structured abstract is **233 words** against MDPI's ~200 guideline (the
+unstructured draft was 213; the four section labels and the restructure add the rest). If
+an editor objects, the cheapest ~16 words are the two module parentheticals in
+Background/Objectives.
+
+**Next.** Convert `paper/paper.md` to the MDPI Word template and submit, unless the
+presubmission enquiry reply redirects the target.
+
 ### 2026-07-29 — bibliography verified, review fixes applied, v1.0.2 cut (archiving blocked)
 
 **Delivered.** `paper/paper.bib` verified: all 15 DOI entries resolve with year, volume,
@@ -125,7 +209,8 @@ Codex's repo-level blockers fixed: `package-lock.json` version drift, the dead
 channel"; the dataset runs **99 storm, 81 Manning, 64 channel, 21 jump, 9 gate**), the
 "Known gaps: None open" claim, and the stale "needs a CDN on first load" text on the site,
 README, guide and Zenodo description — Three.js has been vendored since the verification
-work, so all eight labs are offline; the real caveat is that `channel_geometry.html` needs
+work, so all ten labs are offline; the real caveat is that `channel_geometry.html` and
+`hydrostatic_forces_3d.html` need
 `animations/vendor/three/` beside it.
 
 **Decisions.** `CITATION.cff` now carries the **concept** DOI as its primary `doi:` — a

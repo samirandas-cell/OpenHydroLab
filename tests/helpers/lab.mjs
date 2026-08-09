@@ -30,6 +30,8 @@ export const MODULES = {
   storm_hydrograph: { file: "storm_hydrograph.html", scope: "global", ready: () => typeof simulate === "function" },
   unit_hydrograph: { file: "unit_hydrograph.html", scope: "global", ready: () => typeof recompute === "function" },
   idf_frequency: { file: "idf_frequency.html", scope: "global", ready: () => typeof iGum === "function" },
+  hydrostatic_forces: { file: "hydrostatic_forces.html", scope: "global", ready: () => typeof solve === "function" },
+  hydrostatic_forces_3d: { file: "hydrostatic_forces_3d.html", scope: "global", ready: () => typeof solve === "function" && typeof THREE === "object" },
 };
 
 export const MODULE_NAMES = Object.keys(MODULES);

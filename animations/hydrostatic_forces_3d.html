@@ -1,0 +1,1170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Hydrostatic Force in Three Dimensions</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --bg:#0f1420; --panel:#171e2e; --panel2:#1d2638; --ink:#e8edf6; --dim:#9aa7bd;
+    --accent:#4db8ff; --sub:#3b82f6; --crit:#f59e0b; --sup:#ef4444; --line:#2b3650;
+    --ok:#34d399; --violet:#a78bfa;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%; overflow:hidden; background:var(--bg); color:var(--ink);
+    font-family:"Segoe UI",system-ui,sans-serif;}
+  .panel{position:absolute; background:color-mix(in srgb, var(--panel) 93%, transparent);
+    border:1px solid var(--line); border-radius:10px; padding:12px 14px;
+    backdrop-filter:blur(6px); font-size:13px; line-height:1.45; z-index:3;}
+  #ui{left:12px; top:12px; width:264px; max-height:calc(100% - 24px); overflow-y:auto;}
+  #side{right:12px; top:12px; width:330px; max-height:calc(100% - 24px); overflow-y:auto;}
+  #actions{left:50%; transform:translateX(-50%); bottom:12px; display:flex; gap:8px; padding:8px;
+    flex-wrap:wrap; justify-content:center; max-width:calc(100% - 660px);}
+  #stage{position:absolute; inset:0; padding:12px 356px 66px 290px;}
+  #view{position:relative; width:100%; height:100%; border:1px solid var(--line);
+    border-radius:10px; overflow:hidden; background:#0c111c;}
+  canvas{display:block; width:100%; height:100%;}
+  #labels{position:absolute; inset:0; pointer-events:none; overflow:hidden;}
+  .lbl{position:absolute; transform:translate(-50%,-50%); white-space:nowrap;
+    font-size:11px; font-weight:600; padding:2px 6px; border-radius:5px;
+    background:rgba(13,20,34,.86); border:1px solid currentColor; letter-spacing:.01em;}
+  h1{font-size:14px; margin-bottom:2px; color:var(--accent);}
+  .sub{color:var(--dim); font-size:11px; margin-bottom:10px;}
+  h2{font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--dim);
+    margin:12px 0 6px; border-bottom:1px solid var(--line); padding-bottom:3px;}
+  label.row{display:flex; justify-content:space-between; align-items:center; margin:7px 0 2px;
+    font-size:12.5px; gap:8px;}
+  label.row .val{color:var(--accent); font-variant-numeric:tabular-nums; font-weight:600;
+    white-space:nowrap;}
+  input[type=range]{width:100%; accent-color:var(--accent);}
+  input[type=range]:disabled{opacity:.3;}
+  label.row.off{opacity:.4;}
+  .chk{display:flex; align-items:center; gap:7px; margin:6px 0; font-size:12.5px; cursor:pointer;}
+  .chk input{accent-color:var(--accent);}
+  button{background:var(--panel2); color:var(--ink); border:1px solid var(--line);
+    border-radius:7px; padding:7px 12px; font-size:12.5px; cursor:pointer;}
+  button:hover{border-color:var(--accent); color:var(--accent);}
+  button.active{background:var(--accent); color:#08111e; border-color:var(--accent); font-weight:600;}
+  button:disabled{opacity:.4; cursor:default;}
+  .seg{display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:4px;}
+  .seg button{padding:6px 4px; font-size:12px;}
+  .presets{display:flex; flex-direction:column; gap:5px; margin-top:4px;}
+  .presets button{text-align:left; padding:6px 9px; font-size:11.5px; line-height:1.3;}
+  table.vals{width:100%; border-collapse:collapse; font-variant-numeric:tabular-nums;}
+  table.vals td{padding:2.5px 0; font-size:12.5px; vertical-align:top;}
+  table.vals td:first-child{color:var(--dim); padding-right:8px;}
+  table.vals td:last-child{text-align:right; font-weight:600; white-space:nowrap;}
+  .note{font-size:11px; color:var(--dim); margin-top:8px;}
+  .note b{color:var(--ink);}
+  .ok{color:var(--ok);} .warn{color:var(--crit);}
+  #chip{margin-top:8px; padding:7px 10px; border-radius:7px; text-align:center; font-weight:700;
+    font-size:12.5px; background:var(--ok); color:#08111e;}
+  .tabs{display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:4px;}
+  .hidden{display:none;}
+  /* worked solution */
+  #stepbar{display:flex; align-items:center; gap:6px; margin:8px 0 4px;}
+  #stepbar button{padding:4px 9px; font-size:12px;}
+  #stepPos{color:var(--dim); font-size:11.5px; margin-left:auto;}
+  .step{border-left:3px solid var(--line); padding:7px 0 7px 10px; margin:9px 0;
+    opacity:.42; transition:opacity .15s;}
+  .step.on{opacity:1; border-left-color:var(--accent);}
+  .step.done{opacity:.72;}
+  .stepHead{font-size:12.5px; font-weight:600; color:var(--ink); margin-bottom:3px;}
+  .stepHead .num{display:inline-block; width:17px; height:17px; line-height:17px; text-align:center;
+    border-radius:50%; background:var(--panel2); color:var(--accent); font-size:10.5px;
+    margin-right:6px; border:1px solid var(--line);}
+  .why{font-size:11px; color:var(--dim); margin-bottom:5px;}
+  .eq{font-family:Cambria,Georgia,serif; font-size:13px; color:#cfdcf0; background:var(--panel2);
+    border-radius:5px; padding:5px 8px; margin-top:4px; font-variant-numeric:tabular-nums;}
+  .eq.sub{color:var(--dim); font-size:12.5px; background:transparent; padding:3px 8px;}
+  .eq.res{color:var(--crit); font-weight:700; background:rgba(245,158,11,.10);}
+  .answer{margin-top:12px; padding:9px 11px; border-radius:8px; background:rgba(52,211,153,.10);
+    border:1px solid rgba(52,211,153,.35); font-size:12.5px;}
+  .answer b{color:var(--ok);}
+  @media (max-width:1250px){
+    html,body{overflow-y:auto; height:auto; min-height:100%;}
+    body{display:flex; flex-direction:column;}
+    .panel{position:static; width:auto; max-height:none; margin:10px 12px 0; transform:none;}
+    #ui,#side{width:auto;}
+    #ui{order:1;} #stage{order:2; position:static; padding:10px 12px; height:560px;}
+    #actions{order:3; align-self:center; max-width:none;} #side{order:4; margin-bottom:12px;}
+  }
+</style>
+</head>
+<body>
+
+<div id="ui" class="panel">
+  <h1>Hydrostatic Force in Three Dimensions</h1>
+  <div class="sub">OpenHydroLab · the pressure prism as a solid you can walk around</div>
+
+  <h2>Surface</h2>
+  <div class="seg">
+    <button id="b-plane" class="active">Plane surface</button>
+    <button id="b-curved">Curved surface</button>
+  </div>
+
+  <div id="planeCtl">
+    <h2>Shape of the plate</h2>
+    <div class="seg">
+      <button id="sh-rect" class="active">Rectangle</button>
+      <button id="sh-tri">Triangle</button>
+      <button id="sh-circ">Circle</button>
+      <button id="sh-semi">Semicircle</button>
+    </div>
+    <div>
+      <label class="row" for="s-th"><span>Angle to free surface θ</span> <span class="val" id="v-th"></span></label>
+      <input type="range" id="s-th" min="0" max="90" step="0.5" value="35">
+    </div>
+    <div>
+      <label class="row" for="s-L"><span id="lab-L">Size along the plane L</span> <span class="val" id="v-L"></span></label>
+      <input type="range" id="s-L" min="0.5" max="10" step="0.05" value="3">
+    </div>
+    <div>
+      <label class="row" for="s-b" id="row-b"><span>Width b</span> <span class="val" id="v-b"></span></label>
+      <input type="range" id="s-b" min="0.3" max="8" step="0.05" value="2">
+    </div>
+    <div>
+      <label class="row" for="s-ht"><span>Depth of upper edge h<sub>top</sub></span> <span class="val" id="v-ht"></span></label>
+      <input type="range" id="s-ht" min="0" max="10" step="0.05" value="1.5">
+    </div>
+  </div>
+
+  <div id="curvedCtl" class="hidden">
+    <h2>Circular gate</h2>
+    <div>
+      <label class="row" for="s-R"><span>Radius R</span> <span class="val" id="v-R"></span></label>
+      <input type="range" id="s-R" min="0.4" max="6" step="0.05" value="2">
+    </div>
+    <div>
+      <label class="row" for="s-hO"><span>Depth of the pivot axis h<sub>O</sub></span> <span class="val" id="v-hO"></span></label>
+      <input type="range" id="s-hO" min="0" max="10" step="0.05" value="3">
+    </div>
+    <div>
+      <label class="row" for="s-span"><span>Arc span</span> <span class="val" id="v-span"></span></label>
+      <input type="range" id="s-span" min="15" max="90" step="0.5" value="90">
+    </div>
+    <div>
+      <label class="row" for="s-bc"><span>Gate width b</span> <span class="val" id="v-bc"></span></label>
+      <input type="range" id="s-bc" min="0.3" max="8" step="0.05" value="2">
+    </div>
+  </div>
+
+  <h2>Fluid</h2>
+  <div>
+    <label class="row" for="s-rho"><span>Density ρ</span> <span class="val" id="v-rho"></span></label>
+    <input type="range" id="s-rho" min="700" max="13600" step="10" value="1000">
+  </div>
+
+  <h2>Show</h2>
+  <label class="chk"><input type="checkbox" id="t-prism" checked> Pressure prism (the solid)</label>
+  <label class="chk"><input type="checkbox" id="t-arrows"> Pressure arrows on the surface</label>
+  <label class="chk"><input type="checkbox" id="t-water" checked> Water body</label>
+  <label class="chk"><input type="checkbox" id="t-labels" checked> Labels</label>
+  <label class="chk"><input type="checkbox" id="t-spin" checked> Slow turntable</label>
+
+  <div id="chip">RECTANGLE ON AN INCLINED PLANE</div>
+
+  <h2>Presets from the worked problems</h2>
+  <div class="presets">
+    <button id="p1">Vertical plate — 1 m × 2.5 m, top edge at the surface</button>
+    <button id="p2">Dam face at 45° — 10 m deep, per metre width</button>
+    <button id="p3">Inclined gate at 30° — hinged 2 m below the surface</button>
+    <button id="p4">Circular gate — 2 m across, 3 m down, at 60°</button>
+    <button id="p5">Radial gate — R = 2 m, 2 m wide, pivot 3 m down</button>
+  </div>
+
+  <div class="note" id="ahaNote"></div>
+</div>
+
+<div id="side" class="panel">
+  <div class="tabs">
+    <button id="tab-work" class="active">Worked solution</button>
+    <button id="tab-read">Readout</button>
+  </div>
+  <div id="work"></div>
+  <div id="readout" class="hidden"></div>
+</div>
+
+<div id="stage"><div id="view"><canvas id="cv"></canvas><div id="labels"></div></div></div>
+
+<div id="actions" class="panel">
+  <button id="b-fit">Reset view</button>
+  <button id="b-pause">⏸ Pause</button>
+  <button id="b-reset">Reset</button>
+</div>
+
+<script src="vendor/three/three.min.js"></script>
+<script src="vendor/three/OrbitControls.js"></script>
+
+<script>
+'use strict';
+/* ==========================================================================
+   PHYSICS
+   Plane surface :  F_R = ρ g h_c A ,  y_R = y_c + I_xc /(y_c A)
+   Curved surface:  F_x = ρ g h_c A_proj ,  F_v = ρ g V
+   Geometric properties come from the standard table; the module ALSO derives
+   A, ȳ and I_xc numerically from the shape's own chord width and compares the
+   two, so the table itself is verified on screen.
+   ========================================================================== */
+const G = 9.81;
+const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
+
+/* ---- plate shapes -------------------------------------------------------
+   Every shape is described by its chord width w(t), t measured along the
+   plane from the upper edge.  ext = the shape's extent along the plane.     */
+const SHAPES = {
+  rect:{ label:'Rectangle',  chip:'RECTANGLE',  usesB:true,  Lname:'Length along the plane L',
+    Aform:'b · L', ycform:'L / 2', Iform:'b L³ / 12',
+    ext:s=>s.L, A:s=>s.b*s.L, yc:s=>s.L/2, I:s=>s.b*Math.pow(s.L,3)/12,
+    Asub:s=>s.b.toFixed(2)+' × '+s.L.toFixed(2),
+    Isub:s=>s.b.toFixed(2)+' × '+s.L.toFixed(2)+'³ / 12',
+    w:(t,s)=> s.b,
+    quad:(s,N)=>{ const d=s.L/N, o=[]; for(let i=0;i<N;i++){const t=(i+0.5)*d; o.push([t,s.b*d]);} return o; } },
+
+  tri:{ label:'Triangle (apex up)', chip:'TRIANGLE', usesB:true, Lname:'Height along the plane L',
+    Aform:'b · L / 2', ycform:'2L / 3', Iform:'b L³ / 36',
+    ext:s=>s.L, A:s=>s.b*s.L/2, yc:s=>2*s.L/3, I:s=>s.b*Math.pow(s.L,3)/36,
+    Asub:s=>s.b.toFixed(2)+' × '+s.L.toFixed(2)+' / 2',
+    Isub:s=>s.b.toFixed(2)+' × '+s.L.toFixed(2)+'³ / 36',
+    w:(t,s)=> s.b*t/s.L,
+    quad:(s,N)=>{ const d=s.L/N, o=[]; for(let i=0;i<N;i++){const t=(i+0.5)*d; o.push([t,s.b*t/s.L*d]);} return o; } },
+
+  circ:{ label:'Circle', chip:'CIRCLE', usesB:false, Lname:'Diameter D',
+    Aform:'π D² / 4', ycform:'D / 2', Iform:'π D⁴ / 64',
+    ext:s=>s.L, A:s=>Math.PI*s.L*s.L/4, yc:s=>s.L/2, I:s=>Math.PI*Math.pow(s.L,4)/64,
+    Asub:s=>'π × '+s.L.toFixed(2)+'² / 4',
+    Isub:s=>'π × '+s.L.toFixed(2)+'⁴ / 64',
+    w:(t,s)=>{ const R=s.L/2, q=R*R-(t-R)*(t-R); return q>0?2*Math.sqrt(q):0; },
+    /* t = R(1−cos u) makes the integrand smooth, so the check reaches
+       machine precision instead of stalling on the √ at the rim */
+    quad:(s,N)=>{ const R=s.L/2, du=Math.PI/N, o=[];
+      for(let i=0;i<N;i++){ const u=(i+0.5)*du;
+        o.push([R*(1-Math.cos(u)), 2*R*R*Math.sin(u)*Math.sin(u)*du]); } return o; } },
+
+  semi:{ label:'Semicircle (flat edge up)', chip:'SEMICIRCLE', usesB:false, Lname:'Radius R',
+    Aform:'π R² / 2', ycform:'4R / 3π', Iform:'0.1098 R⁴',
+    ext:s=>s.L, A:s=>Math.PI*s.L*s.L/2, yc:s=>4*s.L/(3*Math.PI),
+    I:s=>(Math.PI/8 - 8/(9*Math.PI))*Math.pow(s.L,4),
+    Asub:s=>'π × '+s.L.toFixed(2)+'² / 2',
+    Isub:s=>'0.1098 × '+s.L.toFixed(2)+'⁴',
+    w:(t,s)=>{ const R=s.L, q=R*R-t*t; return q>0?2*Math.sqrt(q):0; },
+    quad:(s,N)=>{ const R=s.L, dv=Math.PI/2/N, o=[];
+      for(let i=0;i<N;i++){ const v=(i+0.5)*dv;
+        o.push([R*Math.sin(v), 2*R*R*Math.cos(v)*Math.cos(v)*dv]); } return o; } }
+};
+
+const st = {
+  mode:'plane', shape:'rect',
+  theta:35, L:3.0, b:2.0, hTop:1.5,
+  R:2.0, hO:3.0, span:90, bc:2.0,
+  rho:1000,
+  prism:true, arrows:false, water:true, labelsOn:true, spin:true,
+  paused:false, step:0, tab:'work'
+};
+
+function solvePlane(){
+  const sh = SHAPES[st.shape];
+  const th = st.theta*Math.PI/180, sn = Math.sin(th), cs = Math.cos(th);
+  const ext = sh.ext(st), A = sh.A(st), ycl = sh.yc(st), Ixc = sh.I(st);
+
+  const hTop = st.hTop, hBot = hTop + ext*sn;
+  const hc   = hTop + ycl*sn;                       // depth of the centroid
+  const F    = st.rho*G*hc*A;                       // F_R = ρ g h_c A
+  const pc   = st.rho*G*hc;
+  const yc   = (sn>1e-9) ? hc/sn : Infinity;        // slope distance to the centroid
+  const dy   = (hc>1e-12 && A>1e-12) ? Ixc*sn/(hc*A) : 0;   // = I_xc /(y_c A)
+  const yR   = yc + dy;
+  const sR   = ycl + dy;                            // from the upper edge, along the plane
+  const hR   = hTop + sR*sn;
+
+  // ---- independent quadrature: rebuild A, ȳ, I_xc, F and s_R from w(t) ----
+  const N = 4000, q = sh.quad(st, N);
+  let An=0, My=0, Fn=0, Ms=0;
+  for(let i=0;i<N;i++){ const t=q[i][0], wt=q[i][1];
+    An += wt; My += t*wt;
+    const p = st.rho*G*(hTop + t*sn);
+    Fn += p*wt; Ms += p*wt*t;
+  }
+  const ycn = An>0 ? My/An : 0;
+  let In=0; for(let i=0;i<N;i++){ const d=q[i][0]-ycn; In += d*d*q[i][1]; }
+  const sRn = Fn>0 ? Ms/Fn : ycl;
+
+  return {sh,th,sn,cs,ext,A,ycl,Ixc,hTop,hBot,hc,F,pc,yc,dy,yR,sR,hR,
+          pTop:st.rho*G*hTop, pBot:st.rho*G*hBot, b:st.b, rho:st.rho, L:st.L,
+          An,ycn,In,Fn,sRn,
+          chkA:A>0?An/A:1, chkYc:ycl>0?ycn/ycl:1, chkI:Ixc>0?In/Ixc:1,
+          chkF:F>0?Fn/F:1, chkS:sR>0?sRn/sR:1,
+          Mtop:F*sR, Mbot:F*(ext-sR)};
+}
+
+function solveCurved(){
+  const R=st.R, b=st.bc, rho=st.rho, hO=st.hO;
+  const spanR=st.span*Math.PI/180;
+  const phi1=1.5*Math.PI-spanR, phi2=1.5*Math.PI;
+  const s=clamp(-Math.sin(phi1),0,1), c=clamp(-Math.cos(phi1),0,1);
+
+  const Hp=R*(1-s), hTopP=hO+R*s, hcP=hO+R*(1+s)/2, Ap=Hp*b;
+  const Fx=rho*G*hcP*Ap;
+  const dyx=(hcP>1e-12)? Hp*Hp/(12*hcP) : 0;
+  const hRx=hcP+dyx, armX=hRx-hO;
+
+  const den = hO*R*c + R*R*(c*s + Math.asin(clamp(c,-1,1)))/2;
+  const V   = b*den, Fv = rho*G*V;
+  const num = hO*R*R*c*c/2 + R*R*R*(1-s*s*s)/3;
+  const xbar = den>1e-12 ? num/den : 0;
+
+  const FR=Math.hypot(Fx,Fv), alpha=Math.atan2(Fv,Fx)*180/Math.PI;
+
+  const N=4000, dphi=(phi2-phi1)/N;
+  let Fxn=0,Fzn=0,Mx=0,Mv=0;
+  for(let i=0;i<N;i++){
+    const ph=phi1+(i+0.5)*dphi, h=hO-R*Math.sin(ph); if(h<=0) continue;
+    const p=rho*G*h, dA=R*dphi*b;
+    const fx=p*(-Math.cos(ph))*dA, fz=p*(-Math.sin(ph))*dA;
+    Fxn+=fx; Fzn+=fz;
+    Mx += -(R*Math.sin(ph))*fx;
+    Mv +=  (R*Math.cos(ph))*fz;
+  }
+  return {R,b,rho,hO,s,c,phi1,phi2,Hp,hTopP,hcP,Ap,Fx,dyx,hRx,armX,V,Fv,xbar,FR,alpha,
+          Fxn,Fzn,Mx,Mv, chkFx:Fx>0?Fxn/Fx:1, chkFv:Fv>0?Fzn/Fv:1,
+          Mfx:Fx*armX, Mfv:Fv*xbar, Mnet:Fv*xbar-Fx*armX,
+          pA:rho*G*hTopP, pC:rho*G*(hO+R)};
+}
+
+let SOL=null;
+function solve(){ SOL = (st.mode==='curved') ? solveCurved() : solvePlane(); return SOL; }
+
+function kindChip(){
+  if(st.mode==='curved') return 'CIRCULAR GATE — PIVOT AXIS AT O';
+  const t = st.theta<0.5 ? 'A HORIZONTAL PLANE'
+          : st.theta>89.5 ? 'A VERTICAL PLANE' : 'AN INCLINED PLANE';
+  return SHAPES[st.shape].chip+' ON '+t;
+}
+
+/* ---------- formatting shared with the worked solution ------------------- */
+function fmtF(N){ if(!isFinite(N)) return '—'; const a=Math.abs(N);
+  if(a>=1e6) return (N/1e6).toFixed(3)+' MN';
+  if(a>=1e3) return (N/1e3).toFixed(2)+' kN'; return N.toFixed(1)+' N'; }
+function fmtM(N){ if(!isFinite(N)) return '—'; if(Math.abs(N)<0.05) N=0;
+  const a=Math.abs(N);
+  if(a>=1e6) return (N/1e6).toFixed(3)+' MN·m';
+  if(a>=1e3) return (N/1e3).toFixed(2)+' kN·m'; return N.toFixed(1)+' N·m'; }
+const m2  = v => (isFinite(v)? v.toFixed(3)+' m' : '∞');
+const kPa = v => (v/1000).toFixed(2)+' kPa';
+</script>
+
+<script>
+'use strict';
+/* ==========================================================================
+   WORKED SOLUTION — the same numbers, written out the way a student would
+   ========================================================================== */
+const $=id=>document.getElementById(id);
+
+function stepsPlane(R){
+  const sh=R.sh, sn=R.sn.toFixed(4), th=st.theta.toFixed(1);
+  const g=(R.rho*G/1000).toFixed(2);
+  return [
+   {t:'Area and centroid of the shape',
+    why:'Everything starts from the shape itself. Read A and the centroid position off the '
+       +'standard table of geometric properties — they do not depend on the water at all.',
+    eqs:[['A = '+sh.Aform, sh.Asub(st)+' = <b>'+R.A.toFixed(4)+' m²</b>'],
+         ['ȳ = '+sh.ycform+'  (from the upper edge, measured <i>along the plane</i>)',
+          '= <b>'+R.ycl.toFixed(4)+' m</b>']],
+    hl:'plate'},
+
+   {t:'Depth of the centroid',
+    why:'Only the vertical drop counts, so multiply the distance along the plane by sin θ. '
+       +'This is the single most common slip in the whole topic: ȳ is along the plane, h_c is vertical.',
+    eqs:[['h_c = h_top + ȳ sin θ',
+          '= '+R.hTop.toFixed(3)+' + '+R.ycl.toFixed(3)+' × sin '+th+'° = <b>'+R.hc.toFixed(4)+' m</b>']],
+    hl:'hc'},
+
+   {t:'Pressure at the centroid',
+    why:'Gauge pressure grows linearly with depth. The pressure at the centroid is the '
+       +'<i>average</i> pressure over the whole surface — that is what makes the next step work.',
+    eqs:[['p_c = ρ g h_c',
+          '= '+st.rho.toFixed(0)+' × 9.81 × '+R.hc.toFixed(3)+' = <b>'+kPa(R.pc)+'</b>']],
+    hl:'prism'},
+
+   {t:'Resultant force',
+    why:'Average pressure × area. Equivalently: F_R is the <i>volume</i> of the pressure prism '
+       +'standing on the plate — which is the solid drawn in the scene.',
+    eqs:[['F_R = p_c A = ρ g h_c A  = γ h_c A,   γ = '+g+' kN/m³',
+          '= '+kPa(R.pc)+' × '+R.A.toFixed(4)+' m² = <b>'+fmtF(R.F)+'</b>'],
+         ['direction: perpendicular to the surface, pushing onto it', '']],
+    res:'F_R = '+fmtF(R.F), hl:'force'},
+
+   {t:'Second moment of area',
+    why:'The pressure is <i>not</i> uniform, so the resultant does not act at the centroid. '
+       +'How far it shifts depends on how the area is spread about the centroid — that is I_xc.',
+    eqs:[['I_xc = '+sh.Iform+'  (about the horizontal centroidal axis)',
+          sh.Isub(st)+' = <b>'+R.Ixc.toFixed(5)+' m⁴</b>']],
+    hl:'plate'},
+
+   {t:'Slope distance to the centroid',
+    why:'The centre-of-pressure formula is written in y — distance measured along the plane '
+       +'from where the plane would cut the free surface. Convert h_c to that axis first.',
+    eqs:[['y_c = h_c / sin θ',
+          '= '+R.hc.toFixed(4)+' / sin '+th+'° = <b>'+(isFinite(R.yc)?R.yc.toFixed(4)+' m':'∞  (θ = 0)')+'</b>']],
+    hl:'yc'},
+
+   {t:'Shift below the centroid',
+    why:'Take moments of the pressure distribution about the free-surface line. Deeper strips '
+       +'push harder, so the resultant slides <i>down</i> the plane by Δy. Note Δy shrinks as the '
+       +'surface is submerged deeper, and vanishes when θ = 0.',
+    eqs:[['Δy = I_xc / (y_c A)',
+          isFinite(R.yc)
+            ? '= '+R.Ixc.toFixed(5)+' / ('+R.yc.toFixed(4)+' × '+R.A.toFixed(4)+') = <b>'+R.dy.toFixed(4)+' m</b>'
+            : '→ 0  (uniform pressure on a horizontal surface) = <b>0.0000 m</b>']],
+    hl:'dy'},
+
+   {t:'Centre of pressure',
+    why:'Add the shift to the centroid. Quote it both ways — along the plane, and as a depth — '
+       +'because problems ask for either.',
+    eqs:[['y_R = y_c + Δy', isFinite(R.yR)? '= <b>'+R.yR.toFixed(4)+' m</b> along the plane':'—'],
+         ['from the upper edge: s_R = ȳ + Δy',
+          '= '+R.ycl.toFixed(4)+' + '+R.dy.toFixed(4)+' = <b>'+R.sR.toFixed(4)+' m</b>'],
+         ['depth: h_R = h_top + s_R sin θ',
+          '= <b>'+R.hR.toFixed(4)+' m</b> below the free surface']],
+    res:'CP at '+R.sR.toFixed(3)+' m from the upper edge', hl:'cp'},
+
+   {t:'Moment on a hinge',
+    why:'Gate problems end here: the hydrostatic moment about a hinge is F_R times its distance '
+       +'from the hinge. Add the gate\'s own weight separately if the question gives one.',
+    eqs:[['M about the upper edge = F_R × s_R',
+          '= '+fmtF(R.F)+' × '+R.sR.toFixed(3)+' m = <b>'+fmtM(R.Mtop)+'</b>'],
+         ['M about the lower edge = F_R × (L − s_R)',
+          '= <b>'+fmtM(R.Mbot)+'</b>']],
+    hl:'force'}
+  ];
+}
+
+function stepsCurved(R){
+  const g=(R.rho*G/1000).toFixed(2);
+  return [
+   {t:'Why a curved surface is different',
+    why:'On a curved surface the pressure changes <i>direction</i> from point to point, so the '
+       +'forces cannot simply be added as numbers. Split them into a horizontal and a vertical '
+       +'component, handle each with a rule you already know, then recombine.',
+    eqs:[['F_R = √(F_x² + F_v²)','']], hl:'gate'},
+
+   {t:'Horizontal component — use the vertical projection',
+    why:'Only the vertical projection of the surface can carry horizontal thrust. That projection '
+       +'is a flat plate, so step 1 of the plane-surface method applies unchanged.',
+    eqs:[['A_proj = R(1 − sin ψ) × b',
+          '= '+R.Hp.toFixed(3)+' × '+R.b.toFixed(2)+' = <b>'+R.Ap.toFixed(4)+' m²</b>'],
+         ['h_c = depth of the centroid of that projection','= <b>'+R.hcP.toFixed(4)+' m</b>'],
+         ['F_x = γ h_c A_proj,   γ = '+g+' kN/m³','= <b>'+fmtF(R.Fx)+'</b>']],
+    res:'F_x = '+fmtF(R.Fx), hl:'fx'},
+
+   {t:'Where F_x acts',
+    why:'Same centre-of-pressure rule as for any plane surface — the projection is vertical, '
+       +'so Δ measured downward is I_xc /(y_c A) with y = h.',
+    eqs:[['Δ = A_proj-height² / (12 h_c)',
+          '= '+R.Hp.toFixed(3)+'² / (12 × '+R.hcP.toFixed(3)+') = <b>'+R.dyx.toFixed(4)+' m</b>'],
+         ['depth of the line of action = h_c + Δ',
+          '= '+R.hRx.toFixed(4)+' m,  i.e. <b>'+R.armX.toFixed(4)+' m below the pivot</b>']],
+    hl:'fx'},
+
+   {t:'Vertical component — weigh the prism of fluid',
+    why:'Take the column of fluid standing vertically between the surface and the free-surface '
+       +'level. Its weight is the vertical force. If the fluid is <i>below</i> the surface the '
+       +'column is imaginary and the force points up — the magnitude is the same either way.',
+    eqs:[['V = volume of that prism','= <b>'+R.V.toFixed(4)+' m³</b>'],
+         ['F_v = γ V','= '+g+' × '+R.V.toFixed(4)+' = <b>'+fmtF(R.Fv)+'</b> (upward here)']],
+    res:'F_v = '+fmtF(R.Fv), hl:'fv'},
+
+   {t:'Where F_v acts',
+    why:'Through the centroid of the prism, measured horizontally from the pivot.',
+    eqs:[['x̄ = centroid of the prism','= <b>'+R.xbar.toFixed(4)+' m from the pivot</b>']],
+    hl:'fv'},
+
+   {t:'Recombine',
+    why:'Vector sum of the two components. The angle tells you the direction the gate is pushed.',
+    eqs:[['F_R = √(F_x² + F_v²)',
+          '= √('+(R.Fx/1000).toFixed(2)+'² + '+(R.Fv/1000).toFixed(2)+'²) = <b>'+fmtF(R.FR)+'</b>'],
+         ['α = tan⁻¹(F_v / F_x)','= <b>'+R.alpha.toFixed(2)+'°</b> to the horizontal']],
+    res:'F_R = '+fmtF(R.FR)+' at '+R.alpha.toFixed(1)+'°', hl:'fr'},
+
+   {t:'Take moments about the pivot',
+    why:'On a circular arc every pressure arrow points at the centre of curvature, so the whole '
+       +'pressure field has no moment about it. The two component moments are large, and they '
+       +'cancel exactly — check it at any setting of the sliders.',
+    eqs:[['M from F_x = F_x × '+R.armX.toFixed(3)+' m','= '+fmtM(R.Mfx)+'  (one way)'],
+         ['M from F_v = F_v × '+R.xbar.toFixed(3)+' m','= '+fmtM(R.Mfv)+'  (the other way)'],
+         ['net moment about the pivot','= <b>'+fmtM(R.Mnet)+'</b>']],
+    res:'the resultant passes through the pivot', hl:'fr'}
+  ];
+}
+
+let stepCache=[], stepHL='all';
+function renderWork(R){
+  const steps = (st.mode==='curved') ? stepsCurved(R) : stepsPlane(R);
+  stepCache = steps;
+  const n = steps.length, cur = clamp(st.step, 0, n);      // 0 = show all
+  let html = '<div id="stepbar">'
+    + '<button id="w-prev">◀</button><button id="w-next">▶</button>'
+    + '<button id="w-all">Show all</button>'
+    + '<span id="stepPos">'+(cur===0?('all '+n+' steps'):('step '+cur+' of '+n))+'</span></div>';
+  steps.forEach((s,i)=>{
+    const k=i+1, cls = cur===0 ? 'on' : (k===cur?'on':(k<cur?'done':''));
+    html += '<div class="step '+cls+'" data-k="'+k+'">'
+         +  '<div class="stepHead"><span class="num">'+k+'</span>'+s.t+'</div>'
+         +  '<div class="why">'+s.why+'</div>';
+    s.eqs.forEach(([a,b])=>{
+      html += '<div class="eq">'+a+'</div>';
+      if(b) html += '<div class="eq sub">'+b+'</div>';
+    });
+    if(s.res) html += '<div class="eq res">'+s.res+'</div>';
+    html += '</div>';
+  });
+  html += '<div class="answer">'+ (st.mode==='curved'
+     ? '<b>Answer.</b> F_x = '+fmtF(R.Fx)+' acting '+R.armX.toFixed(3)+' m below the pivot; '
+      +'F_v = '+fmtF(R.Fv)+' acting '+R.xbar.toFixed(3)+' m from it; resultant '+fmtF(R.FR)
+      +' at '+R.alpha.toFixed(1)+'° to the horizontal, passing through the pivot.'
+     : '<b>Answer.</b> F_R = '+fmtF(R.F)+', perpendicular to the surface, acting '
+      +R.sR.toFixed(3)+' m from the upper edge along the plane — a depth of '+R.hR.toFixed(3)+' m.')
+    +'</div>';
+  $('work').innerHTML = html;
+  stepHL = (cur===0) ? 'all' : steps[cur-1].hl;
+  $('w-prev').disabled = (cur<=1 && cur!==0);
+  $('w-next').disabled = (cur>=n);
+  $('w-prev').onclick=()=>{ st.step = (st.step===0? n : Math.max(1,st.step-1)); refresh(); };
+  $('w-next').onclick=()=>{ st.step = (st.step===0? 1 : Math.min(n,st.step+1)); refresh(); };
+  $('w-all').onclick =()=>{ st.step = 0; refresh(); };
+}
+
+const rw=(a,id)=>'<tr><td>'+a+'</td><td id="'+id+'"></td></tr>';
+const RO_PLANE =
+  '<h2 style="margin-top:0">Shape</h2><table class="vals">'+
+  rw('area A','o-A')+rw('centroid ȳ from the upper edge','o-ycl')+rw('I<sub>xc</sub>','o-Ixc')+
+  '</table><h2>Force</h2><table class="vals">'+
+  rw('centroid depth h<sub>c</sub>','o-hc')+rw('p at the centroid','o-pc')+
+  rw('<b>F<sub>R</sub> = ρ g h<sub>c</sub> A</b>','o-F')+
+  '</table><h2>Centre of pressure</h2><table class="vals">'+
+  rw('y<sub>c</sub> = h<sub>c</sub>/sinθ','o-yc')+rw('Δy = I<sub>xc</sub>/(y<sub>c</sub>A)','o-dy')+
+  rw('s<sub>R</sub> from the upper edge','o-sR')+rw('depth of the CP','o-hR')+
+  '</table><h2>Self-checks (independent quadrature)</h2><table class="vals">'+
+  rw('A from ∫w dt ÷ table A','o-cA')+
+  rw('ȳ from ∫t w dt ÷ table ȳ','o-cY')+
+  rw('I<sub>xc</sub> from ∫(t−ȳ)²w dt ÷ table','o-cI')+
+  rw('∮p dA ÷ ρg h<sub>c</sub>A','o-cF')+
+  rw('∮t p dA / ∮p dA ÷ s<sub>R</sub>','o-cS')+
+  '</table><div class="note">The first three rows re-derive the shape\'s geometric properties '
+  +'from its own chord width and compare them with the values in the standard table — so the '
+  +'table itself is checked on screen, not just the force formula.</div>';
+
+const RO_CURVED =
+  '<h2 style="margin-top:0">Horizontal component</h2><table class="vals">'+
+  rw('projected area A<sub>proj</sub>','o-Ap')+rw('centroid depth h<sub>c</sub>','o-hcP')+
+  rw('<b>F<sub>x</sub> = γ h<sub>c</sub> A<sub>proj</sub></b>','o-Fx')+
+  rw('line of action, below the pivot','o-armX')+
+  '</table><h2>Vertical component</h2><table class="vals">'+
+  rw('prism volume V','o-V')+rw('<b>F<sub>v</sub> = γ V</b>','o-Fv')+
+  rw('line of action x̄, from the pivot','o-xbar')+
+  '</table><h2>Resultant</h2><table class="vals">'+
+  rw('F<sub>R</sub>','o-FR')+rw('α to the horizontal','o-alpha')+
+  rw('moment of F<sub>x</sub> about the pivot','o-Mfx')+
+  rw('moment of F<sub>v</sub> about the pivot','o-Mfv')+
+  rw('<b>net moment</b>','o-Mnet')+
+  '</table><h2>Self-checks (independent quadrature)</h2><table class="vals">'+
+  rw('∮p·n<sub>x</sub> dA ÷ γh<sub>c</sub>A<sub>proj</sub>','o-cFx')+
+  rw('∮p·n<sub>z</sub> dA ÷ γV','o-cFv')+
+  rw('|net moment| ÷ (F<sub>R</sub>·R)','o-cM')+
+  '</table><div class="note">Both components are computed twice — from the formulas and by '
+  +'integrating p over 4000 arc elements. The net moment about the pivot axis is zero to machine '
+  +'precision at every slider setting, because the traction on a circular arc is radial.</div>';
+
+let roMode=null;
+const put=(id,v)=>{const e=$(id); if(e) e.textContent=v;};
+function putChk(id,v){ const e=$(id); if(!e) return; const ok=Math.abs(v-1)<2e-3;
+  e.textContent=v.toFixed(6)+(ok?' ✓':' !'); e.className=ok?'ok':'warn'; }
+
+function renderReadout(R){
+  if(roMode!==st.mode){ $('readout').innerHTML = st.mode==='curved'?RO_CURVED:RO_PLANE; roMode=st.mode; }
+  if(st.mode==='curved'){
+    put('o-Ap',R.Ap.toFixed(4)+' m²'); put('o-hcP',m2(R.hcP)); put('o-Fx',fmtF(R.Fx));
+    put('o-armX',m2(R.armX)); put('o-V',R.V.toFixed(4)+' m³'); put('o-Fv',fmtF(R.Fv)+' ↑');
+    put('o-xbar',m2(R.xbar)); put('o-FR',fmtF(R.FR)); put('o-alpha',R.alpha.toFixed(2)+'°');
+    put('o-Mfx',fmtM(R.Mfx)); put('o-Mfv',fmtM(R.Mfv)); put('o-Mnet',fmtM(R.Mnet));
+    putChk('o-cFx',R.chkFx); putChk('o-cFv',R.chkFv);
+    const e=$('o-cM'); if(e){ e.textContent=(Math.abs(R.Mnet)/(R.FR*R.R+1e-9)).toExponential(1)+' ✓'; e.className='ok'; }
+  }else{
+    put('o-A',R.A.toFixed(4)+' m²'); put('o-ycl',m2(R.ycl)); put('o-Ixc',R.Ixc.toFixed(5)+' m⁴');
+    put('o-hc',m2(R.hc)); put('o-pc',kPa(R.pc)); put('o-F',fmtF(R.F));
+    put('o-yc',isFinite(R.yc)?m2(R.yc):'∞  (θ = 0)'); put('o-dy',m2(R.dy));
+    put('o-sR',m2(R.sR)); put('o-hR',m2(R.hR));
+    putChk('o-cA',R.chkA); putChk('o-cY',R.chkYc); putChk('o-cI',R.chkI);
+    putChk('o-cF',R.chkF); putChk('o-cS',R.chkS);
+  }
+}
+</script>
+
+<script>
+'use strict';
+/* ==========================================================================
+   3D SCENE
+   ========================================================================== */
+const cv = document.getElementById('cv');
+const viewEl = document.getElementById('view');
+const labelsEl = document.getElementById('labels');
+
+const renderer = new THREE.WebGLRenderer({canvas:cv, antialias:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, 2));
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0c111c);
+const camera = new THREE.PerspectiveCamera(42, 2, 0.05, 2000);
+const controls = new THREE.OrbitControls(camera, cv);
+controls.enableDamping = true; controls.dampingFactor = 0.08;
+controls.minDistance = 0.6; controls.maxDistance = 400;
+
+scene.add(new THREE.AmbientLight(0xffffff, 0.62));
+const sun = new THREE.DirectionalLight(0xffffff, 1.05); sun.position.set(6,12,9); scene.add(sun);
+const fill = new THREE.DirectionalLight(0x88b4ff, 0.35); fill.position.set(-8,4,-6); scene.add(fill);
+
+const GROUPS = {};                       // named groups so a step can highlight one
+['water','plate','prism','arrows','force','dims','gate','fx','fv','fr'].forEach(k=>{
+  const g = new THREE.Group(); g.name=k; scene.add(g); GROUPS[k]=g;
+});
+function clearGroup(g){
+  while(g.children.length){ const c=g.children.pop();
+    if(c.geometry) c.geometry.dispose();
+    if(c.material){ (Array.isArray(c.material)?c.material:[c.material]).forEach(m=>m.dispose()); } }
+}
+
+/* ---------- HTML labels, projected each frame ---------------------------- */
+let LABELS=[];
+function clearLabels(){ LABELS.forEach(l=>l.el.remove()); LABELS=[]; }
+function addLabel(text, pos, color, prio, tag){
+  const el=document.createElement('div');
+  el.className='lbl'; el.textContent=text; el.style.color=color;
+  el.dataset.tag = tag||'misc';
+  labelsEl.appendChild(el);
+  LABELS.push({el, pos:pos.clone(), prio:prio||0, text, tag:tag||'misc'});
+  return el;
+}
+/* which labels belong to each step's highlight — without this the step-through
+   changes the geometry but leaves every caption on screen */
+const LBL_SETS = {
+  all:  null,                                   // null = show everything
+  plate:['surf'],
+  hc:   ['surf','hc','centroid'],
+  prism:['surf','centroid'],
+  force:['surf','FR','cp'],
+  yc:   ['surf','yc','centroid'],
+  dy:   ['surf','dy','centroid','cp'],
+  cp:   ['surf','cp','dy','FR'],
+  gate: ['surf','pivot','hO'],
+  fx:   ['surf','pivot','Fx'],
+  fv:   ['surf','pivot','Fv','hO'],
+  fr:   ['surf','pivot','Fx','Fv','FR','Mnet']
+};
+function labelVisible(l){
+  const set = LBL_SETS[stepHL];
+  return !set || set.includes(l.tag);
+}
+const _v = new THREE.Vector3();
+function layoutLabels(){
+  const w=viewEl.clientWidth, h=viewEl.clientHeight;
+  const items=[];
+  for(const l of LABELS){
+    _v.copy(l.pos).project(camera);
+    const x=(_v.x*0.5+0.5)*w, y=(-_v.y*0.5+0.5)*h;
+    const vis = st.labelsOn && labelVisible(l) && _v.z<1
+                && x>-60 && x<w+60 && y>-40 && y<h+40;
+    l.el.style.display = vis?'block':'none';
+    if(vis) items.push({l,x,y});
+  }
+  // push overlapping labels apart vertically, most important first
+  items.sort((a,b)=> (b.l.prio-a.l.prio) || (a.y-b.y));
+  const placed=[];
+  for(const it of items){
+    let y=it.y;
+    for(let guard=0; guard<40; guard++){
+      const hit = placed.find(p=>Math.abs(p.y-y)<19 && Math.abs(p.x-it.x)<118);
+      if(!hit) break;
+      y = (y<=hit.y) ? hit.y-19.5 : hit.y+19.5;
+    }
+    placed.push({x:it.x,y});
+    it.l.el.style.left=it.x+'px'; it.l.el.style.top=y+'px';
+  }
+}
+
+/* ---------- small builders ----------------------------------------------- */
+const COL = {ink:'#e8edf6', dim:'#9aa7bd', acc:'#4db8ff', sub:'#3b82f6',
+             crit:'#f59e0b', ok:'#34d399', vio:'#a78bfa'};
+function pressureColor(t){                       // 0..1 → deep blue → cyan → amber
+  const c=new THREE.Color();
+  if(t<0.55) c.setHSL(0.60-0.09*(t/0.55), 0.75, 0.34+0.24*(t/0.55));
+  else       c.setHSL(0.51-0.42*((t-0.55)/0.45), 0.80, 0.58);
+  return c;
+}
+/* a real solid arrow — ArrowHelper's 1-px line vanishes in a 3D scene */
+function thickArrow(from,to,color,rad){
+  const g=new THREE.Group();
+  const d=new THREE.Vector3().subVectors(to,from), len=d.length();
+  if(len<1e-6) return g;
+  const dir=d.clone().normalize();
+  const head=Math.min(len*0.30, rad*7.5), shaft=Math.max(len-head, len*0.05);
+  const mat=new THREE.MeshStandardMaterial({color, roughness:0.42, metalness:0.15});
+  const q=new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,1,0), dir);
+  const sh=new THREE.Mesh(new THREE.CylinderGeometry(rad,rad,shaft,14), mat);
+  sh.position.copy(from).addScaledVector(dir, shaft/2); sh.quaternion.copy(q);
+  const hd=new THREE.Mesh(new THREE.ConeGeometry(rad*2.5, head, 18), mat);
+  hd.position.copy(to).addScaledVector(dir, -head/2); hd.quaternion.copy(q);
+  g.add(sh,hd); return g;
+}
+/* force arrows and markers are annotations, not geometry — keep them visible
+   even when they end inside the translucent prism */
+function onTop(obj){
+  obj.traverse(o=>{ if(o.material){ o.material.depthTest=false; o.material.transparent=true; }
+                    o.renderOrder=30; });
+  return obj;
+}
+/* a tank drawn from the inside: BackSide only, so nothing hazes over the
+   subject sitting in front of it */
+function tank(cx,cy,cz,W,H,D){
+  const g=new THREE.Group();
+  const box=new THREE.BoxGeometry(W,H,D);
+  const m=new THREE.Mesh(box,new THREE.MeshStandardMaterial({
+    color:0x2f6fd0, transparent:true, opacity:0.26, side:THREE.BackSide,
+    roughness:0.9, depthWrite:false}));
+  m.position.set(cx,cy,cz); m.renderOrder=-5; g.add(m);
+  const e=new THREE.LineSegments(new THREE.EdgesGeometry(box),
+    new THREE.LineBasicMaterial({color:0x4db8ff, transparent:true, opacity:0.30}));
+  e.position.set(cx,cy,cz); g.add(e);
+  const s=new THREE.Mesh(new THREE.PlaneGeometry(W,D),
+    new THREE.MeshBasicMaterial({color:0x4db8ff, transparent:true, opacity:0.13,
+      side:THREE.DoubleSide, depthWrite:false}));
+  s.rotation.x=-Math.PI/2; s.position.set(cx,0,cz); s.renderOrder=-4; g.add(s);
+  const sl=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.PlaneGeometry(W,D)),
+    new THREE.LineBasicMaterial({color:0x7fd0ff, transparent:true, opacity:0.65}));
+  sl.rotation.x=-Math.PI/2; sl.position.set(cx,0,cz); g.add(sl);
+  return g;
+}
+function tube(from,to,color,r){
+  const d=new THREE.Vector3().subVectors(to,from), len=d.length();
+  const g=new THREE.CylinderGeometry(r,r,len,8);
+  const m=new THREE.Mesh(g,new THREE.MeshBasicMaterial({color}));
+  m.position.copy(from).add(to).multiplyScalar(0.5);
+  m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), d.clone().normalize());
+  return m;
+}
+function dashLine(from,to,color){
+  const g=new THREE.BufferGeometry().setFromPoints([from,to]);
+  const m=new THREE.LineDashedMaterial({color, dashSize:0.18, gapSize:0.12, transparent:true, opacity:0.85});
+  const l=new THREE.Line(g,m); l.computeLineDistances(); return l;
+}
+
+/* ---------- the plane-surface scene -------------------------------------- */
+/* local frame:  ex = (1,0,0) across the plate
+                 d  = (0,−sinθ, cosθ) down the plane from the upper edge
+                 n  = (0, cosθ, sinθ) outward normal, on the wetted side      */
+let sceneSpan = 10;
+function buildPlane(R){
+  Object.values(GROUPS).forEach(clearGroup); clearLabels();
+  const sn=R.sn, cs=R.cs, ext=R.ext, sh=R.sh;
+  const D  = new THREE.Vector3(0,-sn,cs), N = new THREE.Vector3(0,cs,sn);
+  const P0 = new THREE.Vector3(0,-R.hTop,0);              // mid-point of the upper edge
+  const at = (t,x)=> P0.clone().addScaledVector(D,t).add(new THREE.Vector3(x,0,0));
+
+  let wMax=0.2; for(let i=0;i<=20;i++) wMax=Math.max(wMax, sh.w(ext*i/20, st));
+  const span = Math.max(ext, wMax, R.hBot)*1.25 + 0.8;
+  sceneSpan = span;
+
+  // ---- plate + pressure prism, one grid ---------------------------------
+  const Ns=72, Nu=30, base=(Ns+1)*(Nu+1);
+  const pMax = Math.max(R.pBot, 1e-9);
+  const kP   = 0.42*ext/pMax;                             // pressure → length, for drawing
+  const pos=[], col=[], idx=[];
+  for(let i=0;i<=Ns;i++){
+    const t=ext*i/Ns, w=sh.w(t,st), p=R.rho*G*(R.hTop+t*sn), hp=kP*p;
+    const c=pressureColor(clamp(p/pMax,0,1));
+    for(let j=0;j<=Nu;j++){
+      const x=(-0.5+j/Nu)*w, P=at(t,x);
+      pos.push(P.x,P.y,P.z); col.push(c.r*0.55,c.g*0.55,c.b*0.55);
+    }
+  }
+  for(let i=0;i<=Ns;i++){
+    const t=ext*i/Ns, w=sh.w(t,st), p=R.rho*G*(R.hTop+t*sn), hp=kP*p;
+    const c=pressureColor(clamp(p/pMax,0,1));
+    for(let j=0;j<=Nu;j++){
+      const x=(-0.5+j/Nu)*w, P=at(t,x).addScaledVector(N,hp);
+      pos.push(P.x,P.y,P.z); col.push(c.r,c.g,c.b);
+    }
+  }
+  const quad=(a,b,c,d)=>{ idx.push(a,b,c, a,c,d); };
+  for(let i=0;i<Ns;i++) for(let j=0;j<Nu;j++){
+    const a=i*(Nu+1)+j, b=a+1, c=a+Nu+2, d=a+Nu+1;
+    quad(a,d,c,b);                                   // bottom (plate), inward
+    quad(base+a, base+b, base+c, base+d);            // top surface
+  }
+  for(let i=0;i<Ns;i++){                             // the two lateral walls
+    const a=i*(Nu+1), b=(i+1)*(Nu+1);
+    quad(a, base+a, base+b, b);
+    const a2=i*(Nu+1)+Nu, b2=(i+1)*(Nu+1)+Nu;
+    quad(a2, b2, base+b2, base+a2);
+  }
+  for(let j=0;j<Nu;j++){                             // the two end caps
+    const a=j, b=j+1;               quad(a, b, base+b, base+a);
+    const a2=Ns*(Nu+1)+j, b2=a2+1;  quad(a2, base+a2, base+b2, b2);
+  }
+  const pg=new THREE.BufferGeometry();
+  pg.setAttribute('position', new THREE.Float32BufferAttribute(pos,3));
+  pg.setAttribute('color',    new THREE.Float32BufferAttribute(col,3));
+  pg.setIndex(idx); pg.computeVertexNormals();
+  const prism=new THREE.Mesh(pg, new THREE.MeshStandardMaterial({
+    vertexColors:true, transparent:true, opacity:0.88, side:THREE.DoubleSide,
+    roughness:0.5, metalness:0.0}));
+  GROUPS.prism.add(prism);
+  // the sloping top face, outlined, so the prism reads as a solid
+  const topEdge=[];
+  for(let i=0;i<=Ns;i++){ const t=ext*i/Ns, w=sh.w(t,st);
+    topEdge.push(at(t,w/2).addScaledVector(N,kP*R.rho*G*(R.hTop+t*sn))); }
+  for(let i=Ns;i>=0;i--){ const t=ext*i/Ns, w=sh.w(t,st);
+    topEdge.push(at(t,-w/2).addScaledVector(N,kP*R.rho*G*(R.hTop+t*sn))); }
+  topEdge.push(topEdge[0]);
+  GROUPS.prism.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(topEdge),
+    new THREE.LineBasicMaterial({color:0xbfe4ff, transparent:true, opacity:0.8})));
+
+  // ---- the plate itself --------------------------------------------------
+  const ppos=[], pidx=[];
+  for(let i=0;i<=Ns;i++){ const t=ext*i/Ns, w=sh.w(t,st);
+    for(let j=0;j<=Nu;j++){ const P=at(t,(-0.5+j/Nu)*w); ppos.push(P.x,P.y,P.z); } }
+  for(let i=0;i<Ns;i++) for(let j=0;j<Nu;j++){
+    const a=i*(Nu+1)+j; pidx.push(a,a+Nu+1,a+Nu+2, a,a+Nu+2,a+1); }
+  const plg=new THREE.BufferGeometry();
+  plg.setAttribute('position', new THREE.Float32BufferAttribute(ppos,3));
+  plg.setIndex(pidx); plg.computeVertexNormals();
+  GROUPS.plate.add(new THREE.Mesh(plg, new THREE.MeshStandardMaterial({
+    color:0xdfe7f5, side:THREE.DoubleSide, roughness:0.5, metalness:0.05})));
+
+  // rim of the plate
+  const rim=[], eps=-0.004*Math.max(ext,1);
+  for(let i=0;i<=Ns;i++){ const t=ext*i/Ns; rim.push(at(t, sh.w(t,st)/2).addScaledVector(N,eps)); }
+  for(let i=Ns;i>=0;i--){ const t=ext*i/Ns; rim.push(at(t,-sh.w(t,st)/2).addScaledVector(N,eps)); }
+  rim.push(rim[0]);
+  GROUPS.plate.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(rim),
+    new THREE.LineBasicMaterial({color:0x9fb4d4})));
+
+  // ---- pressure arrows (optional) ---------------------------------------
+  const aRad=Math.max(ext*0.006,0.010);
+  for(let i=1;i<=7;i++){
+    const t=ext*i/8, w=sh.w(t,st); if(w<1e-3) continue;
+    const p=R.rho*G*(R.hTop+t*sn), l=kP*p;
+    for(const f of [-0.3,0,0.3]){
+      const P=at(t,f*w), Q=P.clone().addScaledVector(N,l);
+      GROUPS.arrows.add(thickArrow(Q,P,0x4db8ff,aRad));
+    }
+  }
+
+  // ---- centroid, centre of pressure, resultant --------------------------
+  const Pc = at(R.ycl,0), Pr = at(R.sR,0);
+  const rMark = Math.max(ext*0.022, 0.03);
+  const cm=new THREE.Mesh(new THREE.SphereGeometry(rMark,18,12),
+        new THREE.MeshStandardMaterial({color:0x9aa7bd}));
+  cm.position.copy(Pc); GROUPS.dims.add(onTop(cm));
+  const rm=new THREE.Mesh(new THREE.SphereGeometry(rMark*1.28,18,12),
+        new THREE.MeshStandardMaterial({color:0xf59e0b, emissive:0x3a2500}));
+  rm.position.copy(Pr); GROUPS.force.add(onTop(rm));
+
+  const fl = ext*0.75 + 0.40;
+  GROUPS.force.add(onTop(thickArrow(Pr.clone().addScaledVector(N,fl), Pr, 0xf59e0b,
+                              Math.max(ext*0.020,0.028))));
+  addLabel('F_R = '+fmtF(R.F), Pr.clone().addScaledVector(N,fl*1.06), COL.crit, 9, 'FR');
+  addLabel('centre of pressure', Pr.clone().addScaledVector(D,ext*0.10).add(new THREE.Vector3(wMax*0.5+0.25,0,0)), COL.crit, 6, 'cp');
+  addLabel('centroid', Pc.clone().addScaledVector(D,-ext*0.10).add(new THREE.Vector3(-wMax*0.5-0.25,0,0)), COL.dim, 5, 'centroid');
+
+  // Δy bracket, drawn just off the plate edge
+  if(R.dy>1e-4){
+    const off=new THREE.Vector3(-wMax*0.5-Math.max(0.12,ext*0.06),0,0);
+    const A1=Pc.clone().add(off), A2=Pr.clone().add(off);
+    GROUPS.dims.add(onTop(tube(A1,A2,0xf59e0b, Math.max(ext*0.006,0.012))));
+    addLabel('Δy = '+R.dy.toFixed(3)+' m', A1.clone().add(A2).multiplyScalar(0.5).add(off.clone().multiplyScalar(0.35)), COL.crit, 7, 'dy');
+  }
+
+  // ---- depth construction: h_c and y_c ----------------------------------
+  const surfC=new THREE.Vector3(Pc.x, 0, Pc.z);
+  GROUPS.dims.add(dashLine(surfC, Pc, 0x34d399));
+  addLabel('h_c = '+R.hc.toFixed(3)+' m', surfC.clone().add(Pc).multiplyScalar(0.5).add(new THREE.Vector3(0,0,0.02)), COL.ok, 8, 'hc');
+  if(isFinite(R.yc)){
+    const O0=P0.clone().addScaledVector(D,-R.hTop/Math.max(sn,1e-6));   // where the plane meets the surface
+    if(Math.abs(O0.y)<1e-6 || R.hTop>0){
+      GROUPS.dims.add(dashLine(O0, Pc, 0xa78bfa));
+      addLabel('y_c = '+R.yc.toFixed(3)+' m', O0.clone().add(Pc).multiplyScalar(0.5), COL.vio, 4, 'yc');
+    }
+  }
+
+  // ---- the tank, sized to the plate --------------------------------------
+  const floor = R.hBot*1.16 + 0.30;
+  const Wx = Math.max(wMax*2.3, 1.4);
+  const Wz = Math.max(ext*cs*1.9 + 0.9, 1.6);
+  const cz = ext*cs/2;
+  GROUPS.water.add(tank(0, -floor/2, cz, Wx, floor, Wz));
+  addLabel('free surface   p = 0', new THREE.Vector3(-Wx*0.42,0,cz-Wz*0.40), COL.acc, 3, 'surf');
+
+  const mid = new THREE.Vector3(0, -(R.hTop+R.hBot)/2, cz*0.9);
+  /* view the prism from the side of the plate and a little above it, so its
+     wedge profile is always visible — a fixed world direction would end up
+     looking straight down the plate normal at some inclinations */
+  const home = new THREE.Vector3(0.72,0,0).addScaledVector(N,0.55).addScaledVector(D,-0.10);
+  fitCamera(mid, Math.max(Wx, Wz, floor)*0.58, home);
+}
+
+/* ---------- the curved-surface scene ------------------------------------- */
+function buildCurved(R){
+  Object.values(GROUPS).forEach(clearGroup); clearLabels();
+  const Rr=R.R, b=R.b, hO=R.hO;
+  const O=new THREE.Vector3(0,-hO,0);
+  const P=(ph,x)=> new THREE.Vector3(x, -hO+Rr*Math.sin(ph), Rr*Math.cos(ph));
+  const span=Math.max(Rr*2, b, hO+Rr)*1.15+0.6; sceneSpan=span;
+
+  // ---- the gate: a cylindrical shell ------------------------------------
+  const Np=64, Nx=2, pos=[], col=[], idx=[];
+  const pMax=Math.max(R.pC,1e-9);
+  for(let i=0;i<=Np;i++){
+    const ph=R.phi1+(R.phi2-R.phi1)*i/Np;
+    const h=Math.max(hO-Rr*Math.sin(ph),0), c=pressureColor(clamp(R.rho*G*h/pMax,0,1));
+    for(let j=0;j<=Nx;j++){ const x=(-0.5+j/Nx)*b, p=P(ph,x);
+      pos.push(p.x,p.y,p.z); col.push(c.r,c.g,c.b); }
+  }
+  for(let i=0;i<Np;i++) for(let j=0;j<Nx;j++){
+    const a=i*(Nx+1)+j; idx.push(a,a+Nx+1,a+Nx+2, a,a+Nx+2,a+1);
+  }
+  const gg=new THREE.BufferGeometry();
+  gg.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
+  gg.setAttribute('color',new THREE.Float32BufferAttribute(col,3));
+  gg.setIndex(idx); gg.computeVertexNormals();
+  GROUPS.gate.add(new THREE.Mesh(gg,new THREE.MeshStandardMaterial({
+    vertexColors:true, side:THREE.DoubleSide, roughness:0.42, metalness:0.1})));
+
+  // pivot axis + radial arms
+  GROUPS.gate.add(tube(new THREE.Vector3(-b*0.72,-hO,0), new THREE.Vector3(b*0.72,-hO,0),
+                       0xdfe7f5, Math.max(Rr*0.012,0.02)));
+  for(const x of [-b/2, b/2]) for(const ph of [R.phi1, R.phi2])
+    GROUPS.gate.add(tube(new THREE.Vector3(x,-hO,0), P(ph,x), 0x9fb4d4, Math.max(Rr*0.008,0.014)));
+  addLabel('pivot axis O', new THREE.Vector3(b*0.80,-hO,0), COL.ink, 9, 'pivot');
+  // a marker where the axis crosses the plane the forces live in, so the
+  // resultant is seen to pass through it and not merely near it
+  const pv=new THREE.Mesh(new THREE.SphereGeometry(Math.max(Rr*0.035,0.05),18,12),
+        new THREE.MeshStandardMaterial({color:0xffffff, emissive:0x334155}));
+  pv.position.set(0,-hO,0); GROUPS.gate.add(onTop(pv));
+  GROUPS.gate.add(dashLine(new THREE.Vector3(0,0,0), new THREE.Vector3(0,-hO,0), 0x34d399));
+  addLabel('h_O = '+hO.toFixed(2)+' m', new THREE.Vector3(0,-hO*0.5,0), COL.ok, 6, 'hO');
+
+  // ---- radial pressure arrows: every one aims at the axis ---------------
+  const aMax=Rr*0.55, aRad=Math.max(Rr*0.010,0.014);
+  for(let i=1;i<=9;i++){
+    const ph=R.phi1+(R.phi2-R.phi1)*i/10;
+    const h=hO-Rr*Math.sin(ph); if(h<=0) continue;
+    let l=aMax*clamp(R.rho*G*h/pMax,0,1);
+    const rad=new THREE.Vector3(0, Math.sin(ph), Math.cos(ph));
+    // keep the tail inside the water: never let an arrow start below the bed
+    const yT=-hO+Rr*Math.sin(ph)+rad.y*l;
+    if(yT < -(hO+Rr)+0.02 && rad.y<-1e-6) l = Math.max(0, (-(hO+Rr)+0.02 - (-hO+Rr*Math.sin(ph)))/rad.y);
+    if(l<1e-3) continue;
+    for(const x of [-b*0.32, 0, b*0.32]){
+      const S=P(ph,x), T=S.clone().addScaledVector(rad, l);
+      GROUPS.arrows.add(thickArrow(T,S,0x4db8ff,aRad));
+    }
+  }
+
+  // ---- components on their true lines of action -------------------------
+  const zP=-R.xbar, yP=-R.hRx;                        // the two lines of action meet here
+  const Pstar=new THREE.Vector3(0,yP,zP);
+  const fxl=Rr*1.05, fvl=Rr*0.88, fRad=Math.max(Rr*0.026,0.032);
+  GROUPS.fx.add(onTop(thickArrow(Pstar.clone().add(new THREE.Vector3(0,0,-fxl)), Pstar, 0xa78bfa, fRad)));
+  addLabel('F_x = '+fmtF(R.Fx), Pstar.clone().add(new THREE.Vector3(0,0,-fxl*1.10)), COL.vio, 8, 'Fx');
+  GROUPS.fv.add(onTop(thickArrow(Pstar.clone().add(new THREE.Vector3(0,-fvl,0)), Pstar, 0x3b82f6, fRad)));
+  addLabel('F_v = '+fmtF(R.Fv)+' ↑', Pstar.clone().add(new THREE.Vector3(0,-fvl*1.12,0)), COL.sub, 8, 'Fv');
+  GROUPS.fx.add(dashLine(new THREE.Vector3(0,yP,-span*0.6), new THREE.Vector3(0,yP,Rr*0.4), 0xa78bfa));
+  GROUPS.fv.add(dashLine(new THREE.Vector3(0,0,zP), new THREE.Vector3(0,-(hO+Rr)*1.05,zP), 0x3b82f6));
+
+  // resultant, spanning P* and the pivot so the line through O is visible
+  const dir=new THREE.Vector3(0,R.Fv,-R.Fx).normalize();     // +y up, −z toward the water
+  const tO=new THREE.Vector3().subVectors(O,Pstar).dot(dir);
+  const s0=Math.min(0,tO)-Rr*0.5, s1=Math.max(0,tO)+Rr*0.80;
+  GROUPS.fr.add(onTop(thickArrow(Pstar.clone().addScaledVector(dir,s0),
+                           Pstar.clone().addScaledVector(dir,s1), 0xf59e0b, fRad*1.05)));
+  addLabel('F_R = '+fmtF(R.FR)+'  at '+R.alpha.toFixed(1)+'°',
+           Pstar.clone().addScaledVector(dir,s1*1.02), COL.crit, 9, 'FR');
+  addLabel('net moment about the axis = '+fmtM(R.Mnet),
+           new THREE.Vector3(0,-hO+Rr*0.28,Rr*0.30), COL.ok, 10, 'Mnet');
+
+  // ---- the reservoir, on the −z side of the gate -------------------------
+  const floor=hO+Rr, Wx=Math.max(b*2.2, Rr*1.3), Wz=Math.max(Rr*2.4, 1.6);
+  const cz=-Wz/2 - Rr*0.02;
+  GROUPS.water.add(tank(0,-floor/2,cz, Wx, floor, Wz));
+  addLabel('free surface   p = 0', new THREE.Vector3(-Wx*0.42,0,cz-Wz*0.34), COL.acc, 3, 'surf');
+
+  fitCamera(new THREE.Vector3(0, -(hO+Rr)*0.52, -Rr*0.15),
+            Math.max(Wx, Rr*2.3, (hO+Rr)*0.62)*0.72,
+            new THREE.Vector3(1.00,0.34,0.46));
+}
+
+/* ---------- camera ------------------------------------------------------- */
+let camInit=false;
+function fitCamera(target, radius, home){
+  const dist = radius/Math.sin(camera.fov*Math.PI/360)*1.05;
+  const dir = camInit
+    ? new THREE.Vector3().subVectors(camera.position, controls.target).normalize()
+    : (home||new THREE.Vector3(0.8,0.45,0.9)).clone().normalize();
+  controls.target.copy(target);
+  camera.position.copy(target).addScaledVector(dir, dist);
+  controls.update(); camInit=true;
+}
+
+/* ---------- highlight the element the current step is about -------------- */
+const HL_SETS = {
+  all:  ['water','plate','prism','arrows','force','dims','gate','fx','fv','fr'],
+  plate:['plate','water'],
+  hc:   ['plate','dims','water'],
+  prism:['plate','prism','water'],
+  force:['plate','force','prism','water'],
+  yc:   ['plate','dims','water'],
+  dy:   ['plate','dims','force','water'],
+  cp:   ['plate','force','dims','water'],
+  gate: ['gate','water','arrows'],
+  fx:   ['gate','fx','water'],
+  fv:   ['gate','fv','water'],
+  fr:   ['gate','fx','fv','fr','water']
+};
+function applyHighlight(){
+  const keep = HL_SETS[stepHL] || HL_SETS.all;
+  for(const k in GROUPS){
+    let on = keep.includes(k);
+    if(k==='prism'  && !st.prism)  on=false;
+    if(k==='arrows' && !st.arrows && st.mode==='plane') on=false;
+    if(k==='water'  && !st.water)  on=false;
+    GROUPS[k].visible = on;
+  }
+  for(const l of LABELS) l.el.style.opacity = (stepHL==='all') ? '1' : '0.96';
+}
+
+/* ---------- frame loop --------------------------------------------------- */
+let simT=0, last=performance.now();
+function resize(){
+  const w=viewEl.clientWidth, h=viewEl.clientHeight;
+  if(w<2||h<2) return;
+  renderer.setSize(w,h,false);
+  camera.aspect=w/h; camera.updateProjectionMatrix();
+}
+window.addEventListener('resize',resize);
+
+function frame(now){
+  const dt = st.paused ? 0 : Math.min(0.05,(now-last)/1000); last=now; simT+=dt;
+  if(st.spin && dt>0 && !dragging){
+    const off=new THREE.Vector3().subVectors(camera.position, controls.target);
+    off.applyAxisAngle(new THREE.Vector3(0,1,0), dt*0.10);
+    camera.position.copy(controls.target).add(off);
+  }
+  controls.update();
+  renderer.render(scene,camera);
+  layoutLabels();
+  requestAnimationFrame(frame);
+}
+let dragging=false;
+cv.addEventListener('pointerdown',()=>{dragging=true;});
+window.addEventListener('pointerup',()=>{dragging=false;});
+
+/* ==========================================================================
+   CONTROLS
+   ========================================================================== */
+function syncInput(id,v){ const e=$(id); if(e) e.value=v; }
+function clampState(){
+  st.theta=clamp(st.theta,0,90); st.L=clamp(st.L,0.5,10); st.b=clamp(st.b,0.3,8);
+  st.hTop=clamp(st.hTop,0,10);   st.R=clamp(st.R,0.4,6);  st.hO=clamp(st.hO,0,10);
+  st.span=clamp(st.span,15,90);  st.bc=clamp(st.bc,0.3,8); st.rho=clamp(st.rho,700,13600);
+  if(st.mode==='plane' && st.theta<0.5 && st.hTop<0.05) st.hTop=0.05;
+}
+function refreshChips(){
+  const sh=SHAPES[st.shape];
+  $('v-th').textContent  = st.theta.toFixed(1)+'°';
+  $('v-L').textContent   = st.L.toFixed(2)+' m';
+  $('v-b').textContent   = sh.usesB ? st.b.toFixed(2)+' m' : 'set by the shape';
+  $('v-ht').textContent  = st.hTop.toFixed(2)+' m';
+  $('v-R').textContent   = st.R.toFixed(2)+' m';
+  $('v-hO').textContent  = st.hO.toFixed(2)+' m';
+  $('v-span').textContent= st.span.toFixed(0)+'°';
+  $('v-bc').textContent  = st.bc.toFixed(2)+' m';
+  $('v-rho').textContent = st.rho.toFixed(0)+' kg/m³ (SG '+(st.rho/1000).toFixed(2)+')';
+  $('lab-L').textContent = sh.Lname;
+  $('s-b').disabled = !sh.usesB;
+  $('row-b').classList.toggle('off', !sh.usesB);
+  $('chip').textContent  = kindChip();
+  $('b-plane').classList.toggle('active', st.mode==='plane');
+  $('b-curved').classList.toggle('active', st.mode==='curved');
+  $('planeCtl').classList.toggle('hidden', st.mode==='curved');
+  $('curvedCtl').classList.toggle('hidden', st.mode!=='curved');
+  ['rect','tri','circ','semi'].forEach(k=>
+    $('sh-'+k).classList.toggle('active', st.shape===k));
+  $('b-pause').classList.toggle('active', st.paused);
+  $('tab-work').classList.toggle('active', st.tab==='work');
+  $('tab-read').classList.toggle('active', st.tab==='read');
+  $('work').classList.toggle('hidden', st.tab!=='work');
+  $('readout').classList.toggle('hidden', st.tab!=='read');
+  $('ahaNote').innerHTML = st.mode==='curved'
+    ? '<b>Aha demo:</b> orbit until you are looking straight down the pivot axis. Every pressure '
+     +'arrow points at that axis, so the whole pressure field has no moment about it — read the '
+     +'net moment label. Then walk step 7 of the worked solution: two big moments, cancelling.'
+    : '<b>Aha demo:</b> turn the prism on and orbit around it. F_R is the <i>volume</i> of that '
+     +'solid and the centre of pressure is directly under its centroid — so the CP sits below the '
+     +'plate centroid simply because the solid is fatter at the deep end. Switch the shape to '
+     +'Triangle and watch both move.';
+}
+
+function rebuild(){
+  const R=solve();
+  if(st.mode==='curved') buildCurved(R); else buildPlane(R);
+  renderWork(R); renderReadout(R); applyHighlight();
+}
+function refresh(){                 // recompute + redraw without moving the camera
+  clampState(); refreshChips();
+  const R=solve();
+  if(st.mode==='curved') buildCurved(R); else buildPlane(R);
+  renderWork(R); renderReadout(R); applyHighlight();
+}
+
+function bindRange(id,key){
+  $(id).addEventListener('input',e=>{ st[key]=parseFloat(e.target.value); refresh(); });
+}
+bindRange('s-th','theta'); bindRange('s-L','L'); bindRange('s-b','b'); bindRange('s-ht','hTop');
+bindRange('s-R','R'); bindRange('s-hO','hO'); bindRange('s-span','span'); bindRange('s-bc','bc');
+bindRange('s-rho','rho');
+
+$('t-prism').addEventListener('change',e=>{st.prism=e.target.checked; applyHighlight();});
+$('t-arrows').addEventListener('change',e=>{st.arrows=e.target.checked; applyHighlight();});
+$('t-water').addEventListener('change',e=>{st.water=e.target.checked; applyHighlight();});
+$('t-labels').addEventListener('change',e=>{st.labelsOn=e.target.checked;});
+$('t-spin').addEventListener('change',e=>{st.spin=e.target.checked;});
+
+$('b-plane').onclick =()=>{ st.mode='plane';  st.step=0; refresh(); };
+$('b-curved').onclick=()=>{ st.mode='curved'; st.step=0; refresh(); };
+['rect','tri','circ','semi'].forEach(k=>
+  $('sh-'+k).onclick=()=>{ st.shape=k; st.step=0; refresh(); });
+$('tab-work').onclick=()=>{ st.tab='work'; refreshChips(); };
+$('tab-read').onclick=()=>{ st.tab='read'; refreshChips(); };
+$('b-pause').onclick =()=>{ st.paused=!st.paused; refreshChips(); };
+$('b-fit').onclick   =()=>{ camInit=false; refresh(); };
+
+function applyPreset(p){
+  Object.assign(st,p); st.step=0; clampState();
+  syncInput('s-th',st.theta); syncInput('s-L',st.L); syncInput('s-b',st.b);
+  syncInput('s-ht',st.hTop);  syncInput('s-R',st.R); syncInput('s-hO',st.hO);
+  syncInput('s-span',st.span);syncInput('s-bc',st.bc); syncInput('s-rho',st.rho);
+  camInit=false; refresh();
+}
+$('p1').onclick=()=>applyPreset({mode:'plane',shape:'rect',theta:90,L:2.5,b:1,hTop:0,rho:1000});
+$('p2').onclick=()=>applyPreset({mode:'plane',shape:'rect',theta:45,L:10*Math.SQRT2,b:1,hTop:0,rho:1000});
+$('p3').onclick=()=>applyPreset({mode:'plane',shape:'rect',theta:30,L:3,b:2,hTop:2,rho:1000});
+$('p4').onclick=()=>applyPreset({mode:'plane',shape:'circ',theta:60,L:2,b:2,hTop:3,rho:1000});
+$('p5').onclick=()=>applyPreset({mode:'curved',R:2,hO:3,span:90,bc:2,rho:1000});
+$('b-reset').onclick=()=>applyPreset({mode:'plane',shape:'rect',theta:35,L:3,b:2,hTop:1.5,
+                                      R:2,hO:3,span:90,bc:2,rho:1000});
+
+/* ---------- go ------------------------------------------------------------ */
+resize(); clampState(); refreshChips(); rebuild();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

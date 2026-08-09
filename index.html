@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>OpenHydroLab — Interactive Hydraulics &amp; Hydrology Animations</title>
-<meta name="description" content="Eight free, physics-accurate, interactive browser laboratories for teaching undergraduate hydraulics and hydrology: channel geometry, Manning uniform flow, specific energy and choking, hydraulic jumps, gradually varied flow, storm hydrographs, the unit hydrograph workbench, and rainfall frequency / IDF analysis. Every number computed from the governing equation. Runs offline, no installation.">
+<title>OpenHydroLab — Interactive Fluid Mechanics, Hydraulics &amp; Hydrology Animations</title>
+<meta name="description" content="Ten free, physics-accurate, interactive browser laboratories for teaching undergraduate fluid mechanics, hydraulics and hydrology: hydrostatic forces on plane and curved surfaces in 2D and 3D, channel geometry, Manning uniform flow, specific energy and choking, hydraulic jumps, gradually varied flow, storm hydrographs, the unit hydrograph workbench, and rainfall frequency / IDF analysis. Every number computed from the governing equation. Runs offline, no installation.">
 
 <!-- Link previews (LinkedIn, ResearchGate, Slack, X, Teams). og:image must be an
      absolute URL — relative paths are silently ignored by every scraper. -->
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="OpenHydroLab">
-<meta property="og:title" content="OpenHydroLab — eight offline browser laboratories for hydraulics &amp; hydrology">
+<meta property="og:title" content="OpenHydroLab — ten offline browser laboratories for fluid mechanics, hydraulics &amp; hydrology">
 <meta property="og:description" content="Interactive teaching laboratories where every number is computed from the governing equation, not animated to look plausible. Runs offline with no installation. MIT licensed, archived and citable.">
 <meta property="og:url" content="https://samirandas-cell.github.io/OpenHydroLab/">
 <meta property="og:image" content="https://samirandas-cell.github.io/OpenHydroLab/og-preview.png">
@@ -18,7 +18,7 @@
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Four OpenHydroLab laboratories: specific energy and choking, hydraulic jumps, storm hydrographs, and the unit hydrograph workbench.">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="OpenHydroLab — eight offline browser laboratories for hydraulics &amp; hydrology">
+<meta name="twitter:title" content="OpenHydroLab — ten offline browser laboratories for fluid mechanics, hydraulics &amp; hydrology">
 <meta name="twitter:description" content="Interactive teaching laboratories where every number is computed from the governing equation. Runs offline, no installation. MIT licensed and citable.">
 <meta name="twitter:image" content="https://samirandas-cell.github.io/OpenHydroLab/og-preview.png">
 <style>
@@ -53,16 +53,48 @@
 <body>
 <header>
   <h1>OpenHydroLab</h1>
-  <p class="tag">Physics-accurate, interactive animations for teaching hydraulics &amp; hydrology</p>
+  <p class="tag">Physics-accurate, interactive animations for teaching fluid mechanics, hydraulics &amp; hydrology</p>
 </header>
 <main>
   <p>
     OpenHydroLab is a free library of interactive HTML animations for undergraduate
-    hydraulics and hydrology. Every number on screen is computed live from the
+    fluid mechanics, hydraulics and hydrology. Every number on screen is computed live from the
     real governing equations — no faked motion. Each animation runs offline in any modern
     browser, needs no installation, and can be projected in class or explored by students
     at home.
   </p>
+
+  <section>
+    <h2>Fluid mechanics</h2>
+    <div class="grid">
+      <div class="card">
+        <h3>Hydrostatic Forces on Surfaces <span class="badge">2D · offline</span></h3>
+        <p>One idea in two linked pictures: the resultant is the <i>volume of the pressure
+           prism</i> and the centre of pressure is its centroid. A section and its pressure
+           diagram, tied together so the CP is visibly the same point in both. Horizontal,
+           vertical and inclined plates on one continuous θ slider — Δy written so θ → 0 stays
+           finite — then curved surfaces, where the resultant on a circular arc is shown to pass
+           through the pivot because every pressure arrow is radial. A worked-solution panel
+           writes the whole calculation out for whatever the sliders say, one step at a time,
+           with the drawing following each step.</p>
+        <a class="launch" href="animations/hydrostatic_forces.html">Launch</a>
+      </div>
+      <div class="card">
+        <h3>Hydrostatic Force in Three Dimensions <span class="badge">3D · offline</span></h3>
+        <p>The pressure prism built as a solid you can orbit around, coloured by pressure — the
+           centre of pressure sits below the centroid simply because the solid is fatter at the
+           deep end. Four plate shapes (rectangle, triangle, circle, semicircle) whose area,
+           centroid and second moment are re-derived from the shape's own chord width and checked
+           against the standard table on screen, so the table is verified rather than memorised.
+           Plus a real cylindrical gate: sight down its pivot axis and every pressure arrow points
+           at it.</p>
+        <a class="launch" href="animations/hydrostatic_forces_3d.html">Launch</a>
+      </div>
+    </div>
+    <p class="note">Both carry a step-by-step <b>worked solution</b> generated from the current
+    slider settings — formula, substitution, result, and a plain-English line saying why the step
+    exists. Walking it with ◀ ▶ dims everything in the drawing the current step is not about.</p>
+  </section>
 
   <section>
     <h2>Open-channel hydraulics</h2>
@@ -117,9 +149,10 @@
       </div>
     </div>
     <p class="note">All animations run fully offline, with no installation and no
-    third-party host. Seven are single self-contained files. The 3D laboratory
-    (Channel Geometry) additionally needs the <code>animations/vendor/three/</code> folder
-    kept alongside it — copy that folder too if you are moving the file on its own.</p>
+    third-party host. Eight are single self-contained files. The two 3D laboratories
+    (Channel Geometry and Hydrostatic Force in Three Dimensions) additionally need the
+    <code>animations/vendor/three/</code> folder kept alongside them — copy that folder too
+    if you are moving either file on its own.</p>
   </section>
 
   <section>

@@ -1,8 +1,8 @@
 # OpenHydroLab — numerical validation results
 
-Generated 2026-07-29T05:41:14.876Z · engines: chromium, firefox, webkit
+Generated 2026-08-09T01:56:07.875Z · engines: chromium, firefox, webkit
 
-354 recorded comparisons across 8 modules and 3 browser engine(s); 0 failing.
+534 recorded comparisons across 10 modules and 3 browser engine(s); 0 failing.
 
 Each row compares a value produced by the laboratory against a reference derived independently of it — a closed-form solution, a conservation identity, or a hand-checkable textbook calculation. Errors are the worst observed across engines.
 
@@ -157,6 +157,146 @@ Each row compares a value produced by the laboratory against a reference derived
 - **HJ-06** — y_c = (q²/g)^(1/3) with q = V₁y₁ = 0.044294 m²/s
 - **HJ-07** — y₁ ∈ {0.010, 0.020, 0.040} m × Fr₁ ∈ {1.5, 2, 3, 4.5, 6, 8, 10} (worst at {"y1":0.02,"Fr":4.5})
 - **HJ-08** — |(E₁−E₂) − (y₂−y₁)³/(4y₁y₂)| / h_L across the same grid (worst at {"y1":0.01,"Fr":1.5})
+
+</details>
+
+## hydrostatic_forces
+
+| Case | Quantity | Reference | OpenHydroLab | Rel. error | Tolerance | Status |
+|---|---|---|---|---|---|---|
+| curved-FR | resultant | 238340 N | 238340 N | 0 | rel ≤ 1e-12 | Pass |
+| curved-Fv | vertical component | 179358 N | 179358 N | 0 | rel ≤ 1e-12 | Pass |
+| curved-Fx | horizontal component | 156960 N | 156960 N | 0 | rel ≤ 1e-12 | Pass |
+| curved-Fx-arm | line of action of F_x below the pivot | 1.08333 m | 1.08333 m | < 1e-9 | rel ≤ 1e-12 | Pass |
+| curved-quadrant-Fv | vertical component | 23114.3 N | 23114.3 N | 0 | rel ≤ 1e-12 | Pass |
+| curved-quadrant-xbar | line of action of F_v | 0.424413 m | 0.424413 m | < 1e-9 | rel ≤ 1e-12 | Pass |
+| curved-selfcheck-Fv | ∮p n_z dA ÷ γV | 1 — | 1 — | 3.74e-9 | rel ≤ 0.000001 | Pass |
+| curved-selfcheck-Fx | ∮p n_x dA ÷ γh_cA_proj | 1 — | 1 — | 8.17e-9 | rel ≤ 0.000001 | Pass |
+| curved-xbar | line of action of F_v from the pivot | 0.948048 m | 0.948048 m | 0 | rel ≤ 1e-12 | Pass |
+| curved-zero-moment | net moment ÷ (F_R·R) | 0 — | 6.106e-17 — | — | rel ≤ 1e-12 | Pass |
+| curved-zero-moment-span22.5 | net moment ÷ (F_R·R) at a 22.5° arc | 0 — | 6.301e-17 — | — | rel ≤ 1e-12 | Pass |
+| curved-zero-moment-span45 | net moment ÷ (F_R·R) at a 45° arc | 0 — | 0 — | — | rel ≤ 1e-12 | Pass |
+| curved-zero-moment-span67.5 | net moment ÷ (F_R·R) at a 67.5° arc | 0 — | 4.772e-17 — | — | rel ≤ 1e-12 | Pass |
+| plane-dam45-CP | CP along the face | 9.42809 m | 9.42809 m | 0 | rel ≤ 1e-12 | Pass |
+| plane-dam45-F | resultant force per metre | 693672 N/m | 693672 N/m | < 1e-9 | rel ≤ 1e-12 | Pass |
+| plane-dy-invariant | Δy·h_c at 20 m ÷ at 1 m | 1 — | 1 — | 0 | rel ≤ 1e-12 | Pass |
+| plane-horiz-dy | shift of the CP below the centroid | 0 m | 0 m | — | rel ≤ 1e-15 | Pass |
+| plane-horiz-F | resultant force | 49050 N | 49050 N | 0 | rel ≤ 1e-12 | Pass |
+| plane-incl-CP | centre of pressure from the upper edge | 1.63636 m | 1.63636 m | < 1e-9 | rel ≤ 1e-12 | Pass |
+| plane-incl-F | resultant force | 161865 N | 161865 N | 0 | rel ≤ 1e-12 | Pass |
+| plane-selfcheck-CP | ∮s p dA / ∮p dA ÷ s_R | 1 — | 1 — | 8.82e-9 | rel ≤ 0.000001 | Pass |
+| plane-selfcheck-F | ∮p dA ÷ γh_cA | 1 — | 1 — | < 1e-9 | rel ≤ 0.000001 | Pass |
+| plane-vertical-CP | centre of pressure from the upper edge | 1.66667 m | 1.66667 m | 0 | rel ≤ 1e-12 | Pass |
+| plane-vertical-F | resultant force | 30656.3 N | 30656.3 N | 0 | rel ≤ 1e-12 | Pass |
+
+<details><summary>Reference derivations</summary>
+
+- **curved-FR** — F_R = √(F_x² + F_v²)
+- **curved-Fv** — F_v = γV with V = b(h_O R + πR²/4) = 18.2832 m³, the prism between the arc and the free-surface level → 179.36 kN
+- **curved-Fx** — F_x = γ h_c A_proj on the vertical projection, h_c = h_O + R/2 = 4 m, A_proj = R·b = 4 m² → 156.96 kN (tutorial radial gate)
+- **curved-Fx-arm** — R/2 + I_xc/(y_cA) for the vertical projection = 1 + 2²/(12·4) = 1.08333 m
+- **curved-quadrant-Fv** — F_v = γ·(πR²/4)·b = weight of the quarter-cylinder of water → 23.11 kN
+- **curved-quadrant-xbar** — with h_O = 0 the prism is a quarter disc, whose centroid is 4R/3π = 0.4244 m from the centre (worked example: quadrant gate, R = 1 m, 3 m wide)
+- **curved-selfcheck-Fv** — the same quadrature, vertical component, against the prism weight
+- **curved-selfcheck-Fx** — quadrature of the radial traction over 4000 arc elements
+- **curved-xbar** — centroid of that prism: (h_O R²/2 + R³/3)/(h_O R + πR²/4) = 0.9480 m
+- **curved-zero-moment** — pressure on a circular arc acts along the radius, so it has no moment about the centre of curvature: F_v x̄ − F_x·arm ≡ 0 for every head, radius and span
+- **curved-zero-moment-span22.5** — the radial-traction identity is a property of circular curvature, not of the quadrant: it must hold for any span
+- **curved-zero-moment-span45** — the radial-traction identity is a property of circular curvature, not of the quadrant: it must hold for any span
+- **curved-zero-moment-span67.5** — the radial-traction identity is a property of circular curvature, not of the quadrant: it must hold for any span
+- **plane-dam45-CP** — upper edge at the free surface, so y_R = 2L/3 = 9.428 m along the face — independent of the inclination
+- **plane-dam45-F** — F = γ(H/2)(L·b) with wetted slant L = H/sin45° = 14.142 m → 693.66 kN/m (worked example: rockfill dam, reservoir depth 10 m)
+- **plane-dy-invariant** — Δy = I_xc/(y_cA) = L² sinθ/(12 h_c), so the product Δy·h_c depends only on L and θ; the ratio between any two submergences is therefore exactly 1
+- **plane-horiz-dy** — uniform pressure has no first moment about the centroid, so Δy = 0 exactly; the module must reach this limit without dividing by sinθ
+- **plane-horiz-F** — uniform pressure p = ρgh = 19.62 kPa over 2.5 m² → 49.05 kN (worked example: plate lying flat 2 m down)
+- **plane-incl-CP** — centroid of the trapezoidal pressure prism, s_R = L(2p_bot + p_top)/(3(p_bot + p_top)) — an independent route to the CP that never uses I_xc
+- **plane-incl-F** — F = γ h_c A, h_c = h_top + (L/2) sinθ = 2.75 m, A = 6 m² → 161.865 kN (tutorial gate AB hinged 2 m below the surface)
+- **plane-selfcheck-CP** — first moment of the same quadrature against y_c + I_xc/(y_cA)
+- **plane-selfcheck-F** — midpoint quadrature of ∮p dA over 4000 strips against γh_cA
+- **plane-vertical-CP** — the pressure prism is a triangle, so its centroid is at 2L/3 = 1.6667 m
+- **plane-vertical-F** — F = γ h_c A with h_c = L/2 for a plate whose upper edge is at the free surface (Munson Eq. 2.18); = ½γL²b = 30656.25 N for L = 2.5 m, b = 1 m
+
+</details>
+
+## hydrostatic_forces_3d
+
+| Case | Quantity | Reference | OpenHydroLab | Rel. error | Tolerance | Status |
+|---|---|---|---|---|---|---|
+| circ-dy | shift of the CP below the centroid | 0.0560023 m | 0.0560023 m | 0 | rel ≤ 1e-12 | Pass |
+| circ-F | resultant force | 119147 N | 119147 N | 0 | rel ≤ 1e-12 | Pass |
+| gate3d-Fv | vertical component | 179358 N | 179358 N | 0 | rel ≤ 1e-12 | Pass |
+| gate3d-Fx | horizontal component | 156960 N | 156960 N | 0 | rel ≤ 1e-12 | Pass |
+| gate3d-zero-moment | net moment ÷ (F_R·R) | 0 — | 6.106e-17 — | — | rel ≤ 1e-12 | Pass |
+| horiz-circ-dy | Δy for a horizontal circ | 0 m | 0 m | — | rel ≤ 1e-15 | Pass |
+| horiz-rect-dy | Δy for a horizontal rect | 0 m | 0 m | — | rel ≤ 1e-15 | Pass |
+| horiz-semi-dy | Δy for a horizontal semi | 0 m | 0 m | — | rel ≤ 1e-15 | Pass |
+| horiz-tri-dy | Δy for a horizontal tri | 0 m | 0 m | — | rel ≤ 1e-15 | Pass |
+| semi-centroid | centroid from the flat edge | 0.848826 m | 0.848826 m | 0 | rel ≤ 1e-12 | Pass |
+| shape-circ-A | area | 7.06858 m² | 7.06858 m² | 0 | rel ≤ 1e-12 | Pass |
+| shape-circ-I | second moment about the centroidal axis | 3.97608 m⁴ | 3.97608 m⁴ | 0 | rel ≤ 1e-12 | Pass |
+| shape-circ-selfcheck-A | area from ∫w dt ÷ table | 1 — | 1 — | < 1e-9 | rel ≤ 0.000001 | Pass |
+| shape-circ-selfcheck-I | second moment from ∫w dt ÷ table | 1 — | 1 — | < 1e-9 | rel ≤ 0.000001 | Pass |
+| shape-circ-selfcheck-yc | centroid from ∫w dt ÷ table | 1 — | 1 — | < 1e-9 | rel ≤ 0.000001 | Pass |
+| shape-circ-yc | centroid from the upper edge | 1.5 m | 1.5 m | 0 | rel ≤ 1e-12 | Pass |
+| shape-rect-A | area | 6 m² | 6 m² | 0 | rel ≤ 1e-12 | Pass |
+| shape-rect-I | second moment about the centroidal axis | 4.5 m⁴ | 4.5 m⁴ | 0 | rel ≤ 1e-12 | Pass |
+| shape-rect-selfcheck-A | area from ∫w dt ÷ table | 1 — | 1 — | < 1e-9 | rel ≤ 0.000001 | Pass |
+| shape-rect-selfcheck-I | second moment from ∫w dt ÷ table | 1 — | 1 — | 6.25e-8 | rel ≤ 0.000001 | Pass |
+| shape-rect-selfcheck-yc | centroid from ∫w dt ÷ table | 1 — | 1 — | < 1e-9 | rel ≤ 0.000001 | Pass |
+| shape-rect-yc | centroid from the upper edge | 1.5 m | 1.5 m | 0 | rel ≤ 1e-12 | Pass |
+| shape-semi-A | area | 14.1372 m² | 14.1372 m² | 0 | rel ≤ 1e-12 | Pass |
+| shape-semi-I | second moment about the centroidal axis | 8.89031 m⁴ | 8.89031 m⁴ | 0 | rel ≤ 1e-12 | Pass |
+| shape-semi-selfcheck-A | area from ∫w dt ÷ table | 1 — | 1 — | < 1e-9 | rel ≤ 0.000001 | Pass |
+| shape-semi-selfcheck-I | second moment from ∫w dt ÷ table | 1 — | 1 — | 9.94e-8 | rel ≤ 0.000001 | Pass |
+| shape-semi-selfcheck-yc | centroid from ∫w dt ÷ table | 1 — | 1 — | 1.93e-8 | rel ≤ 0.000001 | Pass |
+| shape-semi-yc | centroid from the upper edge | 1.27324 m | 1.27324 m | 0 | rel ≤ 1e-12 | Pass |
+| shape-tri-A | area | 3 m² | 3 m² | 0 | rel ≤ 1e-12 | Pass |
+| shape-tri-I | second moment about the centroidal axis | 1.5 m⁴ | 1.5 m⁴ | 0 | rel ≤ 1e-12 | Pass |
+| shape-tri-selfcheck-A | area from ∫w dt ÷ table | 1 — | 1 — | < 1e-9 | rel ≤ 0.000001 | Pass |
+| shape-tri-selfcheck-I | second moment from ∫w dt ÷ table | 1 — | 1 — | 3.13e-8 | rel ≤ 0.000001 | Pass |
+| shape-tri-selfcheck-yc | centroid from ∫w dt ÷ table | 1 — | 1 — | 1.56e-8 | rel ≤ 0.000001 | Pass |
+| shape-tri-yc | centroid from the upper edge | 2 m | 2 m | 0 | rel ≤ 1e-12 | Pass |
+| tri-CP | centre of pressure from the apex | 2.1293 m | 2.1293 m | 0 | rel ≤ 1e-12 | Pass |
+| worked-solution-answer | F_R quoted by the panel | 161.865 kN | 161.87 kN | 3.09e-5 | rel ≤ 0.0005 | Pass |
+
+<details><summary>Reference derivations</summary>
+
+- **circ-dy** — Δy = I_xc sinθ /(h_c A) with I_xc = πD⁴/64 — the form of I_xc/(y_cA) that stays finite as θ → 0
+- **circ-F** — F = γ h_c A, h_c = 3 + 1·sin60° = 3.8660 m, A = πD²/4 = 3.1416 m² → 119.15 kN
+- **gate3d-Fv** — F_v = γ b (h_O R + πR²/4) → 179.36 kN
+- **gate3d-Fx** — F_x = γ h_c A_proj on the vertical projection → 156.96 kN
+- **gate3d-zero-moment** — the traction on a circular arc is radial, so it exerts no moment about the pivot axis — the property a Tainter gate is designed around
+- **horiz-circ-dy** — uniform pressure has no first moment about the centroid, whatever the shape; Δy = I_xc sinθ/(h_cA) reaches this without dividing by sinθ
+- **horiz-rect-dy** — uniform pressure has no first moment about the centroid, whatever the shape; Δy = I_xc sinθ/(h_cA) reaches this without dividing by sinθ
+- **horiz-semi-dy** — uniform pressure has no first moment about the centroid, whatever the shape; Δy = I_xc sinθ/(h_cA) reaches this without dividing by sinθ
+- **horiz-tri-dy** — uniform pressure has no first moment about the centroid, whatever the shape; Δy = I_xc sinθ/(h_cA) reaches this without dividing by sinθ
+- **semi-centroid** — standard table: the centroid of a semicircle lies 4R/3π = 0.8488 m from its diameter, which is why its CP is not at mid-height
+- **shape-circ-A** — standard table of geometric properties, circ: A = 7.068583 m² at L = 3 m, b = 2 m
+- **shape-circ-I** — standard table, circ: I_xc = 3.976078 m⁴
+- **shape-circ-selfcheck-A** — the module integrates the shape's own chord width w(t) and compares with the table value; the substitution used for the circular shapes makes the integrand smooth, so this must hold to ~1e-8
+- **shape-circ-selfcheck-I** — the module integrates the shape's own chord width w(t) and compares with the table value; the substitution used for the circular shapes makes the integrand smooth, so this must hold to ~1e-8
+- **shape-circ-selfcheck-yc** — the module integrates the shape's own chord width w(t) and compares with the table value; the substitution used for the circular shapes makes the integrand smooth, so this must hold to ~1e-8
+- **shape-circ-yc** — standard table, circ: ȳ = 1.500000 m
+- **shape-rect-A** — standard table of geometric properties, rect: A = 6.000000 m² at L = 3 m, b = 2 m
+- **shape-rect-I** — standard table, rect: I_xc = 4.500000 m⁴
+- **shape-rect-selfcheck-A** — the module integrates the shape's own chord width w(t) and compares with the table value; the substitution used for the circular shapes makes the integrand smooth, so this must hold to ~1e-8
+- **shape-rect-selfcheck-I** — the module integrates the shape's own chord width w(t) and compares with the table value; the substitution used for the circular shapes makes the integrand smooth, so this must hold to ~1e-8
+- **shape-rect-selfcheck-yc** — the module integrates the shape's own chord width w(t) and compares with the table value; the substitution used for the circular shapes makes the integrand smooth, so this must hold to ~1e-8
+- **shape-rect-yc** — standard table, rect: ȳ = 1.500000 m
+- **shape-semi-A** — standard table of geometric properties, semi: A = 14.137167 m² at L = 3 m, b = 2 m
+- **shape-semi-I** — standard table, semi: I_xc = 8.890314 m⁴
+- **shape-semi-selfcheck-A** — the module integrates the shape's own chord width w(t) and compares with the table value; the substitution used for the circular shapes makes the integrand smooth, so this must hold to ~1e-8
+- **shape-semi-selfcheck-I** — the module integrates the shape's own chord width w(t) and compares with the table value; the substitution used for the circular shapes makes the integrand smooth, so this must hold to ~1e-8
+- **shape-semi-selfcheck-yc** — the module integrates the shape's own chord width w(t) and compares with the table value; the substitution used for the circular shapes makes the integrand smooth, so this must hold to ~1e-8
+- **shape-semi-yc** — standard table, semi: ȳ = 1.273240 m
+- **shape-tri-A** — standard table of geometric properties, tri: A = 3.000000 m² at L = 3 m, b = 2 m
+- **shape-tri-I** — standard table, tri: I_xc = 1.500000 m⁴
+- **shape-tri-selfcheck-A** — the module integrates the shape's own chord width w(t) and compares with the table value; the substitution used for the circular shapes makes the integrand smooth, so this must hold to ~1e-8
+- **shape-tri-selfcheck-I** — the module integrates the shape's own chord width w(t) and compares with the table value; the substitution used for the circular shapes makes the integrand smooth, so this must hold to ~1e-8
+- **shape-tri-selfcheck-yc** — the module integrates the shape's own chord width w(t) and compares with the table value; the substitution used for the circular shapes makes the integrand smooth, so this must hold to ~1e-8
+- **shape-tri-yc** — standard table, tri: ȳ = 2.000000 m
+- **tri-CP** — direct integration of the first moment of pressure over the triangle, s_R = L(4h_top + 3L sinθ)/[2(3h_top + 2L sinθ)] — independent of I_xc
+- **worked-solution-answer** — the worked-solution panel must quote the model's own resultant, to the two decimals it displays
 
 </details>
 
@@ -339,6 +479,14 @@ Each row compares a value produced by the laboratory against a reference derived
 | accessibility.spec.mjs › hydraulic_jump — focus order reaches the controls by Tab alone | Pass | Pass | Pass |
 | accessibility.spec.mjs › hydraulic_jump — layout does not overflow horizontally | Pass | Pass | Pass |
 | accessibility.spec.mjs › hydraulic_jump — sliders are operable from the keyboard | Pass | Pass | Pass |
+| accessibility.spec.mjs › hydrostatic_forces — every interactive control has an accessible name | Pass | Pass | Pass |
+| accessibility.spec.mjs › hydrostatic_forces — focus order reaches the controls by Tab alone | Pass | Pass | Pass |
+| accessibility.spec.mjs › hydrostatic_forces — layout does not overflow horizontally | Pass | Pass | Pass |
+| accessibility.spec.mjs › hydrostatic_forces — sliders are operable from the keyboard | Pass | Pass | Pass |
+| accessibility.spec.mjs › hydrostatic_forces_3d — every interactive control has an accessible name | Pass | Pass | Pass |
+| accessibility.spec.mjs › hydrostatic_forces_3d — focus order reaches the controls by Tab alone | Pass | Pass | Pass |
+| accessibility.spec.mjs › hydrostatic_forces_3d — layout does not overflow horizontally | Pass | Pass | Pass |
+| accessibility.spec.mjs › hydrostatic_forces_3d — sliders are operable from the keyboard | Pass | Pass | Pass |
 | accessibility.spec.mjs › idf_frequency — every interactive control has an accessible name | Pass | Pass | Pass |
 | accessibility.spec.mjs › idf_frequency — focus order reaches the controls by Tab alone | Pass | Pass | Pass |
 | accessibility.spec.mjs › idf_frequency — layout does not overflow horizontally | Pass | Pass | Pass |
@@ -366,6 +514,10 @@ Each row compares a value produced by the laboratory against a reference derived
 | file-protocol.spec.mjs › gvf_profiles works when opened directly from disk | Pass | Pass | Pass |
 | file-protocol.spec.mjs › hydraulic_jump renders from disk | Pass | Pass | Pass |
 | file-protocol.spec.mjs › hydraulic_jump works when opened directly from disk | Pass | Pass | Pass |
+| file-protocol.spec.mjs › hydrostatic_forces renders from disk | Pass | Pass | Pass |
+| file-protocol.spec.mjs › hydrostatic_forces works when opened directly from disk | Pass | Pass | Pass |
+| file-protocol.spec.mjs › hydrostatic_forces_3d renders from disk | Pass | Pass | Pass |
+| file-protocol.spec.mjs › hydrostatic_forces_3d works when opened directly from disk | Pass | Pass | Pass |
 | file-protocol.spec.mjs › idf_frequency renders from disk | Pass | Pass | Pass |
 | file-protocol.spec.mjs › idf_frequency works when opened directly from disk | Pass | Pass | Pass |
 | file-protocol.spec.mjs › manning_uniform_flow renders from disk | Pass | Pass | Pass |
@@ -386,6 +538,10 @@ Each row compares a value produced by the laboratory against a reference derived
 | loads-clean.spec.mjs › gvf_profiles renders its canvas and keeps animating | Pass | Pass | Pass |
 | loads-clean.spec.mjs › hydraulic_jump loads without console or runtime errors | Pass | Pass | Pass |
 | loads-clean.spec.mjs › hydraulic_jump renders its canvas and keeps animating | Pass | Pass | Pass |
+| loads-clean.spec.mjs › hydrostatic_forces loads without console or runtime errors | Pass | Pass | Pass |
+| loads-clean.spec.mjs › hydrostatic_forces renders its canvas and keeps animating | Pass | Pass | Pass |
+| loads-clean.spec.mjs › hydrostatic_forces_3d loads without console or runtime errors | Pass | Pass | Pass |
+| loads-clean.spec.mjs › hydrostatic_forces_3d renders its canvas and keeps animating | Pass | Pass | Pass |
 | loads-clean.spec.mjs › idf_frequency loads without console or runtime errors | Pass | Pass | Pass |
 | loads-clean.spec.mjs › idf_frequency renders its canvas and keeps animating | Pass | Pass | Pass |
 | loads-clean.spec.mjs › manning_uniform_flow loads without console or runtime errors | Pass | Pass | Pass |
@@ -403,6 +559,10 @@ Each row compares a value produced by the laboratory against a reference derived
 | self-contained.spec.mjs › gvf_profiles still works with the network cut | Pass | Pass | Pass |
 | self-contained.spec.mjs › hydraulic_jump requests nothing from outside the origin | Pass | Pass | Pass |
 | self-contained.spec.mjs › hydraulic_jump still works with the network cut | Pass | Pass | Pass |
+| self-contained.spec.mjs › hydrostatic_forces requests nothing from outside the origin | Pass | Pass | Pass |
+| self-contained.spec.mjs › hydrostatic_forces still works with the network cut | Pass | Pass | Pass |
+| self-contained.spec.mjs › hydrostatic_forces_3d requests nothing from outside the origin | Pass | Pass | Pass |
+| self-contained.spec.mjs › hydrostatic_forces_3d still works with the network cut | Pass | Pass | Pass |
 | self-contained.spec.mjs › idf_frequency requests nothing from outside the origin | Pass | Pass | Pass |
 | self-contained.spec.mjs › idf_frequency still works with the network cut | Pass | Pass | Pass |
 | self-contained.spec.mjs › manning_uniform_flow requests nothing from outside the origin | Pass | Pass | Pass |
