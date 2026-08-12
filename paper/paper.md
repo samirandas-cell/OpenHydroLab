@@ -62,7 +62,7 @@ file, with no installation and no third-party host; and the physics is exposed i
 source. Every reference value is derived independently of the code — from a closed form,
 a conservation identity, a textbook calculation or an independent reimplementation — and
 every tolerance is justified case by case, never widened to pass. **Results:** The protocol yields
-<!--G:comparisons-->582<!--/G--> numerical comparisons and
+<!--G:comparisons-->591<!--/G--> numerical comparisons and
 <!--G:software-runs-->324<!--/G--> software, offline and accessibility test executions
 across <!--G:engines-->3<!--/G--> browser engines, and regenerates that dataset on every
 run. Applying it to a codebase believed correct exposed six defects, including a routing
@@ -132,7 +132,7 @@ hydrology, and of the verification protocol built around it. The contribution is
    and of what an automated suite must exercise beyond numerical agreement — offline
    operation, the `file://` protocol, accessibility, and cross-engine consistency.
 3. **Evidence from applying it.** A generated validation dataset covering
-   <!--G:comparisons-->582<!--/G--> comparisons on
+   <!--G:comparisons-->591<!--/G--> comparisons on
    <!--G:modules-->10<!--/G--> laboratories, and an account of seven defects in code that
    had already been used in teaching and reviewed by its author — six the protocol exposed,
    and one it could not, which marks the boundary of what numerical verification sees.
@@ -242,7 +242,9 @@ each laboratory has a written guide in the repository stating its theory, its as
 and its limitations. Several modules also display live self-checks: a momentum residual
 |*M*~1~ − *M*~2~|/*M*~1~ across a jump, a head-consistency residual over a hump, an
 energy-consistency ratio along a gradually varied profile, a mass-balance closure on a
-storm hydrograph. These are computed and displayed every frame, so a student watching a
+storm hydrograph, the ratio of a quadrature of ∮*p* d*A* to γ*h*~c~*A* on a submerged
+plane, and each plate shape's integrated section properties beside their tabulated values.
+These are computed and displayed every frame, so a student watching a
 module is also watching its conservation laws hold. This is a pedagogical device and a
 debugging device at once, and the same identities appear in the offline verification suite
 as swept invariants (Section 3.3).
@@ -318,13 +320,18 @@ the module, and require the original answer to return.
 
 Where a quantity is reachable by two different derivations, both are computed and required
 to agree. These are the strongest tests in the suite, because they fail if *either* route
-is wrong, and they do not depend on any external reference at all. Five are used: the
-energy loss across a jump as *E*~1~ − *E*~2~ and as (*y*~2~ − *y*~1~)³/(4*y*~1~*y*~2~); a
-duration-changed unit hydrograph by S-curve lag-and-subtract and by superposition of
-lagged unit hydrographs; a gradually varied reach length by RK4 marching and by the
-direct-step method; the rational-method discharge from its engineering form and from
-base SI units; and the velocity-distribution coefficient α by numerical integration and
-from the closed form printed beside it.
+is wrong, and they do not depend on any external reference at all. Eight are used: the
+hydrostatic resultant and centre of pressure on a plane surface by quadrature of ∮*p* d*A*
+and from γ*h*~c~*A* with the trapezoidal-prism centroid; the components on a curved surface
+by quadrature of the radial traction and from the vertical projection and the prism weight;
+the second moment *I*~xc~ of each of four plate shapes by integrating the shape's own chord
+width and from the standard property table; the energy loss across a jump as
+*E*~1~ − *E*~2~ and as (*y*~2~ − *y*~1~)³/(4*y*~1~*y*~2~); a duration-changed unit
+hydrograph by S-curve lag-and-subtract and by superposition of lagged unit hydrographs; a
+gradually varied reach length by RK4 marching and by the direct-step method; the
+rational-method discharge from its engineering form and from base SI units; and the
+velocity-distribution coefficient α by numerical integration and from the closed form
+printed beside it.
 
 #### 2.4.3. The drawing is measured, not only the numbers
 
@@ -356,9 +363,11 @@ either hold across the swept range or they do not.
 #### 2.4.5. Sweeps, not spot checks
 
 Conservation is not a property of one fortunate parameter set. Volume closure, the
-momentum residual, the specific-energy identity and normal-depth inversion are each swept
-across the modules' control ranges — 99 storm parameter sets, 64 channel states, 21 jump
-states, 81 normal-depth states, 9 gate settings — and the **worst** error over the sweep is
+momentum residual, the specific-energy identity, normal-depth inversion and the vanishing
+of the hydrostatic moment about a centre of curvature are each swept across the modules'
+control ranges — 99 storm parameter sets, 64 channel states, 21 jump states, 81
+normal-depth states, 48 curved-gate states in each of the two hydrostatic laboratories, 32
+plate submergences, 9 sluice-gate settings — and the **worst** error over the sweep is
 what is recorded. A sweep that reported its mean would hide exactly the parameter corner
 where a model fails.
 
@@ -450,8 +459,8 @@ against the archived release, with overall status
 
 ### 3.1. Numerical verification
 
-The suite records <!--G:comparisons-->582<!--/G--> numerical comparisons —
-<!--G:cases-->194<!--/G--> distinct verification cases evaluated on each of
+The suite records <!--G:comparisons-->591<!--/G--> numerical comparisons —
+<!--G:cases-->197<!--/G--> distinct verification cases evaluated on each of
 <!--G:engines-->3<!--/G--> browser engines — across <!--G:modules-->10<!--/G-->
 laboratories, with <!--G:failures-->0<!--/G--> failing. Table 3 summarises them by
 laboratory. Errors are the worst observed across engines, and each case is judged against
@@ -464,8 +473,8 @@ a relative tolerance and absolute otherwise, and are the worst observed across e
 <!-- BEGIN GENERATED table:module-summary -->
 | Laboratory | Verification cases | Comparisons (× 3 engines) | Tolerance band | Worst error | Passing |
 |---|---|---|---|---|---|
-| `hydrostatic_forces` | 37 | 111 | 1 × 10^−15^ – 1 × 10^−6^ | 8.8 × 10^−9^ | 111/111 |
-| `hydrostatic_forces_3d` | 39 | 117 | 1 × 10^−15^ – 0.0005 | 3.1 × 10^−5^ | 117/117 |
+| `hydrostatic_forces` | 39 | 117 | 1 × 10^−15^ – 1 × 10^−6^ | 8.8 × 10^−9^ | 117/117 |
+| `hydrostatic_forces_3d` | 40 | 120 | 1 × 10^−15^ – 0.0005 | 3.1 × 10^−5^ | 120/120 |
 | `channel_geometry` | 44 | 132 | 1 × 10^−12^ – 0.005 | 4.0 × 10^−3^ | 132/132 |
 | `specific_energy` | 10 | 30 | 1 × 10^−9^ – 1 × 10^−6^ | < 10^−15^ | 30/30 |
 | `hydraulic_jump` | 8 | 24 | 1 × 10^−9^ – 1 × 10^−8^ | 4.2 × 10^−15^ | 24/24 |
@@ -474,7 +483,7 @@ a relative tolerance and absolute otherwise, and are the worst observed across e
 | `storm_hydrograph` | 9 | 27 | 1 × 10^−9^ – 0.005 | 4.1 × 10^−3^ | 27/27 |
 | `unit_hydrograph` | 9 | 27 | 1 × 10^−9^ – 0.005 | 2.6 × 10^−14^ | 27/27 |
 | `idf_frequency` | 11 | 33 | 1 × 10^−12^ – 0.25 | 1.2 × 10^−1^ | 33/33 |
-| **All modules** | **194** | **582** | — | **1.2 × 10^−1^** | **582/582** |
+| **All modules** | **197** | **591** | — | **1.2 × 10^−1^** | **591/591** |
 <!-- END GENERATED -->
 
 Table 4 groups the comparisons by the tolerance they are held to. The informative column
@@ -484,9 +493,9 @@ behaviour rather than to the mathematics, because a suite whose cases routinely 
 most of their allowance is a suite whose limits were chosen after the fact.
 
 The pattern here is the one the policy predicts. Of the
-<!--G:tight-cases-->124<!--/G--> cases held to 10⁻⁹ or tighter — the closed-form identities
+<!--G:tight-cases-->127<!--/G--> cases held to 10⁻⁹ or tighter — the closed-form identities
 and conservation laws, where nothing but double-precision arithmetic stands between the
-module and its reference — <!--G:exact-cases-->124<!--/G--> agree with their independent
+module and its reference — <!--G:exact-cases-->127<!--/G--> agree with their independent
 reference to better than 10⁻¹², using under a thousandth of a percent of their allowance.
 Every group that consumes an appreciable fraction of its tolerance is one whose limit was
 set by a stated property of the mathematics or of the reference, not by the code: fixed-step
@@ -506,7 +515,7 @@ and that error as a percentage of the tolerance allowed.
 | Tolerance | Cases | Comparisons | Worst error observed | Worst error as % of tolerance |
 |---|---|---|---|---|
 | rel. ≤ 1 × 10^−15^ | 5 | 15 | 0 | 0 |
-| abs. ≤ 1 × 10^−12^ | 9 | 27 | 1.3 × 10^−15^ | 0.13% |
+| abs. ≤ 1 × 10^−12^ | 12 | 36 | 1.3 × 10^−15^ | 0.13% |
 | rel. ≤ 1 × 10^−12^ | 71 | 213 | < 10^−15^ | 0.031% |
 | abs. ≤ 1 × 10^−9^ | 10 | 30 | < 10^−15^ | < 0.001% |
 | rel. ≤ 1 × 10^−9^ | 29 | 87 | < 10^−15^ | < 0.001% |
@@ -532,13 +541,24 @@ and that error as a percentage of the tolerance allowed.
 Table 5 reports the cross-validation cases of Section 2.4.2, in which a quantity is
 computed by two independent derivations and the results required to agree. These carry no
 external reference and cannot be satisfied by a coincidence of implementation: they fail
-if either route is wrong.
+if either route is wrong. The first eight rows are the live self-checks described in
+Section 2.2.3 — the ratios a statics laboratory displays on screen while a student watches
+its quadrature reproduce the closed form. A displayed self-check is an assurance until
+something checks it, so the protocol treats those ratios as cases like any other.
 
 **Table 5.** Quantities computed by two independent routes and required to agree.
 
 <!-- BEGIN GENERATED table:two-routes -->
 | Case | Laboratory | Quantity | Reference | OpenHydroLab | Error | Tolerance |
 |---|---|---|---|---|---|---|
+| `plane-selfcheck-F` | `hydrostatic_forces` | ∮p dA ÷ γh_cA | 1 | 1 | < 10^−15^ | rel. ≤ 1 × 10^−6^ |
+| `plane-selfcheck-CP` | `hydrostatic_forces` | ∮s p dA / ∮p dA ÷ s_R | 1 | 1 | 8.8 × 10^−9^ | rel. ≤ 1 × 10^−6^ |
+| `curved-selfcheck-Fx` | `hydrostatic_forces` | ∮p n_x dA ÷ γh_cA_proj | 1 | 1 | 8.2 × 10^−9^ | rel. ≤ 1 × 10^−6^ |
+| `curved-selfcheck-Fv` | `hydrostatic_forces` | ∮p n_z dA ÷ γV | 1 | 1 | 3.7 × 10^−9^ | rel. ≤ 1 × 10^−6^ |
+| `shape-rect-selfcheck-I` | `hydrostatic_forces_3d` | second moment from ∫w dt ÷ table | 1 | 1 | 6.3 × 10^−8^ | rel. ≤ 1 × 10^−6^ |
+| `shape-tri-selfcheck-I` | `hydrostatic_forces_3d` | second moment from ∫w dt ÷ table | 1 | 1 | 3.1 × 10^−8^ | rel. ≤ 1 × 10^−6^ |
+| `shape-circ-selfcheck-I` | `hydrostatic_forces_3d` | second moment from ∫w dt ÷ table | 1 | 1 | 1.3 × 10^−15^ | rel. ≤ 1 × 10^−6^ |
+| `shape-semi-selfcheck-I` | `hydrostatic_forces_3d` | second moment from ∫w dt ÷ table | 1 | 1 | 9.9 × 10^−8^ | rel. ≤ 1 × 10^−6^ |
 | `HJ-04` | `hydraulic_jump` | Energy loss, momentum closed form | 0.132467 m | 0.132467 m | 0 | rel. ≤ 1 × 10^−9^ |
 | `HJ-08` | `hydraulic_jump` | Worst energy-route disagreement over 21 states | 0 | 4.18 × 10^−15^ | 4.2 × 10^−15^ | abs. ≤ 1 × 10^−8^ |
 | `UH-06.24` | `unit_hydrograph` | S-curve vs superposition, D' = 24 h | 0 m³/s | 7.11 × 10^−15^ m³/s | 7.1 × 10^−15^ | abs. ≤ 1 × 10^−6^ |
@@ -550,6 +570,14 @@ if either route is wrong.
 The derivations behind these cases, as recorded in the dataset, are:
 
 <!-- BEGIN GENERATED list:two-routes-derivations -->
+- **plane-selfcheck-F** — midpoint quadrature of ∮p dA over 4000 strips against γh_cA
+- **plane-selfcheck-CP** — first moment of the same quadrature against y_c + I_xc/(y_cA)
+- **curved-selfcheck-Fx** — quadrature of the radial traction over 4000 arc elements
+- **curved-selfcheck-Fv** — the same quadrature, vertical component, against the prism weight
+- **shape-rect-selfcheck-I** — the module integrates the shape's own chord width w(t) and compares with the table value; the substitution used for the circular shapes makes the integrand smooth, so this must hold to ~1e-8
+- **shape-tri-selfcheck-I** — the module integrates the shape's own chord width w(t) and compares with the table value; the substitution used for the circular shapes makes the integrand smooth, so this must hold to ~1e-8
+- **shape-circ-selfcheck-I** — the module integrates the shape's own chord width w(t) and compares with the table value; the substitution used for the circular shapes makes the integrand smooth, so this must hold to ~1e-8
+- **shape-semi-selfcheck-I** — the module integrates the shape's own chord width w(t) and compares with the table value; the substitution used for the circular shapes makes the integrand smooth, so this must hold to ~1e-8
 - **HJ-04** — h_L = (y₂ − y₁)³/(4y₁y₂) must equal E₁ − E₂
 - **HJ-08** — |(E₁−E₂) − (y₂−y₁)³/(4y₁y₂)| / h_L across the same grid (worst at {"y1":0.01,"Fr":1.5})
 - **UH-06.24** — max |UH from S-curve − UH from averaging 4 lagged 6-h UHs| over 0–140 h
@@ -558,18 +586,22 @@ The derivations behind these cases, as recorded in the dataset, are:
 - **CG-19** — α by numerical integration must match the closed form printed beside it
 <!-- END GENERATED -->
 
-### 3.3. Conservation invariants across swept parameter ranges
+### 3.3. Invariants across swept parameter ranges
 
 Table 6 reports the swept invariants of Section 2.4.5. Each row is the **worst** residual
 over an entire parameter sweep, not a representative one — the value at the least
 favourable corner of the module's control range.
 
-**Table 6.** Conservation invariants swept across the laboratories' control ranges. Each
-error is the worst over the whole sweep.
+**Table 6.** Invariants swept across the laboratories' control ranges — conservation
+identities, and the scaling and equilibrium properties the statics laboratories rest on.
+Each error is the worst over the whole sweep.
 
 <!-- BEGIN GENERATED table:invariants -->
 | Case | Laboratory | Quantity | Reference | OpenHydroLab | Error | Tolerance |
 |---|---|---|---|---|---|---|
+| `plane-dy-invariant-sweep` | `hydrostatic_forces` | Worst drift in Δy·h_c over 32 depths | 0 | 2.31 × 10^−16^ | < 10^−15^ | abs. ≤ 1 × 10^−12^ |
+| `curved-zero-moment-sweep` | `hydrostatic_forces` | Worst pivot-moment residual over 48 arc states | 0 | 6.24 × 10^−16^ | < 10^−15^ | abs. ≤ 1 × 10^−12^ |
+| `gate3d-zero-moment-sweep` | `hydrostatic_forces_3d` | Worst pivot-axis moment residual over 48 gate states | 0 | 9.27 × 10^−16^ | < 10^−15^ | abs. ≤ 1 × 10^−12^ |
 | `CG-08` | `channel_geometry` | Worst Froude-number error over 64 states | 0 | 0 | 0 | abs. ≤ 1 × 10^−12^ |
 | `MN-09` | `manning_uniform_flow` | Worst normal-depth round-trip error over 81 states | 0 | 2.96 × 10^−16^ | < 10^−15^ | abs. ≤ 1 × 10^−6^ |
 | `SE-06` | `specific_energy` | Worst \|E₁ − E₂\|/E₁ across 9 gate settings | 0 | 3.25 × 10^−16^ | < 10^−15^ | abs. ≤ 1 × 10^−9^ |
@@ -582,6 +614,9 @@ error is the worst over the whole sweep.
 The sweeps and identities behind these cases are:
 
 <!-- BEGIN GENERATED list:invariant-derivations -->
+- **plane-dy-invariant-sweep** — Δy·h_c = I_xc sinθ/A is independent of submergence; held against the shallow reference at each geometry for θ ∈ {15, 40, 65, 90}° × L ∈ {1.2, 3.4} m × h_top ∈ {2, 8, 25, 100} m (worst at {"theta":90,"L":1.2,"hTop":8})
+- **curved-zero-moment-sweep** — radial traction has no moment about the centre of curvature, so |F_v x̄ − F_x·arm| ÷ (F_R·R) = 0 for R ∈ {0.5, 1, 2.5, 5} m × h_O ∈ {0, 1.5, 4, 12} m × span ∈ {15, 45, 90}° (worst at {"R":0.5,"hO":12,"span":90})
+- **gate3d-zero-moment-sweep** — a Tainter gate carries no hydrostatic moment on its pivot at any head: |M_O| ÷ (F_R·R) = 0 for R ∈ {0.5, 1, 2.5, 5} m × h_O ∈ {0, 1.5, 4, 12} m × span ∈ {15, 45, 90}° (worst at {"R":0.5,"hO":12,"span":45})
 - **CG-08** — Fr = V/√(gA/T) over 4 shapes × y ∈ {0.3, 0.8, 1.2, 2.0} m × V ∈ {0.4, 1, 2.5, 6} m/s (worst at null)
 - **MN-09** — 3 shapes × S₀ ∈ {1e-4, 1e-3, 1e-2} × n ∈ {0.011, 0.015, 0.030} × y ∈ {0.5, 1.5, 3.0} m (worst at {"shape":"rect","S":0.0001,"n":0.011,"y":1.5})
 - **SE-06** — sluice-gate discharge is derived from E₁ = E₂; y₁ ∈ {0.12, 0.17, 0.24} m × a ∈ {8, 12, 20} mm (worst at {"y1":0.17,"a":0.012})
@@ -784,7 +819,7 @@ cascade exactly says nothing about whether a real catchment behaves like one. Ea
 states its module's assumptions and limitations for this reason, and the pedagogical
 framing is that these are models to be understood, including in their failure.
 
-**Coverage is broad rather than exhaustive.** The <!--G:cases-->194<!--/G--> cases were
+**Coverage is broad rather than exhaustive.** The <!--G:cases-->197<!--/G--> cases were
 selected to exercise the quantities a student reads and the identities the teaching rests
 on. They are not a formal coverage analysis of the source, and a defect in a rarely
 exercised branch could survive them.
@@ -840,7 +875,7 @@ host, and exposes its physics in readable source. The protocol requires every re
 value to be derived independently of the code, prefers quantities reachable by two routes,
 sweeps the control ranges and reports the worst case, justifies every tolerance
 individually, and tests the delivery protocol students actually use. Applied to the suite,
-it records <!--G:comparisons-->582<!--/G--> numerical comparisons and
+it records <!--G:comparisons-->591<!--/G--> numerical comparisons and
 <!--G:software-runs-->324<!--/G--> software, offline and accessibility test executions
 across <!--G:engines-->3<!--/G--> browser engines, with
 <!--G:failures-->0<!--/G--> failures, and regenerates its own published dataset on every

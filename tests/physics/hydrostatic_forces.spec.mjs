@@ -225,6 +225,64 @@ test.describe(`${MODULE} — numerical verification`, () => {
     }
   });
 
+  test("zero moment about the pivot, swept over the whole control range", async ({ page }, testInfo) => {
+    await openLab(page, MODULE);
+
+    /* The span cases above check the identity at three points. It is claimed for every
+       head, radius and span, so it is swept and the worst corner reported — a mean over
+       this grid would hide exactly the configuration where curvature stops cancelling. */
+    let worst = 0, at = null, n = 0;
+    for (const R of [0.5, 1, 2.5, 5]) {
+      for (const hO of [0, 1.5, 4, 12]) {
+        for (const span of [15, 45, 90]) {
+          const r = await curved(page, { R, hO, span, b: 1.5 });
+          const res = Math.abs(r.Mnet) / (r.FR * R);
+          n += 1;
+          if (res > worst) { worst = res; at = { R, hO, span }; }
+        }
+      }
+    }
+
+    await verify(testInfo, {
+      module: MODULE, id: "curved-zero-moment-sweep",
+      quantity: `Worst pivot-moment residual over ${n} arc states`, units: "—",
+      reference: 0, observed: worst, absTol: 1e-12,
+      source: `radial traction has no moment about the centre of curvature, so `
+        + `|F_v x̄ − F_x·arm| ÷ (F_R·R) = 0 for R ∈ {0.5, 1, 2.5, 5} m × h_O ∈ {0, 1.5, 4, 12} m `
+        + `× span ∈ {15, 45, 90}° (worst at ${JSON.stringify(at)})`,
+    });
+  });
+
+  test("the depth shift scales as 1/h_c across heads and inclinations", async ({ page }, testInfo) => {
+    await openLab(page, MODULE);
+
+    /* Δy = I_xc sinθ/(h_c A), so Δy·h_c depends on the plate and its inclination but not
+       on how deep it is sunk. Sweeping the head at fixed geometry must leave the product
+       unchanged — an invariant that holds regardless of which form the module evaluates. */
+    let worst = 0, at = null, n = 0;
+    for (const theta of [15, 40, 65, 90]) {
+      for (const L of [1.2, 3.4]) {
+        const base = await plane(page, { theta, L, b: 1.7, hTop: 0.5 });
+        const ref = base.dy * base.hc;
+        for (const hTop of [2, 8, 25, 100]) {
+          const r = await plane(page, { theta, L, b: 1.7, hTop });
+          const res = Math.abs(r.dy * r.hc - ref) / Math.abs(ref);
+          n += 1;
+          if (res > worst) { worst = res; at = { theta, L, hTop }; }
+        }
+      }
+    }
+
+    await verify(testInfo, {
+      module: MODULE, id: "plane-dy-invariant-sweep",
+      quantity: `Worst drift in Δy·h_c over ${n} depths`, units: "—",
+      reference: 0, observed: worst, absTol: 1e-12,
+      source: `Δy·h_c = I_xc sinθ/A is independent of submergence; held against the shallow `
+        + `reference at each geometry for θ ∈ {15, 40, 65, 90}° × L ∈ {1.2, 3.4} m × `
+        + `h_top ∈ {2, 8, 25, 100} m (worst at ${JSON.stringify(at)})`,
+    });
+  });
+
   test("the resultant AS DRAWN passes through the pivot, both fluid sides", async ({ page }, testInfo) => {
     await openLab(page, MODULE);
     /* The numbers being right is not the same claim as the arrow lying on the right line.

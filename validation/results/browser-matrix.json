@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-12T12:53:43.023Z",
+  "generated": "2026-08-12T14:00:54.759Z",
   "engines": [
     "chromium",
     "firefox",
@@ -16,22 +16,17 @@
       "firefox": "passed",
       "webkit": "passed"
     },
-    "accessibility.spec.mjs › manning_uniform_flow — every interactive control has an accessible name": {
-      "chromium": "passed",
-      "firefox": "passed",
-      "webkit": "passed"
-    },
     "accessibility.spec.mjs › channel_geometry — layout does not overflow horizontally": {
       "chromium": "passed",
       "firefox": "passed",
       "webkit": "passed"
     },
-    "accessibility.spec.mjs › manning_uniform_flow — sliders are operable from the keyboard": {
+    "accessibility.spec.mjs › manning_uniform_flow — every interactive control has an accessible name": {
       "chromium": "passed",
       "firefox": "passed",
       "webkit": "passed"
     },
-    "accessibility.spec.mjs › manning_uniform_flow — layout does not overflow horizontally": {
+    "accessibility.spec.mjs › manning_uniform_flow — sliders are operable from the keyboard": {
       "chromium": "passed",
       "firefox": "passed",
       "webkit": "passed"
@@ -42,6 +37,11 @@
       "webkit": "passed"
     },
     "accessibility.spec.mjs › specific_energy — every interactive control has an accessible name": {
+      "chromium": "passed",
+      "firefox": "passed",
+      "webkit": "passed"
+    },
+    "accessibility.spec.mjs › manning_uniform_flow — layout does not overflow horizontally": {
       "chromium": "passed",
       "firefox": "passed",
       "webkit": "passed"
@@ -96,11 +96,6 @@
       "firefox": "passed",
       "webkit": "passed"
     },
-    "accessibility.spec.mjs › gvf_profiles — layout does not overflow horizontally": {
-      "chromium": "passed",
-      "firefox": "passed",
-      "webkit": "passed"
-    },
     "accessibility.spec.mjs › storm_hydrograph — every interactive control has an accessible name": {
       "chromium": "passed",
       "firefox": "passed",
@@ -111,7 +106,7 @@
       "firefox": "passed",
       "webkit": "passed"
     },
-    "accessibility.spec.mjs › gvf_profiles — focus order reaches the controls by Tab alone": {
+    "accessibility.spec.mjs › gvf_profiles — layout does not overflow horizontally": {
       "chromium": "passed",
       "firefox": "passed",
       "webkit": "passed"
@@ -121,7 +116,12 @@
       "firefox": "passed",
       "webkit": "passed"
     },
-    "accessibility.spec.mjs › unit_hydrograph — sliders are operable from the keyboard": {
+    "accessibility.spec.mjs › gvf_profiles — focus order reaches the controls by Tab alone": {
+      "chromium": "passed",
+      "firefox": "passed",
+      "webkit": "passed"
+    },
+    "accessibility.spec.mjs › storm_hydrograph — focus order reaches the controls by Tab alone": {
       "chromium": "passed",
       "firefox": "passed",
       "webkit": "passed"
@@ -131,7 +131,7 @@
       "firefox": "passed",
       "webkit": "passed"
     },
-    "accessibility.spec.mjs › storm_hydrograph — focus order reaches the controls by Tab alone": {
+    "accessibility.spec.mjs › unit_hydrograph — sliders are operable from the keyboard": {
       "chromium": "passed",
       "firefox": "passed",
       "webkit": "passed"
@@ -161,12 +161,12 @@
       "firefox": "passed",
       "webkit": "passed"
     },
-    "accessibility.spec.mjs › hydrostatic_forces — sliders are operable from the keyboard": {
+    "accessibility.spec.mjs › idf_frequency — layout does not overflow horizontally": {
       "chromium": "passed",
       "firefox": "passed",
       "webkit": "passed"
     },
-    "accessibility.spec.mjs › idf_frequency — layout does not overflow horizontally": {
+    "accessibility.spec.mjs › hydrostatic_forces — sliders are operable from the keyboard": {
       "chromium": "passed",
       "firefox": "passed",
       "webkit": "passed"
@@ -176,22 +176,22 @@
       "firefox": "passed",
       "webkit": "passed"
     },
-    "accessibility.spec.mjs › hydrostatic_forces — focus order reaches the controls by Tab alone": {
-      "chromium": "passed",
-      "firefox": "passed",
-      "webkit": "passed"
-    },
     "accessibility.spec.mjs › hydrostatic_forces — layout does not overflow horizontally": {
       "chromium": "passed",
       "firefox": "passed",
       "webkit": "passed"
     },
-    "accessibility.spec.mjs › hydrostatic_forces_3d — sliders are operable from the keyboard": {
+    "accessibility.spec.mjs › hydrostatic_forces — focus order reaches the controls by Tab alone": {
       "chromium": "passed",
       "firefox": "passed",
       "webkit": "passed"
     },
     "accessibility.spec.mjs › hydrostatic_forces_3d — every interactive control has an accessible name": {
+      "chromium": "passed",
+      "firefox": "passed",
+      "webkit": "passed"
+    },
+    "accessibility.spec.mjs › hydrostatic_forces_3d — sliders are operable from the keyboard": {
       "chromium": "passed",
       "firefox": "passed",
       "webkit": "passed"
@@ -206,12 +206,17 @@
       "firefox": "passed",
       "webkit": "passed"
     },
+    "accessibility.spec.mjs › hydrostatic_forces_3d — layout does not overflow horizontally": {
+      "chromium": "passed",
+      "firefox": "passed",
+      "webkit": "passed"
+    },
     "file-protocol.spec.mjs › channel_geometry works when opened directly from disk": {
       "chromium": "passed",
       "firefox": "passed",
       "webkit": "passed"
     },
-    "accessibility.spec.mjs › hydrostatic_forces_3d — layout does not overflow horizontally": {
+    "file-protocol.spec.mjs › specific_energy works when opened directly from disk": {
       "chromium": "passed",
       "firefox": "passed",
       "webkit": "passed"
@@ -226,17 +231,12 @@
       "firefox": "passed",
       "webkit": "passed"
     },
-    "file-protocol.spec.mjs › specific_energy works when opened directly from disk": {
+    "file-protocol.spec.mjs › specific_energy renders from disk": {
       "chromium": "passed",
       "firefox": "passed",
       "webkit": "passed"
     },
     "file-protocol.spec.mjs › hydraulic_jump works when opened directly from disk": {
-      "chromium": "passed",
-      "firefox": "passed",
-      "webkit": "passed"
-    },
-    "file-protocol.spec.mjs › specific_energy renders from disk": {
       "chromium": "passed",
       "firefox": "passed",
       "webkit": "passed"
@@ -276,17 +276,12 @@
       "firefox": "passed",
       "webkit": "passed"
     },
-    "file-protocol.spec.mjs › idf_frequency renders from disk": {
-      "chromium": "passed",
-      "firefox": "passed",
-      "webkit": "passed"
-    },
     "file-protocol.spec.mjs › idf_frequency works when opened directly from disk": {
       "chromium": "passed",
       "firefox": "passed",
       "webkit": "passed"
     },
-    "file-protocol.spec.mjs › hydrostatic_forces works when opened directly from disk": {
+    "file-protocol.spec.mjs › idf_frequency renders from disk": {
       "chromium": "passed",
       "firefox": "passed",
       "webkit": "passed"
@@ -296,17 +291,12 @@
       "firefox": "passed",
       "webkit": "passed"
     },
+    "file-protocol.spec.mjs › hydrostatic_forces works when opened directly from disk": {
+      "chromium": "passed",
+      "firefox": "passed",
+      "webkit": "passed"
+    },
     "file-protocol.spec.mjs › hydrostatic_forces_3d works when opened directly from disk": {
-      "chromium": "passed",
-      "firefox": "passed",
-      "webkit": "passed"
-    },
-    "file-protocol.spec.mjs › channel_geometry builds its 3D scene from disk": {
-      "chromium": "passed",
-      "firefox": "passed",
-      "webkit": "passed"
-    },
-    "label-layout.spec.mjs › channel_geometry labels never overlap at 1600×950": {
       "chromium": "passed",
       "firefox": "passed",
       "webkit": "passed"
@@ -316,12 +306,7 @@
       "firefox": "passed",
       "webkit": "passed"
     },
-    "loads-clean.spec.mjs › channel_geometry loads without console or runtime errors": {
-      "chromium": "passed",
-      "firefox": "passed",
-      "webkit": "passed"
-    },
-    "accessibility.spec.mjs › hydrostatic_forces_3d — focus order reaches the controls by Tab alone": {
+    "file-protocol.spec.mjs › channel_geometry builds its 3D scene from disk": {
       "chromium": "passed",
       "firefox": "passed",
       "webkit": "passed"
@@ -331,7 +316,22 @@
       "firefox": "passed",
       "webkit": "passed"
     },
+    "accessibility.spec.mjs › hydrostatic_forces_3d — focus order reaches the controls by Tab alone": {
+      "chromium": "passed",
+      "firefox": "passed",
+      "webkit": "passed"
+    },
     "label-layout.spec.mjs › channel_geometry labels never overlap at 1366×768": {
+      "chromium": "passed",
+      "firefox": "passed",
+      "webkit": "passed"
+    },
+    "label-layout.spec.mjs › channel_geometry labels never overlap at 1600×950": {
+      "chromium": "passed",
+      "firefox": "passed",
+      "webkit": "passed"
+    },
+    "loads-clean.spec.mjs › channel_geometry loads without console or runtime errors": {
       "chromium": "passed",
       "firefox": "passed",
       "webkit": "passed"
@@ -341,22 +341,22 @@
       "firefox": "passed",
       "webkit": "passed"
     },
-    "loads-clean.spec.mjs › channel_geometry renders its canvas and keeps animating": {
-      "chromium": "passed",
-      "firefox": "passed",
-      "webkit": "passed"
-    },
     "loads-clean.spec.mjs › manning_uniform_flow renders its canvas and keeps animating": {
       "chromium": "passed",
       "firefox": "passed",
       "webkit": "passed"
     },
-    "loads-clean.spec.mjs › specific_energy loads without console or runtime errors": {
+    "loads-clean.spec.mjs › channel_geometry renders its canvas and keeps animating": {
       "chromium": "passed",
       "firefox": "passed",
       "webkit": "passed"
     },
     "loads-clean.spec.mjs › specific_energy renders its canvas and keeps animating": {
+      "chromium": "passed",
+      "firefox": "passed",
+      "webkit": "passed"
+    },
+    "loads-clean.spec.mjs › specific_energy loads without console or runtime errors": {
       "chromium": "passed",
       "firefox": "passed",
       "webkit": "passed"
@@ -431,12 +431,22 @@
       "firefox": "passed",
       "webkit": "passed"
     },
+    "loads-clean.spec.mjs › every link on the landing page resolves": {
+      "chromium": "passed",
+      "firefox": "passed",
+      "webkit": "passed"
+    },
     "loads-clean.spec.mjs › hydrostatic_forces_3d renders its canvas and keeps animating": {
       "chromium": "passed",
       "firefox": "passed",
       "webkit": "passed"
     },
-    "loads-clean.spec.mjs › every link on the landing page resolves": {
+    "self-contained.spec.mjs › manning_uniform_flow requests nothing from outside the origin": {
+      "chromium": "passed",
+      "firefox": "passed",
+      "webkit": "passed"
+    },
+    "self-contained.spec.mjs › hydraulic_jump requests nothing from outside the origin": {
       "chromium": "passed",
       "firefox": "passed",
       "webkit": "passed"
@@ -451,22 +461,12 @@
       "firefox": "passed",
       "webkit": "passed"
     },
-    "self-contained.spec.mjs › manning_uniform_flow requests nothing from outside the origin": {
+    "self-contained.spec.mjs › storm_hydrograph requests nothing from outside the origin": {
       "chromium": "passed",
       "firefox": "passed",
       "webkit": "passed"
     },
     "self-contained.spec.mjs › gvf_profiles requests nothing from outside the origin": {
-      "chromium": "passed",
-      "firefox": "passed",
-      "webkit": "passed"
-    },
-    "self-contained.spec.mjs › hydraulic_jump requests nothing from outside the origin": {
-      "chromium": "passed",
-      "firefox": "passed",
-      "webkit": "passed"
-    },
-    "self-contained.spec.mjs › storm_hydrograph requests nothing from outside the origin": {
       "chromium": "passed",
       "firefox": "passed",
       "webkit": "passed"
@@ -481,12 +481,7 @@
       "firefox": "passed",
       "webkit": "passed"
     },
-    "self-contained.spec.mjs › hydrostatic_forces requests nothing from outside the origin": {
-      "chromium": "passed",
-      "firefox": "passed",
-      "webkit": "passed"
-    },
-    "self-contained.spec.mjs › hydrostatic_forces_3d requests nothing from outside the origin": {
+    "self-contained.spec.mjs › manning_uniform_flow still works with the network cut": {
       "chromium": "passed",
       "firefox": "passed",
       "webkit": "passed"
@@ -496,7 +491,7 @@
       "firefox": "passed",
       "webkit": "passed"
     },
-    "self-contained.spec.mjs › manning_uniform_flow still works with the network cut": {
+    "self-contained.spec.mjs › hydrostatic_forces requests nothing from outside the origin": {
       "chromium": "passed",
       "firefox": "passed",
       "webkit": "passed"
@@ -506,7 +501,17 @@
       "firefox": "passed",
       "webkit": "passed"
     },
+    "self-contained.spec.mjs › hydrostatic_forces_3d requests nothing from outside the origin": {
+      "chromium": "passed",
+      "firefox": "passed",
+      "webkit": "passed"
+    },
     "self-contained.spec.mjs › hydraulic_jump still works with the network cut": {
+      "chromium": "passed",
+      "firefox": "passed",
+      "webkit": "passed"
+    },
+    "self-contained.spec.mjs › unit_hydrograph still works with the network cut": {
       "chromium": "passed",
       "firefox": "passed",
       "webkit": "passed"
@@ -521,7 +526,7 @@
       "firefox": "passed",
       "webkit": "passed"
     },
-    "self-contained.spec.mjs › unit_hydrograph still works with the network cut": {
+    "self-contained.spec.mjs › no animation references a third-party host in its source": {
       "chromium": "passed",
       "firefox": "passed",
       "webkit": "passed"
@@ -532,11 +537,6 @@
       "webkit": "passed"
     },
     "self-contained.spec.mjs › hydrostatic_forces still works with the network cut": {
-      "chromium": "passed",
-      "firefox": "passed",
-      "webkit": "passed"
-    },
-    "self-contained.spec.mjs › no animation references a third-party host in its source": {
       "chromium": "passed",
       "firefox": "passed",
       "webkit": "passed"

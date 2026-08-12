@@ -173,6 +173,34 @@ test.describe(`${MODULE} — numerical verification`, () => {
     });
   });
 
+  test("zero moment about the pivot axis, swept over the whole control range", async ({ page }, testInfo) => {
+    await openLab(page, MODULE);
+
+    /* The single configuration above is the textbook one. The identity is what the gate
+       design rests on, so it is required at every head, radius and span, and the worst
+       corner of the sweep is what gets reported. */
+    let worst = 0, at = null, n = 0;
+    for (const R of [0.5, 1, 2.5, 5]) {
+      for (const hO of [0, 1.5, 4, 12]) {
+        for (const span of [15, 45, 90]) {
+          const r = await curved(page, { R, hO, span, bc: 2 });
+          const res = Math.abs(r.Mnet) / (r.FR * R);
+          n += 1;
+          if (res > worst) { worst = res; at = { R, hO, span }; }
+        }
+      }
+    }
+
+    await verify(testInfo, {
+      module: MODULE, id: "gate3d-zero-moment-sweep",
+      quantity: `Worst pivot-axis moment residual over ${n} gate states`, units: "—",
+      reference: 0, observed: worst, absTol: 1e-12,
+      source: `a Tainter gate carries no hydrostatic moment on its pivot at any head: `
+        + `|M_O| ÷ (F_R·R) = 0 for R ∈ {0.5, 1, 2.5, 5} m × h_O ∈ {0, 1.5, 4, 12} m × `
+        + `span ∈ {15, 45, 90}° (worst at ${JSON.stringify(at)})`,
+    });
+  });
+
   test("the resultant AS DRAWN passes through the pivot axis", async ({ page }, testInfo) => {
     await openLab(page, MODULE);
     /* The zero-moment identity holding in the numbers is not the same claim as the arrow

@@ -118,7 +118,9 @@ function cell(s) {
 }
 
 function withUnits(value, units) {
-  const u = units && units !== '–' ? ` ${units}` : '';
+  // Dimensionless is written as a bare dash, and the specs are not consistent about
+  // which one: en dash, em dash and hyphen all mean "no units, print nothing".
+  const u = units && !['-', '–', '—'].includes(units.trim()) ? ` ${units}` : '';
   return `${sig(value)}${u}`;
 }
 
@@ -309,8 +311,21 @@ function softwareMatrix() {
 
 // ---------------------------------------------------------------- blocks
 
-const TWO_ROUTE_IDS = ['HJ-04', 'HJ-08', 'UH-06.24', 'GV-08', 'ID-10', 'CG-19'];
-const INVARIANT_IDS = ['CG-08', 'MN-09', 'SE-06', 'HJ-07', 'SH-08', 'UH-03', 'GV-06.M1'];
+/* Cases whose reference is a second derivation of the same quantity rather than an
+   external value. Listed in module order, matching Table 1 and Table 3. */
+const TWO_ROUTE_IDS = [
+  'plane-selfcheck-F', 'plane-selfcheck-CP', 'curved-selfcheck-Fx', 'curved-selfcheck-Fv',
+  'shape-rect-selfcheck-I', 'shape-tri-selfcheck-I', 'shape-circ-selfcheck-I',
+  'shape-semi-selfcheck-I',
+  'HJ-04', 'HJ-08', 'UH-06.24', 'GV-08', 'ID-10', 'CG-19',
+];
+
+/* Identities required to hold across a whole control range, reported at their worst
+   corner. A case belongs here only if it sweeps: spot checks live in Table 3. */
+const INVARIANT_IDS = [
+  'plane-dy-invariant-sweep', 'curved-zero-moment-sweep', 'gate3d-zero-moment-sweep',
+  'CG-08', 'MN-09', 'SE-06', 'HJ-07', 'SH-08', 'UH-03', 'GV-06.M1',
+];
 
 const blocks = {
   'table:module-summary': moduleSummary(),

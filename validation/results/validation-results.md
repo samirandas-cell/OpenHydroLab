@@ -1,8 +1,8 @@
 # OpenHydroLab — numerical validation results
 
-Generated 2026-08-12T12:53:43.023Z · engines: chromium, firefox, webkit
+Generated 2026-08-12T14:00:54.759Z · engines: chromium, firefox, webkit
 
-582 recorded comparisons across 10 modules and 3 browser engine(s); 0 failing.
+591 recorded comparisons across 10 modules and 3 browser engine(s); 0 failing.
 
 Each row compares a value produced by the laboratory against a reference derived independently of it — a closed-form solution, a conservation identity, or a hand-checkable textbook calculation. Errors are the worst observed across engines.
 
@@ -177,6 +177,7 @@ Each row compares a value produced by the laboratory against a reference derived
 | curved-zero-moment-span22.5 | net moment ÷ (F_R·R) at a 22.5° arc | 0 — | 6.301e-17 — | — | rel ≤ 1e-12 | Pass |
 | curved-zero-moment-span45 | net moment ÷ (F_R·R) at a 45° arc | 0 — | 0 — | — | rel ≤ 1e-12 | Pass |
 | curved-zero-moment-span67.5 | net moment ÷ (F_R·R) at a 67.5° arc | 0 — | 4.772e-17 — | — | rel ≤ 1e-12 | Pass |
+| curved-zero-moment-sweep | Worst pivot-moment residual over 48 arc states | 0 — | 6.243e-16 — | — | abs ≤ 1e-12 | Pass |
 | drawn-plane-from-wet-side-th0 | signed standoff of the arrow tail along the wet-side normal at θ = 0° | 1.08574 m | 1.08574 m | 0 | abs ≤ 1e-9 | Pass |
 | drawn-plane-from-wet-side-th30 | signed standoff of the arrow tail along the wet-side normal at θ = 30° | 1.73103 m | 1.73103 m | 0 | abs ≤ 1e-9 | Pass |
 | drawn-plane-from-wet-side-th90 | signed standoff of the arrow tail along the wet-side normal at θ = 90° | 1.2757 m | 1.2757 m | 0 | abs ≤ 1e-9 | Pass |
@@ -193,6 +194,7 @@ Each row compares a value produced by the laboratory against a reference derived
 | plane-dam45-CP | CP along the face | 9.42809 m | 9.42809 m | 0 | rel ≤ 1e-12 | Pass |
 | plane-dam45-F | resultant force per metre | 693672 N/m | 693672 N/m | < 1e-9 | rel ≤ 1e-12 | Pass |
 | plane-dy-invariant | Δy·h_c at 20 m ÷ at 1 m | 1 — | 1 — | 0 | rel ≤ 1e-12 | Pass |
+| plane-dy-invariant-sweep | Worst drift in Δy·h_c over 32 depths | 0 — | 2.313e-16 — | — | abs ≤ 1e-12 | Pass |
 | plane-horiz-dy | shift of the CP below the centroid | 0 m | 0 m | — | rel ≤ 1e-15 | Pass |
 | plane-horiz-F | resultant force | 49050 N | 49050 N | 0 | rel ≤ 1e-12 | Pass |
 | plane-incl-CP | centre of pressure from the upper edge | 1.63636 m | 1.63636 m | < 1e-9 | rel ≤ 1e-12 | Pass |
@@ -217,6 +219,7 @@ Each row compares a value produced by the laboratory against a reference derived
 - **curved-zero-moment-span22.5** — the radial-traction identity is a property of circular curvature, not of the quadrant: it must hold for any span
 - **curved-zero-moment-span45** — the radial-traction identity is a property of circular curvature, not of the quadrant: it must hold for any span
 - **curved-zero-moment-span67.5** — the radial-traction identity is a property of circular curvature, not of the quadrant: it must hold for any span
+- **curved-zero-moment-sweep** — radial traction has no moment about the centre of curvature, so |F_v x̄ − F_x·arm| ÷ (F_R·R) = 0 for R ∈ {0.5, 1, 2.5, 5} m × h_O ∈ {0, 1.5, 4, 12} m × span ∈ {15, 45, 90}° (worst at {"R":0.5,"hO":12,"span":90})
 - **drawn-plane-from-wet-side-th0** — the fluid pushes ONTO the surface, so the arrow must start clear of the plate on the wetted (+n) side and point inward — drawing it from the dry side reverses the physics while still looking like a plausible annotation
 - **drawn-plane-from-wet-side-th30** — the fluid pushes ONTO the surface, so the arrow must start clear of the plate on the wetted (+n) side and point inward — drawing it from the dry side reverses the physics while still looking like a plausible annotation
 - **drawn-plane-from-wet-side-th90** — the fluid pushes ONTO the surface, so the arrow must start clear of the plate on the wetted (+n) side and point inward — drawing it from the dry side reverses the physics while still looking like a plausible annotation
@@ -233,6 +236,7 @@ Each row compares a value produced by the laboratory against a reference derived
 - **plane-dam45-CP** — upper edge at the free surface, so y_R = 2L/3 = 9.428 m along the face — independent of the inclination
 - **plane-dam45-F** — F = γ(H/2)(L·b) with wetted slant L = H/sin45° = 14.142 m → 693.66 kN/m (worked example: rockfill dam, reservoir depth 10 m)
 - **plane-dy-invariant** — Δy = I_xc/(y_cA) = L² sinθ/(12 h_c), so the product Δy·h_c depends only on L and θ; the ratio between any two submergences is therefore exactly 1
+- **plane-dy-invariant-sweep** — Δy·h_c = I_xc sinθ/A is independent of submergence; held against the shallow reference at each geometry for θ ∈ {15, 40, 65, 90}° × L ∈ {1.2, 3.4} m × h_top ∈ {2, 8, 25, 100} m (worst at {"theta":90,"L":1.2,"hTop":8})
 - **plane-horiz-dy** — uniform pressure has no first moment about the centroid, so Δy = 0 exactly; the module must reach this limit without dividing by sinθ
 - **plane-horiz-F** — uniform pressure p = ρgh = 19.62 kPa over 2.5 m² → 49.05 kN (worked example: plate lying flat 2 m down)
 - **plane-incl-CP** — centroid of the trapezoidal pressure prism, s_R = L(2p_bot + p_top)/(3(p_bot + p_top)) — an independent route to the CP that never uses I_xc
@@ -256,6 +260,7 @@ Each row compares a value produced by the laboratory against a reference derived
 | gate3d-Fv | vertical component | 179358 N | 179358 N | 0 | rel ≤ 1e-12 | Pass |
 | gate3d-Fx | horizontal component | 156960 N | 156960 N | 0 | rel ≤ 1e-12 | Pass |
 | gate3d-zero-moment | net moment ÷ (F_R·R) | 0 — | 6.106e-17 — | — | rel ≤ 1e-12 | Pass |
+| gate3d-zero-moment-sweep | Worst pivot-axis moment residual over 48 gate states | 0 — | 9.273e-16 — | — | abs ≤ 1e-12 | Pass |
 | horiz-circ-dy | Δy for a horizontal circ | 0 m | 0 m | — | rel ≤ 1e-15 | Pass |
 | horiz-rect-dy | Δy for a horizontal rect | 0 m | 0 m | — | rel ≤ 1e-15 | Pass |
 | horiz-semi-dy | Δy for a horizontal semi | 0 m | 0 m | — | rel ≤ 1e-15 | Pass |
@@ -298,6 +303,7 @@ Each row compares a value produced by the laboratory against a reference derived
 - **gate3d-Fv** — F_v = γ b (h_O R + πR²/4) → 179.36 kN
 - **gate3d-Fx** — F_x = γ h_c A_proj on the vertical projection → 156.96 kN
 - **gate3d-zero-moment** — the traction on a circular arc is radial, so it exerts no moment about the pivot axis — the property a Tainter gate is designed around
+- **gate3d-zero-moment-sweep** — a Tainter gate carries no hydrostatic moment on its pivot at any head: |M_O| ÷ (F_R·R) = 0 for R ∈ {0.5, 1, 2.5, 5} m × h_O ∈ {0, 1.5, 4, 12} m × span ∈ {15, 45, 90}° (worst at {"R":0.5,"hO":12,"span":45})
 - **horiz-circ-dy** — uniform pressure has no first moment about the centroid, whatever the shape; Δy = I_xc sinθ/(h_cA) reaches this without dividing by sinθ
 - **horiz-rect-dy** — uniform pressure has no first moment about the centroid, whatever the shape; Δy = I_xc sinθ/(h_cA) reaches this without dividing by sinθ
 - **horiz-semi-dy** — uniform pressure has no first moment about the centroid, whatever the shape; Δy = I_xc sinθ/(h_cA) reaches this without dividing by sinθ
