@@ -1,10 +1,8 @@
 {
-  "title": "OpenHydroLab: interactive, physics-accurate animations for teaching hydraulics and hydrology",
-  "description": "<p>OpenHydroLab is an open-source suite of eight interactive browser laboratories for teaching undergraduate hydraulics and hydrology. Every displayed quantity is computed live from the governing equation, and every module runs offline from a local file, with no installation and no third-party host. Seven modules are single self-contained HTML pages; the 3D channel-geometry laboratory is a page plus a vendored copy of Three.js under <code>animations/vendor/three/</code>, which must be kept alongside it.</p><p>Modules: channel geometry and the Froude number, Manning uniform flow, specific energy and choking, hydraulic jumps, gradually varied flow profiles, storm hydrographs, the unit hydrograph workbench, and an IDF/frequency-analysis pipeline on a real 27-year gauge record.</p><p>Release 1.0.2 adds the verification harness: 118 distinct numerical cases, executed across Chromium, Firefox and WebKit to yield 354 comparison records, together with 88 software, offline-delivery and accessibility checks repeated on the three engines (264 runs). Every reference value is derived independently of the code. The verification protocol is documented in <code>validation/validation-protocol.md</code> and the generated dataset in <code>validation/results/</code>. This protocol establishes computational fidelity and reproducibility only; it makes no claim about learning outcomes.</p>",
+  "title": "OpenHydroLab: interactive, physics-accurate animations for teaching fluid mechanics, hydraulics and hydrology",
+  "version": "1.0.3",
   "upload_type": "software",
-  "license": "mit",
-  "access_right": "open",
-  "version": "1.0.2",
+  "license": "MIT",
   "language": "eng",
   "creators": [
     {
@@ -13,8 +11,11 @@
       "orcid": "0000-0002-3814-534X"
     }
   ],
+  "description": "<p>OpenHydroLab is an open-source suite of ten interactive browser laboratories for teaching undergraduate fluid mechanics, hydraulics and hydrology. Every displayed quantity is computed live from the governing equation, and every module runs offline from a local file, with no installation and no third-party host. Eight modules are single self-contained HTML pages; the two 3D laboratories are a page plus a vendored copy of Three.js under <code>animations/vendor/three/</code>, which must be kept alongside them.</p>\n\n<p><strong>Modules.</strong> Fluid statics: hydrostatic forces on plane and curved surfaces, and hydrostatic force in three dimensions. Open-channel hydraulics: channel geometry and the Froude number, specific energy and choking, hydraulic jumps, Manning uniform flow, gradually varied flow profiles. Hydrology: storm hydrographs, the unit hydrograph workbench, and an IDF/frequency-analysis pipeline on a real 27-year gauge record.</p>\n\n<p><strong>Release 1.0.3</strong> opens the fluid mechanics section with the two hydrostatic-forces laboratories, and extends the verification harness from the numbers a module reports to the geometry it draws: arrows retain the line segment they were constructed from, and cases assert against those recorded endpoints rather than against a recomputation of what they ought to be. The harness now records 194 distinct numerical cases, executed across Chromium, Firefox and WebKit to yield 582 comparison records, together with 108 software, offline-delivery and accessibility checks repeated on the three engines (324 runs), with none failing. Every reference value is derived independently of the code. The protocol is documented in <code>validation/validation-protocol.md</code> and the generated dataset in <code>validation/results/</code>.</p>\n\n<p>This protocol establishes computational fidelity and reproducibility only; it makes no claim about learning outcomes.</p>",
   "keywords": [
     "hydrology",
+    "fluid mechanics",
+    "hydrostatics",
     "open-channel hydraulics",
     "engineering education",
     "interactive simulation",
