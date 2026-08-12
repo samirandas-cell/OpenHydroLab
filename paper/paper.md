@@ -1,5 +1,5 @@
 ---
-title: "Designed for Verification: Developing and Validating an Open, Offline Simulation Suite for Undergraduate Hydraulics and Hydrology"
+title: "Designed for Verification: Developing and Validating an Open, Offline Simulation Suite for Undergraduate Fluid Mechanics, Hydraulics and Hydrology"
 author:
   - name: Samiran Das
     orcid: 0000-0002-3814-534X
@@ -17,15 +17,15 @@ article_type: "Article"
 keywords:
   - engineering education
   - educational simulation
+  - fluid mechanics
   - hydraulics
   - hydrology
   - open-channel flow
   - software verification
   - open educational resources
-  - design-based research
   - offline learning technology
   - reproducibility
-date: 28 July 2026
+date: 12 August 2026
 bibliography: paper.bib
 ---
 
@@ -55,14 +55,13 @@ open-source suite of ten interactive browser laboratories covering fluid statics
 (hydrostatic forces on plane and curved surfaces, in two and three dimensions),
 open-channel hydraulics (geometry, uniform flow, specific energy, jumps, gradually varied
 flow) and engineering hydrology (storm and unit hydrographs, rainfall frequency), and of
-the verification protocol
-built around it. **Methods:** Three design commitments distinguish the suite: every
-displayed quantity is computed live from its governing equation rather than animated to look
-plausible; each laboratory runs offline from a local file, with no installation and no
-third-party host; and the physics is exposed in readable source. Every reference value is
-derived independently of the code — from a closed form, a conservation identity, a textbook
-calculation or an independent reimplementation — and every tolerance is justified case by
-case, never widened to pass. **Results:** The protocol yields
+the verification protocol built around it. **Methods:** Three design commitments
+distinguish the suite: every displayed quantity is computed live from its governing
+equation rather than animated to look plausible; each laboratory runs offline from a local
+file, with no installation and no third-party host; and the physics is exposed in readable
+source. Every reference value is derived independently of the code — from a closed form,
+a conservation identity, a textbook calculation or an independent reimplementation — and
+every tolerance is justified case by case, never widened to pass. **Results:** The protocol yields
 <!--G:comparisons-->582<!--/G--> numerical comparisons and
 <!--G:software-runs-->324<!--/G--> software, offline and accessibility test executions
 across <!--G:engines-->3<!--/G--> browser engines, and regenerates that dataset on every
@@ -70,13 +69,13 @@ run. Applying it to a codebase believed correct exposed six defects, including a
 step documented as exact that was not; a seventh — a force computed correctly in every
 number and drawn on the wrong side of the surface — passed every numerical check and was
 found by eye, prompting a class of test that measures the drawn geometry itself.
-**Conclusions:** The verification process, not the
-artifact, is the transferable result: it makes what a simulation displays a public,
-reproducible fact rather than an assurance. No learning-outcome claim is made.
+**Conclusions:** The verification process, not the artifact, is the transferable result:
+it makes what a simulation displays a public, reproducible fact rather than an assurance.
+No learning-outcome claim is made.
 
-**Keywords:** engineering education; educational simulation; hydraulics; hydrology;
-open-channel flow; software verification; open educational resources; design-based
-research; offline learning technology; reproducibility
+**Keywords:** engineering education; educational simulation; fluid mechanics; hydraulics;
+hydrology; open-channel flow; software verification; open educational resources; offline
+learning technology; reproducibility
 
 ## 1. Introduction
 
@@ -160,8 +159,8 @@ Section 5 concludes.
 
 OpenHydroLab comprises ten laboratories, each a web page that runs in any current
 browser. Eight are a single self-contained HTML file; the two that render in 3D ship
-alongside a vendored copy of a 3D rendering library. Table 1 lists them with the concepts each is
-built to expose. The suite is released under the MIT licence, and the release described
+alongside a vendored copy of a 3D rendering library. Table 1 lists them with the concepts
+each is built to expose. The suite is released under the MIT licence, and the release described
 and verified here is archived with a persistent identifier (Section 6).
 
 **Table 1.** The ten laboratories and the concepts each is designed to expose. The
@@ -214,7 +213,7 @@ the physics in a classic script instead puts its top-level bindings in the globa
 where an automated test can call the model functions directly and compare at double
 precision — a difference of some nine orders of magnitude in the strength of the available
 evidence. Every laboratory therefore keeps its physics in a classic script and its
-rendering in whatever the rendering needs. The one module with a 3D scene is split
+rendering in whatever the rendering needs. The two modules with a 3D scene are split
 accordingly: physics in the global scope, rendering as a module.
 
 #### 2.2.2. Offline, self-contained, and free of third-party hosts
@@ -319,14 +318,34 @@ the module, and require the original answer to return.
 
 Where a quantity is reachable by two different derivations, both are computed and required
 to agree. These are the strongest tests in the suite, because they fail if *either* route
-is wrong, and they do not depend on any external reference at all. Four are used: the
+is wrong, and they do not depend on any external reference at all. Five are used: the
 energy loss across a jump as *E*~1~ − *E*~2~ and as (*y*~2~ − *y*~1~)³/(4*y*~1~*y*~2~); a
 duration-changed unit hydrograph by S-curve lag-and-subtract and by superposition of
 lagged unit hydrographs; a gradually varied reach length by RK4 marching and by the
-direct-step method; and the rational-method discharge from its engineering form and from
-base SI units.
+direct-step method; the rational-method discharge from its engineering form and from
+base SI units; and the velocity-distribution coefficient α by numerical integration and
+from the closed form printed beside it.
 
-#### 2.4.3. Behaviour, not only values
+#### 2.4.3. The drawing is measured, not only the numbers
+
+A simulation makes two assertions: one in the numbers it reports, and one in the picture it
+draws. They can disagree, and a protocol that samples only the first cannot see it — a
+failure mode we did not anticipate and met in practice (Section 3.5). Where a drawn element
+carries a physical claim rather than decorating one, its geometry is therefore recorded and
+compared like any other quantity: each arrow in a 3D scene retains the line segment it was
+constructed from, and the 2D modules publish the equivalent through a documented global.
+
+The independence requirement of Section 2.4.1 applies here with particular force, because
+the tempting test is the circular one. A check that recomputes where an arrow *ought* to
+start and end, using the same expression the renderer used, is self-comparison and will
+confirm a mis-drawn figure as readily as a correct one. The cases assert instead against
+the endpoints the renderer actually produced, and against an independently stated
+geometric property: that the resultant on a circular arc passes through the centre of
+curvature, that a plane resultant is normal to its plate, that an arrowhead lies on the
+centre of pressure, and that an arrow's tail stands off on the wetted side — the last
+signed, since an unsigned standoff cannot distinguish the two faces.
+
+#### 2.4.4. Behaviour, not only values
 
 Some of the claims teaching rests on are orderings rather than numbers, and are tested as
 such: urbanisation must raise and advance the storm peak; jump dissipation must increase
@@ -334,7 +353,7 @@ with the approach Froude number; rainfall intensity must fall with duration and 
 return period; a mild slope must give *y*~n~ > *y*~c~. These carry no tolerance. They
 either hold across the swept range or they do not.
 
-#### 2.4.4. Sweeps, not spot checks
+#### 2.4.5. Sweeps, not spot checks
 
 Conservation is not a property of one fortunate parameter set. Volume closure, the
 momentum residual, the specific-energy identity and normal-depth inversion are each swept
@@ -343,7 +362,7 @@ states, 81 normal-depth states, 9 gate settings — and the **worst** error over
 what is recorded. A sweep that reported its mean would hide exactly the parameter corner
 where a model fails.
 
-#### 2.4.5. Tolerances are justified per case, never widened to pass
+#### 2.4.6. Tolerances are justified per case, never widened to pass
 
 Each comparison carries its own tolerance, set by what the numerics can honestly deliver
 and recorded with the case (Table 2).
@@ -371,7 +390,7 @@ mathematics that limits it. A tolerance is never widened to make a test pass wit
 reason in the case record, and the published dataset carries every tolerance alongside its
 observed error so that the policy can be audited rather than trusted.
 
-#### 2.4.6. Retry policy
+#### 2.4.7. Retry policy
 
 The physics suite runs with retries disabled. A retry there would convert a real numerical
 failure into an intermittent one and hide it. The interaction tests, which drive a browser
@@ -402,7 +421,7 @@ following checks on every laboratory, on all <!--G:engines-->3<!--/G--> browser 
   respond to arrow keys with their readouts updating; focus order reaches the controls by
   Tab alone; and no layout overflows horizontally at 1920 × 1080, 1366 × 768 or
   1024 × 768.
-- **Label layout in the 3D scene** — text sprites hold a fixed pixel size while the
+- **Label layout in the 3D scenes** — labels hold a fixed pixel size while the
   geometry they annotate changes by orders of magnitude, so hand-tuned label offsets
   collapse silently at the extremes of the control range. Label separation is measured
   rather than eyeballed.
@@ -541,7 +560,7 @@ The derivations behind these cases, as recorded in the dataset, are:
 
 ### 3.3. Conservation invariants across swept parameter ranges
 
-Table 6 reports the swept invariants of Section 2.4.4. Each row is the **worst** residual
+Table 6 reports the swept invariants of Section 2.4.5. Each row is the **worst** residual
 over an entire parameter sweep, not a representative one — the value at the least
 favourable corner of the module's control range.
 
@@ -599,7 +618,7 @@ point. The label-layout row measures separation between text sprites in the 3D s
 class of failure that produces no error, no exception and no numerical discrepancy — only
 an unreadable figure at one end of a slider's range.
 
-### 3.5. Defects the protocol exposed
+### 3.5. Defects found in code believed correct
 
 The protocol was written for a codebase that had already been used in teaching, reviewed
 by its author, and believed correct. It found six defects, listed in Table 8. Two of them
@@ -649,17 +668,13 @@ demonstrate, while every case in Table 3 passed. It was found by eye.
 The lesson generalises past this suite. A simulation makes two assertions — one in the
 numbers it reports and one in the picture it draws — and a protocol that samples only the
 first cannot see a disagreement between them. Our response was to make the drawing
-measurable rather than to look harder: each 3D arrow now retains the line segment it was
-constructed from, the 2D module publishes the equivalent through a global, and the new
-cases assert against those recorded endpoints rather than against a recomputation of what
-the endpoints ought to be. That distinction is the whole of it, and it is the
-independent-derivation rule again in a new setting: a test that recomputed the drawing from
-the same expression the renderer used would have confirmed the reversed arrow. The cases now assert that the resultant
-misses the pivot by nothing on both modules, that the plane resultant is exactly normal to
-its plate, that the arrowhead sits on the centre of pressure, and that the tail stands off
-on the *wetted* side — the last of these signed, because an unsigned standoff is identical
-whichever face the arrow is drawn from, and the first version of that test duly passed with
-the arrow still reversed.
+measurable rather than to look harder, in the terms set out in Section 2.4.3: the drawn
+geometry is recorded and asserted against independently stated geometric properties. The
+distinction that makes those cases worth anything is the independence one — a test that
+recomputed the drawing from the same expression the renderer used would have confirmed the
+reversed arrow. That this is not a hypothetical risk is worth recording: the first version
+of the standoff case passed with the arrow still reversed, because it measured an unsigned
+distance, which is identical whichever face the arrow is drawn from.
 
 We also record, for the same reason, one case where the protocol was wrong and the code was
 right. The two-reservoir cascade peaks *after* the rain stops, at the instant the two
@@ -691,9 +706,9 @@ evidence.
 ### 4.2. The protocol, not the artifact, is the transferable result
 
 The ten laboratories are useful to instructors of fluid mechanics, hydraulics and
-hydrology, a small
-population. The protocol applies to any educational simulation that puts a computed number
-on screen, which is most of them. Its transferable content is four rules:
+hydrology, a small population. The protocol applies to any educational simulation that
+puts a computed number on screen, which is most of them. Its transferable content is five
+rules:
 
 1. **The reference must be derived independently of the code under test.** A test that
    re-runs the implementation's own arithmetic is a syntax check wearing the costume of a
@@ -710,6 +725,11 @@ on screen, which is most of them. Its transferable content is four rules:
    it. The `file://` defect is a specific instance of a general failure: verification
    environments drift toward the developer's convenience, and the drift is invisible until
    it is not.
+5. **Measure the picture where the picture carries the claim.** A figure is an assertion,
+   and in a teaching simulation it is often *the* assertion — the thing the student looks
+   at while the numbers scroll past unread. Correct numbers do not certify the drawing
+   that displays them, as defect 7 shows, and the endpoints the renderer produced are
+   available to a test as readily as the values it printed.
 
 To these we add a practice rather than a rule: the dataset should be generated, published
 and cited, and the manuscript's numbers should be produced from it mechanically. Doing so
@@ -755,7 +775,7 @@ for another property valued by anyone who needs to trust the numbers.
 
 ### 4.4. Limitations
 
-Beyond the absence of any learning claim, five limitations bound the results.
+Beyond the absence of any learning claim, six limitations bound the results.
 
 The verification is of **implementation fidelity against physical models, not of the models
 themselves**. The φ-index, the Nash cascade, the Gumbel distribution and Manning's equation
@@ -812,10 +832,9 @@ nor lend it.
 
 ## 5. Conclusions
 
-We have reported the design and technical validation of OpenHydroLab, ten open,
-offline, interactive laboratories for undergraduate fluid mechanics, hydraulics and
-hydrology, and the
-verification protocol built around them. The suite computes every displayed quantity from
+We have reported the design and technical validation of OpenHydroLab, ten open, offline,
+interactive laboratories for undergraduate fluid mechanics, hydraulics and hydrology, and
+the verification protocol built around them. The suite computes every displayed quantity from
 its governing equation, runs from a local file with no installation and no third-party
 host, and exposes its physics in readable source. The protocol requires every reference
 value to be derived independently of the code, prefers quantities reachable by two routes,
@@ -833,10 +852,11 @@ delivery failure introduced by the fix for an earlier one. Neither was reachable
 inspection or by ordinary use. A seventh defect bounds the claim: a resultant force whose
 magnitude, inclination and zero-moment identity were all exactly right was drawn on the
 wrong side of the surface, and no numerical case could see it. A simulation asserts in its
-picture as well as in its numbers, and the drawn geometry has to be measured too. That is the argument of this paper: for an instrument whose
-purpose is to show students what the physics does, correctness is not a quality attribute
-to be assumed, and the process that establishes it in public is a more transferable
-contribution than the artifact it certifies.
+picture as well as in its numbers, and the drawn geometry has to be measured too. That is
+the argument of this paper: for an instrument whose purpose is to show students what the
+physics does, correctness is not a quality attribute to be assumed, and the process that
+establishes it in public is a more transferable contribution than the artifact it
+certifies.
 
 No claim about learning outcomes is made here. That question is a separate study, with a
 separate design, and it should be answered on its own evidence.
