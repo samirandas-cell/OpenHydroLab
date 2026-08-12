@@ -309,6 +309,13 @@ the panel. It is the same calculation the class has to write, with their numbers
 * Step emphasis is applied by multiplying `ctx.globalAlpha` per element group, so `chipLabel`
   and `hatch` multiply the inherited alpha rather than setting it absolutely — otherwise dimmed
   captions would keep full-strength backgrounds and borders.
+* The global `DRAWN` records the endpoints of the force arrows the last frame actually drew.
+  This module's claims are geometric — the resultant arriving *normal to the plate* at the
+  centre of pressure, and *through the pivot* on a circular arc — and a sign slip in the
+  drawing leaves every readout correct while quietly falsifying the picture. The suite
+  measures those drawn lines: the angle to the plate, the arrowhead's distance from the CP,
+  the **signed** standoff of the tail on the wetted side (an unsigned one cannot tell the two
+  sides apart), and the perpendicular miss from the pivot for both fluid-side settings.
 * Pause freezes the physics: the probe sweep, the submergence sweep and the surface ripple all
   advance on accumulated simulation time, never on `performance.now()` directly.
 * Canvas is scaled by `devicePixelRatio`; the two viewports switch from side-by-side to stacked

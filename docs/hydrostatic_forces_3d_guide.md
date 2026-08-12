@@ -237,6 +237,12 @@ Press ▶ four times. Step 4 leaves the prism and the force arrow alone in the s
 * Stable ids: readout values `o-*`, slider chips `v-*`, sliders `s-*`, classification `#chip`.
 * Labels are DOM nodes under `#labels`, each tagged with `data-tag`, so overlap can be measured
   in screen space by a test rather than eyeballed.
+* Every force arrow records the line it was drawn along in `userData.from` / `userData.to`.
+  That exists because the zero-moment *numbers* being right is not the same claim as the
+  *arrow* lying on the right line: a sign slip in the drawn direction once left every readout
+  correct, every physics check passing, and the resultant quietly missing the pivot by 0.71 R.
+  The suite now measures the perpendicular distance from the pivot to the drawn line, reading
+  the endpoints the scene actually used rather than recomputing what they ought to be.
 * Sliders are clamped rather than allowed to reach impossible states; a horizontal plate is held
   at least 0.05 m below the surface.
 * Panels stack below 1250 px; no horizontal page scroll at 1560, 1100 or 430 px.

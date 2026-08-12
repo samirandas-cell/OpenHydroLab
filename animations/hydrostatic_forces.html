@@ -383,6 +383,12 @@ const C = {
    current step is not about fades back, so the drawing says the same thing the
    text does.  'all' (the default) shows the complete scene.                  */
 let stepHL='all';
+/* What the last frame actually drew, in canvas pixels plus the scale to convert back
+   to metres. The scene's whole claim is geometric — the resultant arriving normal to
+   the plate, and passing through the pivot on a circular arc — and that claim lives in
+   the drawing, not in the readouts. Recording the endpoints lets a test measure the
+   line that was drawn instead of recomputing the line it thinks should have been. */
+const DRAWN = {};
 const HL2D = {
   all  : null,
   plate: ['tank','plate','dims'],
@@ -597,6 +603,8 @@ function drawPlaneScene(vp,R){
 
   // resultant — the water is on the wet side, so it pushes ONTO the plate
   const fl = aMax*1.20 + 26;
+  DRAWN.plane = {x0:rxp+nx*fl, y0:ryp+ny*fl, x1:rxp, y1:ryp,
+                 cpx:rxp, cpy:ryp, ax:Ax, ay:Ay, bx:Bx, by:By, pxPerM:sc, L:R.L};
   grp('force',()=>{
     dot(rxp,ryp,5.2,C.crit,'#0f1420');
     arrow(rxp+nx*fl, ryp+ny*fl, rxp, ryp, C.crit, 3.6, 13);
@@ -798,6 +806,8 @@ function drawCurvedScene(vp,R){
   // the same straight line whichever way the components point
   const tO = (Ox-Px)*ex + (Oy-Py)*ey;
   const s0 = Math.min(0,tO) - 46, s1 = Math.max(0,tO) + Math.min(vp.w*0.14, 84);
+  DRAWN.curved = {x0:Px+ex*s0, y0:Py+ey*s0, x1:Px+ex*s1, y1:Py+ey*s1,
+                  ox:Ox, oy:Oy, pxPerM:sc, R:R.R};
   grp('fr',()=>{
     dot(Px,Py,4.5,C.crit,'#0f1420');
     arrow(Px+ex*s0, Py+ey*s0, Px+ex*s1, Py+ey*s1, C.crit, 3.6, 13);

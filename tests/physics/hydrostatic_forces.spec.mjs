@@ -225,6 +225,93 @@ test.describe(`${MODULE} — numerical verification`, () => {
     }
   });
 
+  test("the resultant AS DRAWN passes through the pivot, both fluid sides", async ({ page }, testInfo) => {
+    await openLab(page, MODULE);
+    /* The numbers being right is not the same claim as the arrow lying on the right line.
+       `DRAWN` records the endpoints the last frame actually used, so this measures the
+       drawing rather than recomputing what the drawing ought to have been. */
+    for (const above of [false, true]) {
+      for (const cfg of [{ R: 2, hO: 3, span: 90, b: 2 }, { R: 2.5, hO: 5, span: 40, b: 1.2 }]) {
+        const miss = await page.evaluate(({ c, ab }) => {
+          Object.assign(st, { mode: "curved", rho: 1000, above: ab, ...c });
+          clampState();
+          const R = solve();
+          drawCurvedScene(VP.scene, R);              // draw one frame and read what it drew
+          const d = DRAWN.curved;
+          const vx = d.x1 - d.x0, vy = d.y1 - d.y0, L = Math.hypot(vx, vy);
+          const ux = vx / L, uy = vy / L;
+          const wx = d.ox - d.x0, wy = d.oy - d.y0, t = wx * ux + wy * uy;
+          const px = Math.hypot(wx - t * ux, wy - t * uy);     // perpendicular miss, pixels
+          return px / (d.pxPerM * d.R);                        // ÷R, dimensionless
+        }, { c: cfg, ab: above });
+
+        await verify(testInfo, {
+          module: MODULE,
+          id: `drawn-resultant-through-O-${above ? "above" : "outside"}-R${cfg.R}-s${cfg.span}`,
+          quantity: `perpendicular distance from O to the drawn resultant ÷ R `
+                  + `(fluid ${above ? "above" : "outside"} the arc)`,
+          units: "—", reference: 0, observed: miss, relTol: 1e-9,
+          source: "the components act on their own lines of action, which meet at P*; the "
+                + "resultant of two forces passes through their intersection, and on a circular "
+                + "arc that line also contains the centre of curvature — so the drawn arrow "
+                + "must miss O by nothing, whichever side the fluid is on",
+        });
+      }
+    }
+  });
+
+  test("the resultant AS DRAWN arrives normal to the plate, at the centre of pressure", async ({ page }, testInfo) => {
+    await openLab(page, MODULE);
+    for (const cfg of [{ theta: 30, L: 3, b: 2, hTop: 2 }, { theta: 0, L: 2.5, b: 1, hTop: 2 },
+                       { theta: 90, L: 2.5, b: 1, hTop: 0 }]) {
+      const r = await page.evaluate((c) => {
+        Object.assign(st, { mode: "plane", rho: 1000, ...c });
+        clampState();
+        const R = solve();
+        drawPlaneScene(VP.scene, R);
+        const d = DRAWN.plane;
+        /* the arrow must be perpendicular to A→B and end on the centre of pressure */
+        const px = d.x1 - d.x0, py = d.y1 - d.y0, pl = Math.hypot(px, py);
+        const tx = d.bx - d.ax, ty = d.by - d.ay, tl = Math.hypot(tx, ty);
+        const dotUnit = tl > 0 ? Math.abs((px * tx + py * ty) / (pl * tl)) : 0;
+        /* and it must arrive from the WET side. The fluid lies on the +n side, where
+           n = (sinθ, −cosθ) in these screen axes (x right, y = depth downward); the test
+           builds n from its own θ rather than from anything the module computed, so a sign
+           slip in the drawing cannot cancel against a matching slip in the reference. */
+        const th = (c.theta * Math.PI) / 180;
+        const nx = Math.sin(th), ny = -Math.cos(th);
+        const signed = ((d.x0 - d.cpx) * nx + (d.y0 - d.cpy) * ny) / d.pxPerM;
+        return { dotUnit, headOffCP: Math.hypot(d.x1 - d.cpx, d.y1 - d.cpy) / d.pxPerM,
+                 signedStandoff: signed };
+      }, cfg);
+
+      await verify(testInfo, {
+        module: MODULE, id: `drawn-plane-normal-th${cfg.theta}`,
+        quantity: `|cos| between the drawn resultant and the plate at θ = ${cfg.theta}°`,
+        units: "—", reference: 0, observed: r.dotUnit, relTol: 1e-9,
+        source: "all the differential forces are perpendicular to the surface, so the resultant "
+              + "must be too (Munson §2.8) — the drawn arrow must be exactly normal to A→B",
+      });
+      await verify(testInfo, {
+        module: MODULE, id: `drawn-plane-head-at-CP-th${cfg.theta}`,
+        quantity: `distance from the drawn arrowhead to the centre of pressure at θ = ${cfg.theta}°`,
+        units: "m", reference: 0, observed: r.headOffCP, absTol: 1e-9,
+        source: "the resultant acts at the centre of pressure, so that is where the arrow ends",
+      });
+      /* Signed, so drawing the arrow from the dry side flips it negative and fails by 2×
+         its own length. An unsigned distance would be identical either way. */
+      await verify(testInfo, {
+        module: MODULE, id: `drawn-plane-from-wet-side-th${cfg.theta}`,
+        quantity: `signed standoff of the arrow tail along the wet-side normal at θ = ${cfg.theta}°`,
+        units: "m", reference: Math.abs(r.signedStandoff), observed: r.signedStandoff,
+        absTol: 1e-9,
+        source: "the fluid pushes ONTO the surface, so the arrow must start clear of the plate "
+              + "on the wetted (+n) side and point inward — drawing it from the dry side "
+              + "reverses the physics while still looking like a plausible annotation",
+      });
+    }
+  });
+
   test("the module's own quadrature agrees with its closed forms", async ({ page }, testInfo) => {
     await openLab(page, MODULE);
     /* The module integrates p over 4000 strips independently of the formulas it displays

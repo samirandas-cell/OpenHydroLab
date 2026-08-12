@@ -712,7 +712,11 @@ function thickArrow(from,to,color,rad){
   sh.position.copy(from).addScaledVector(dir, shaft/2); sh.quaternion.copy(q);
   const hd=new THREE.Mesh(new THREE.ConeGeometry(rad*2.5, head, 18), mat);
   hd.position.copy(to).addScaledVector(dir, -head/2); hd.quaternion.copy(q);
-  g.add(sh,hd); return g;
+  g.add(sh,hd);
+  /* record the line this arrow was actually drawn along, so a test can measure the
+     drawn geometry rather than recompute what it thinks the geometry should be */
+  g.userData.from = from.clone(); g.userData.to = to.clone();
+  return g;
 }
 /* force arrows and markers are annotations, not geometry — keep them visible
    even when they end inside the translucent prism */
@@ -981,7 +985,11 @@ function buildCurved(R){
   GROUPS.fv.add(dashLine(new THREE.Vector3(0,0,zP), new THREE.Vector3(0,-(hO+Rr)*1.05,zP), 0x3b82f6));
 
   // resultant, spanning P* and the pivot so the line through O is visible
-  const dir=new THREE.Vector3(0,R.Fv,-R.Fx).normalize();     // +y up, −z toward the water
+  /* The reservoir is on the −z side, so the water pushes the gate toward +z: the
+     horizontal component of the resultant is +F_x, not −F_x. Getting this sign wrong
+     still draws a plausible-looking arrow — it just stops passing through the pivot,
+     which is the one thing this scene exists to show. */
+  const dir=new THREE.Vector3(0,R.Fv,R.Fx).normalize();
   const tO=new THREE.Vector3().subVectors(O,Pstar).dot(dir);
   const s0=Math.min(0,tO)-Rr*0.5, s1=Math.max(0,tO)+Rr*0.80;
   GROUPS.fr.add(onTop(thickArrow(Pstar.clone().addScaledVector(dir,s0),

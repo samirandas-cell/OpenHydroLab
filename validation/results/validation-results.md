@@ -1,8 +1,8 @@
 # OpenHydroLab — numerical validation results
 
-Generated 2026-08-09T01:56:07.875Z · engines: chromium, firefox, webkit
+Generated 2026-08-12T12:53:43.023Z · engines: chromium, firefox, webkit
 
-534 recorded comparisons across 10 modules and 3 browser engine(s); 0 failing.
+582 recorded comparisons across 10 modules and 3 browser engine(s); 0 failing.
 
 Each row compares a value produced by the laboratory against a reference derived independently of it — a closed-form solution, a conservation identity, or a hand-checkable textbook calculation. Errors are the worst observed across engines.
 
@@ -177,6 +177,19 @@ Each row compares a value produced by the laboratory against a reference derived
 | curved-zero-moment-span22.5 | net moment ÷ (F_R·R) at a 22.5° arc | 0 — | 6.301e-17 — | — | rel ≤ 1e-12 | Pass |
 | curved-zero-moment-span45 | net moment ÷ (F_R·R) at a 45° arc | 0 — | 0 — | — | rel ≤ 1e-12 | Pass |
 | curved-zero-moment-span67.5 | net moment ÷ (F_R·R) at a 67.5° arc | 0 — | 4.772e-17 — | — | rel ≤ 1e-12 | Pass |
+| drawn-plane-from-wet-side-th0 | signed standoff of the arrow tail along the wet-side normal at θ = 0° | 1.08574 m | 1.08574 m | 0 | abs ≤ 1e-9 | Pass |
+| drawn-plane-from-wet-side-th30 | signed standoff of the arrow tail along the wet-side normal at θ = 30° | 1.73103 m | 1.73103 m | 0 | abs ≤ 1e-9 | Pass |
+| drawn-plane-from-wet-side-th90 | signed standoff of the arrow tail along the wet-side normal at θ = 90° | 1.2757 m | 1.2757 m | 0 | abs ≤ 1e-9 | Pass |
+| drawn-plane-head-at-CP-th0 | distance from the drawn arrowhead to the centre of pressure at θ = 0° | 0 m | 0 m | — | abs ≤ 1e-9 | Pass |
+| drawn-plane-head-at-CP-th30 | distance from the drawn arrowhead to the centre of pressure at θ = 30° | 0 m | 0 m | — | abs ≤ 1e-9 | Pass |
+| drawn-plane-head-at-CP-th90 | distance from the drawn arrowhead to the centre of pressure at θ = 90° | 0 m | 0 m | — | abs ≤ 1e-9 | Pass |
+| drawn-plane-normal-th0 | |cos| between the drawn resultant and the plate at θ = 0° | 0 — | 0 — | — | rel ≤ 1e-9 | Pass |
+| drawn-plane-normal-th30 | |cos| between the drawn resultant and the plate at θ = 30° | 0 — | 3.170e-16 — | — | rel ≤ 1e-9 | Pass |
+| drawn-plane-normal-th90 | |cos| between the drawn resultant and the plate at θ = 90° | 0 — | 0 — | — | rel ≤ 1e-9 | Pass |
+| drawn-resultant-through-O-above-R2-s90 | perpendicular distance from O to the drawn resultant ÷ R (fluid above the arc) | 0 — | 5.440e-16 — | — | rel ≤ 1e-9 | Pass |
+| drawn-resultant-through-O-above-R2.5-s40 | perpendicular distance from O to the drawn resultant ÷ R (fluid above the arc) | 0 — | 2.329e-16 — | — | rel ≤ 1e-9 | Pass |
+| drawn-resultant-through-O-outside-R2-s90 | perpendicular distance from O to the drawn resultant ÷ R (fluid outside the arc) | 0 — | 4.784e-16 — | — | rel ≤ 1e-9 | Pass |
+| drawn-resultant-through-O-outside-R2.5-s40 | perpendicular distance from O to the drawn resultant ÷ R (fluid outside the arc) | 0 — | 4.842e-16 — | — | rel ≤ 1e-9 | Pass |
 | plane-dam45-CP | CP along the face | 9.42809 m | 9.42809 m | 0 | rel ≤ 1e-12 | Pass |
 | plane-dam45-F | resultant force per metre | 693672 N/m | 693672 N/m | < 1e-9 | rel ≤ 1e-12 | Pass |
 | plane-dy-invariant | Δy·h_c at 20 m ÷ at 1 m | 1 — | 1 — | 0 | rel ≤ 1e-12 | Pass |
@@ -204,6 +217,19 @@ Each row compares a value produced by the laboratory against a reference derived
 - **curved-zero-moment-span22.5** — the radial-traction identity is a property of circular curvature, not of the quadrant: it must hold for any span
 - **curved-zero-moment-span45** — the radial-traction identity is a property of circular curvature, not of the quadrant: it must hold for any span
 - **curved-zero-moment-span67.5** — the radial-traction identity is a property of circular curvature, not of the quadrant: it must hold for any span
+- **drawn-plane-from-wet-side-th0** — the fluid pushes ONTO the surface, so the arrow must start clear of the plate on the wetted (+n) side and point inward — drawing it from the dry side reverses the physics while still looking like a plausible annotation
+- **drawn-plane-from-wet-side-th30** — the fluid pushes ONTO the surface, so the arrow must start clear of the plate on the wetted (+n) side and point inward — drawing it from the dry side reverses the physics while still looking like a plausible annotation
+- **drawn-plane-from-wet-side-th90** — the fluid pushes ONTO the surface, so the arrow must start clear of the plate on the wetted (+n) side and point inward — drawing it from the dry side reverses the physics while still looking like a plausible annotation
+- **drawn-plane-head-at-CP-th0** — the resultant acts at the centre of pressure, so that is where the arrow ends
+- **drawn-plane-head-at-CP-th30** — the resultant acts at the centre of pressure, so that is where the arrow ends
+- **drawn-plane-head-at-CP-th90** — the resultant acts at the centre of pressure, so that is where the arrow ends
+- **drawn-plane-normal-th0** — all the differential forces are perpendicular to the surface, so the resultant must be too (Munson §2.8) — the drawn arrow must be exactly normal to A→B
+- **drawn-plane-normal-th30** — all the differential forces are perpendicular to the surface, so the resultant must be too (Munson §2.8) — the drawn arrow must be exactly normal to A→B
+- **drawn-plane-normal-th90** — all the differential forces are perpendicular to the surface, so the resultant must be too (Munson §2.8) — the drawn arrow must be exactly normal to A→B
+- **drawn-resultant-through-O-above-R2-s90** — the components act on their own lines of action, which meet at P*; the resultant of two forces passes through their intersection, and on a circular arc that line also contains the centre of curvature — so the drawn arrow must miss O by nothing, whichever side the fluid is on
+- **drawn-resultant-through-O-above-R2.5-s40** — the components act on their own lines of action, which meet at P*; the resultant of two forces passes through their intersection, and on a circular arc that line also contains the centre of curvature — so the drawn arrow must miss O by nothing, whichever side the fluid is on
+- **drawn-resultant-through-O-outside-R2-s90** — the components act on their own lines of action, which meet at P*; the resultant of two forces passes through their intersection, and on a circular arc that line also contains the centre of curvature — so the drawn arrow must miss O by nothing, whichever side the fluid is on
+- **drawn-resultant-through-O-outside-R2.5-s40** — the components act on their own lines of action, which meet at P*; the resultant of two forces passes through their intersection, and on a circular arc that line also contains the centre of curvature — so the drawn arrow must miss O by nothing, whichever side the fluid is on
 - **plane-dam45-CP** — upper edge at the free surface, so y_R = 2L/3 = 9.428 m along the face — independent of the inclination
 - **plane-dam45-F** — F = γ(H/2)(L·b) with wetted slant L = H/sin45° = 14.142 m → 693.66 kN/m (worked example: rockfill dam, reservoir depth 10 m)
 - **plane-dy-invariant** — Δy = I_xc/(y_cA) = L² sinθ/(12 h_c), so the product Δy·h_c depends only on L and θ; the ratio between any two submergences is therefore exactly 1
@@ -224,6 +250,9 @@ Each row compares a value produced by the laboratory against a reference derived
 |---|---|---|---|---|---|---|
 | circ-dy | shift of the CP below the centroid | 0.0560023 m | 0.0560023 m | 0 | rel ≤ 1e-12 | Pass |
 | circ-F | resultant force | 119147 N | 119147 N | 0 | rel ≤ 1e-12 | Pass |
+| drawn-resultant-through-pivot-R1-hO0-s90 | perpendicular distance from the pivot to the drawn resultant ÷ R | 0 — | 3.140e-16 — | — | rel ≤ 1e-12 | Pass |
+| drawn-resultant-through-pivot-R2-hO3-s90 | perpendicular distance from the pivot to the drawn resultant ÷ R | 0 — | 1.110e-16 — | — | rel ≤ 1e-12 | Pass |
+| drawn-resultant-through-pivot-R2.5-hO5-s40 | perpendicular distance from the pivot to the drawn resultant ÷ R | 0 — | 1.986e-16 — | — | rel ≤ 1e-12 | Pass |
 | gate3d-Fv | vertical component | 179358 N | 179358 N | 0 | rel ≤ 1e-12 | Pass |
 | gate3d-Fx | horizontal component | 156960 N | 156960 N | 0 | rel ≤ 1e-12 | Pass |
 | gate3d-zero-moment | net moment ÷ (F_R·R) | 0 — | 6.106e-17 — | — | rel ≤ 1e-12 | Pass |
@@ -263,6 +292,9 @@ Each row compares a value produced by the laboratory against a reference derived
 
 - **circ-dy** — Δy = I_xc sinθ /(h_c A) with I_xc = πD⁴/64 — the form of I_xc/(y_cA) that stays finite as θ → 0
 - **circ-F** — F = γ h_c A, h_c = 3 + 1·sin60° = 3.8660 m, A = πD²/4 = 3.1416 m² → 119.15 kN
+- **drawn-resultant-through-pivot-R1-hO0-s90** — the two components act on their own lines of action, which intersect at P*; the resultant of two forces passes through their intersection, and for a circular arc that line must also contain the centre of curvature — so the drawn arrow must miss the pivot by exactly nothing
+- **drawn-resultant-through-pivot-R2-hO3-s90** — the two components act on their own lines of action, which intersect at P*; the resultant of two forces passes through their intersection, and for a circular arc that line must also contain the centre of curvature — so the drawn arrow must miss the pivot by exactly nothing
+- **drawn-resultant-through-pivot-R2.5-hO5-s40** — the two components act on their own lines of action, which intersect at P*; the resultant of two forces passes through their intersection, and for a circular arc that line must also contain the centre of curvature — so the drawn arrow must miss the pivot by exactly nothing
 - **gate3d-Fv** — F_v = γ b (h_O R + πR²/4) → 179.36 kN
 - **gate3d-Fx** — F_x = γ h_c A_proj on the vertical projection → 156.96 kN
 - **gate3d-zero-moment** — the traction on a circular arc is radial, so it exerts no moment about the pivot axis — the property a Tainter gate is designed around

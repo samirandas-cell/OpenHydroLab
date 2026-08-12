@@ -173,6 +173,46 @@ test.describe(`${MODULE} — numerical verification`, () => {
     });
   });
 
+  test("the resultant AS DRAWN passes through the pivot axis", async ({ page }, testInfo) => {
+    await openLab(page, MODULE);
+    /* The zero-moment identity holding in the numbers is not the same claim as the arrow
+       in the scene lying on the right line. A sign slip in the drawn direction leaves every
+       readout correct and every other check passing, while the one thing the scene exists
+       to show quietly stops being true — which is exactly what happened once. So measure
+       the drawn geometry: the perpendicular distance from the pivot to the line the
+       resultant arrow is actually drawn along. */
+    for (const cfg of [
+      { R: 2, hO: 3, span: 90, bc: 2 },
+      { R: 1, hO: 0, span: 90, bc: 3 },
+      { R: 2.5, hO: 5, span: 40, bc: 1.2 },
+    ]) {
+      const miss = await page.evaluate((c) => {
+        Object.assign(st, { mode: "curved", rho: 1000, ...c });
+        clampState(); refresh();
+        const R = solve();
+        /* read the endpoints the resultant arrow was actually built with — not a
+           recomputation of what they ought to be, which would pass either way */
+        const arrow = GROUPS.fr.children.find((o) => o.userData && o.userData.from);
+        if (!arrow) return NaN;
+        const A = arrow.userData.from, B = arrow.userData.to;
+        const dir = new THREE.Vector3().subVectors(B, A).normalize();
+        const O = new THREE.Vector3(0, -R.hO, 0);            // pivot, in the force plane
+        const v = new THREE.Vector3().subVectors(O, A);
+        return v.sub(dir.multiplyScalar(v.dot(dir))).length() / R.R;   // ÷R, dimensionless
+      }, cfg);
+
+      await verify(testInfo, {
+        module: MODULE, id: `drawn-resultant-through-pivot-R${cfg.R}-hO${cfg.hO}-s${cfg.span}`,
+        quantity: "perpendicular distance from the pivot to the drawn resultant ÷ R",
+        units: "—", reference: 0, observed: miss, relTol: 1e-12,
+        source: "the two components act on their own lines of action, which intersect at P*; "
+              + "the resultant of two forces passes through their intersection, and for a "
+              + "circular arc that line must also contain the centre of curvature — so the "
+              + "drawn arrow must miss the pivot by exactly nothing",
+      });
+    }
+  });
+
   test("the worked solution reports the same numbers as the model", async ({ page }, testInfo) => {
     await openLab(page, MODULE);
     /* The step-by-step panel is generated from the solution object, but it is what a
