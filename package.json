@@ -14,7 +14,8 @@
     "validate": "playwright test && node tools/manuscript-tables.mjs --check",
     "paper": "node tools/manuscript-tables.mjs",
     "paper:check": "node tools/manuscript-tables.mjs --check",
-    "install-browsers": "playwright install --with-deps chromium firefox webkit"
+    "install-browsers": "playwright install --with-deps chromium firefox webkit",
+    "paper:docx": "node tools/manuscript-docx.cjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.48.0",
