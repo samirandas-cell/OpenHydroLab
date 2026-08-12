@@ -1,14 +1,14 @@
 cff-version: 1.2.0
 message: "If you use OpenHydroLab, please cite it as below."
-title: "OpenHydroLab: interactive, physics-accurate animations for teaching hydraulics and hydrology"
+title: "OpenHydroLab: interactive, physics-accurate animations for teaching fluid mechanics, hydraulics and hydrology"
 type: software
 authors:
   - family-names: Das
     given-names: Samiran
     affiliation: "James Watt School of Engineering, University of Glasgow (Singapore campus)"
     orcid: "https://orcid.org/0000-0002-3814-534X"
-version: 1.0.2
-date-released: 2026-07-29
+version: 1.0.3
+date-released: 2026-08-12
 license: MIT
 repository-code: "https://github.com/samirandas-cell/OpenHydroLab"
 # The concept DOI is the primary identifier because a release cannot contain
@@ -29,6 +29,8 @@ identifiers:
     description: "Archived snapshot of version 1.0.0"
 keywords:
   - hydrology
+  - fluid mechanics
+  - hydrostatics
   - open-channel hydraulics
   - engineering education
   - interactive simulation

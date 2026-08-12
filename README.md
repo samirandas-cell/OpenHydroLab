@@ -79,15 +79,17 @@ tests are left failing until they are closed.
 If you use OpenHydroLab in teaching or research, please cite the archived release — see
 `CITATION.cff` for the full record.
 
-- **This version (1.0.2):** [10.5281/zenodo.21665643](https://doi.org/10.5281/zenodo.21665643)
+- **This version (1.0.3):** minted by Zenodo when the release is published; added here in
+  the commit that follows it. Until then, cite the concept DOI below.
+- **Previous version (1.0.2):** [10.5281/zenodo.21665643](https://doi.org/10.5281/zenodo.21665643)
 - **All versions:** [10.5281/zenodo.21635797](https://doi.org/10.5281/zenodo.21635797)
 
 Cite the version DOI to pin the exact code your results depend on; cite the concept DOI to
 point readers at whatever the current release is.
 
 > Das, S. (2026). *OpenHydroLab: interactive, physics-accurate animations for teaching
-> hydraulics and hydrology* (Version 1.0.2) [Computer software].
-> https://doi.org/10.5281/zenodo.21665643
+> fluid mechanics, hydraulics and hydrology* (Version 1.0.3) [Computer software].
+> https://doi.org/10.5281/zenodo.21635797
 
 ## Contributing
 
