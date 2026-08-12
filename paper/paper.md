@@ -67,7 +67,10 @@ case, never widened to pass. **Results:** The protocol yields
 <!--G:software-runs-->324<!--/G--> software, offline and accessibility test executions
 across <!--G:engines-->3<!--/G--> browser engines, and regenerates that dataset on every
 run. Applying it to a codebase believed correct exposed six defects, including a routing
-step documented as exact that was not. **Conclusions:** The verification process, not the
+step documented as exact that was not; a seventh — a force computed correctly in every
+number and drawn on the wrong side of the surface — passed every numerical check and was
+found by eye, prompting a class of test that measures the drawn geometry itself.
+**Conclusions:** The verification process, not the
 artifact, is the transferable result: it makes what a simulation displays a public,
 reproducible fact rather than an assurance. No learning-outcome claim is made.
 
@@ -131,8 +134,9 @@ hydrology, and of the verification protocol built around it. The contribution is
    operation, the `file://` protocol, accessibility, and cross-engine consistency.
 3. **Evidence from applying it.** A generated validation dataset covering
    <!--G:comparisons-->582<!--/G--> comparisons on
-   <!--G:modules-->10<!--/G--> laboratories, and an account of the six defects the protocol
-   exposed in code that had already been used in teaching and reviewed by its author.
+   <!--G:modules-->10<!--/G--> laboratories, and an account of seven defects in code that
+   had already been used in teaching and reviewed by its author — six the protocol exposed,
+   and one it could not, which marks the boundary of what numerical verification sees.
 
 We state the scope limit at the outset and repeat it where it matters. This study
 establishes computational fidelity, reproducibility and adoption readiness. It says
@@ -600,9 +604,12 @@ an unreadable figure at one end of a slider's range.
 The protocol was written for a codebase that had already been used in teaching, reviewed
 by its author, and believed correct. It found six defects, listed in Table 8. Two of them
 are, in our view, the strongest available argument for the protocol, because neither could
-have been found by inspection or by ordinary use.
+have been found by inspection or by ordinary use. The table carries a seventh that the
+protocol did not find, because the argument for a verification process is incomplete
+without the boundary of what it verifies.
 
-**Table 8.** Defects exposed by applying the protocol to code already believed correct.
+**Table 8.** Defects found in code already believed correct. Six were exposed by the
+protocol; the seventh was not, and is recorded here for that reason.
 
 | # | Defect | Class | How the protocol caught it | Consequence if shipped |
 |---|---|---|---|---|
@@ -612,6 +619,7 @@ have been found by inspection or by ordinary use.
 | 4 | The 3D channel-geometry laboratory loaded its rendering library from a content delivery network | Self-containment | Source scan for third-party hosts, plus run-time request interception | The offline claim false for one of the laboratories, failing precisely in the low-bandwidth setting the design targets |
 | 5 | The vendored replacement library, imported as an ES module, worked over HTTP and produced a blank page from `file://` | Delivery | Loading every laboratory from disk with no server | A student double-clicking the file sees nothing, with no error message, while every server-based test passes |
 | 6 | A bed-slope label in the 3D scene overlapped and buried the side-slope label at part of the control range | Presentation | Measured label separation with a floor of one label height | An unreadable annotation at one end of a slider, invisible to every other class of test |
+| 7 | In the 3D cylindrical-gate scene the resultant's direction vector carried the horizontal component with the wrong sign, so the arrow was drawn on the wrong side of the gate and missed the pivot by 0.71*R* | Drawn geometry | **It did not.** The magnitude, the inclination angle and the zero-moment identity were all exactly right, so every numerical case passed; the author saw the arrow miss the pivot | The one thing that scene exists to demonstrate — that hydrostatic traction on a circular arc has no moment about the centre of curvature — silently contradicted by the picture asserting it |
 
 Defect 2 is the instructive one. The code was wrong, the comment above it asserted that it
 was right, and the error was invisible in ordinary use: a hydrograph lagging by half a time
@@ -624,6 +632,34 @@ Defect 5 is the second. It was *introduced by the fix for defect 4* and passed t
 existing test suite, because that suite served pages over `http://localhost` while students
 open files from disk. The lesson is stated as a rule in Section 2.2.2 and encoded as a
 permanent test.
+
+Defect 7 is the boundary case, and it is the reason we report the protocol's limits as
+findings rather than as caveats. The cylindrical-gate scene exists to show that hydrostatic
+traction on a circular arc is radial and therefore exerts no moment about the centre of
+curvature. Every number that scene computes was right: the resultant's magnitude, its
+inclination, and the cancellation of the two large opposing component moments all agreed
+with independently derived references to double precision, across
+<!--G:engines-->3<!--/G--> engines and the full range of radii, heads and arc spans. The
+direction vector, however, carried the horizontal component with the wrong sign — the
+reservoir sits on the −*z* side of the gate, so the water pushes it towards +*z* — and the
+arrow was therefore drawn on the wrong side of the gate, missing the pivot by 0.71*R*. A
+reader of that scene would have seen a figure contradicting the identity it was drawn to
+demonstrate, while every case in Table 3 passed. It was found by eye.
+
+The lesson generalises past this suite. A simulation makes two assertions — one in the
+numbers it reports and one in the picture it draws — and a protocol that samples only the
+first cannot see a disagreement between them. Our response was to make the drawing
+measurable rather than to look harder: each 3D arrow now retains the line segment it was
+constructed from, the 2D module publishes the equivalent through a global, and the new
+cases assert against those recorded endpoints rather than against a recomputation of what
+the endpoints ought to be. That distinction is the whole of it, and it is the
+independent-derivation rule again in a new setting: a test that recomputed the drawing from
+the same expression the renderer used would have confirmed the reversed arrow. The cases now assert that the resultant
+misses the pivot by nothing on both modules, that the plane resultant is exactly normal to
+its plate, that the arrowhead sits on the centre of pressure, and that the tail stands off
+on the *wetted* side — the last of these signed, because an unsigned standoff is identical
+whichever face the arrow is drawn from, and the first version of that test duly passed with
+the arrow still reversed.
 
 We also record, for the same reason, one case where the protocol was wrong and the code was
 right. The two-reservoir cascade peaks *after* the rain stops, at the instant the two
@@ -733,6 +769,13 @@ selected to exercise the quantities a student reads and the identities the teach
 on. They are not a formal coverage analysis of the source, and a defect in a rarely
 exercised branch could survive them.
 
+**What is drawn is verified more thinly than what is computed.** Defect 7 was a correct
+number rendered as an incorrect picture, and it passed every numerical case. The geometry
+cases added in response measure the arrows that carry an identity — position, direction and
+incidence on the pivot or the centre of pressure — but they do not verify a scene as a
+whole. Colour, shading, occlusion, and the readability of a figure at projection distance
+remain outside the protocol, checked only by looking.
+
 **The empirical fit carries a genuinely loose tolerance.** The Sherman IDF surface is a
 four-parameter summary of 36 fitted quantiles and cannot reproduce them exactly; its
 tolerance is stated as a fraction of the mean intensity being fitted rather than as
@@ -787,7 +830,10 @@ run.
 Applying the protocol to code already believed correct exposed six defects, including a
 routing step that was first order in time beneath a comment asserting it was exact, and a
 delivery failure introduced by the fix for an earlier one. Neither was reachable by
-inspection or by ordinary use. That is the argument of this paper: for an instrument whose
+inspection or by ordinary use. A seventh defect bounds the claim: a resultant force whose
+magnitude, inclination and zero-moment identity were all exactly right was drawn on the
+wrong side of the surface, and no numerical case could see it. A simulation asserts in its
+picture as well as in its numbers, and the drawn geometry has to be measured too. That is the argument of this paper: for an instrument whose
 purpose is to show students what the physics does, correctness is not a quality attribute
 to be assumed, and the process that establishes it in public is a more transferable
 contribution than the artifact it certifies.
