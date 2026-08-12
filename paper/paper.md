@@ -1,13 +1,15 @@
 ---
-title: "Verifiable by Construction: Designing and Validating an Open, Offline Simulation Suite for Undergraduate Hydraulics and Hydrology"
+title: "Designed for Verification: Developing and Validating an Open, Offline Simulation Suite for Undergraduate Hydraulics and Hydrology"
 author:
   - name: Samiran Das
     orcid: 0000-0002-3814-534X
     email: samiran.das@glasgow.ac.uk
     affiliation: 1
+    corresponding: true
 affiliations:
   - index: 1
-    name: "James Watt School of Engineering, University of Glasgow (Singapore campus), Singapore"
+    name: "James Watt School of Engineering, University of Glasgow (Singapore campus), 1 Punggol Coast Road, Singapore 828608, Singapore"
+correspondence: "Correspondence: samiran.das@glasgow.ac.uk"
 journal: "Education Sciences"
 special_issue: "The Role of Technology in STEM Education: Opportunities and Challenges"
 section: "STEM Education"
@@ -36,27 +38,38 @@ bibliography: paper.bib
   validation dataset.
 -->
 
+Samiran Das <sup>1,</sup>\*
+
+<sup>1</sup> James Watt School of Engineering, University of Glasgow (Singapore campus),
+1 Punggol Coast Road, Singapore 828608, Singapore; samiran.das@glasgow.ac.uk;
+ORCID 0000-0002-3814-534X
+
+\* Correspondence: samiran.das@glasgow.ac.uk
+
 ## Abstract
 
-Educational simulations are ubiquitous in STEM teaching, yet the numbers they display are
-rarely verified in public, and the process behind them is rarely reported at all. We report
-the design and technical validation of OpenHydroLab, an open-source suite of eight
-interactive browser laboratories covering open-channel hydraulics (geometry, uniform flow,
-specific energy, jumps, gradually varied flow) and engineering hydrology (storm and unit
-hydrographs, rainfall frequency). Three design commitments
-distinguish it: every displayed quantity is computed live from its governing equation rather
-than animated to look plausible; each laboratory runs offline from a local file with no
-installation and no third-party host; and the governing equations are exposed in readable
-source. The central contribution is the verification process. Every reference value is
-derived independently of the code — from a closed form, a conservation identity, a
-hand-checkable textbook calculation, or an independent reimplementation — and tolerances are
-justified case by case, never widened to pass. The protocol yields
-<!--G:comparisons-->354<!--/G--> numerical comparisons and
-<!--G:software-runs-->264<!--/G--> software, offline and accessibility test executions
-across <!--G:engines-->3<!--/G--> browser engines, regenerating the reported dataset on
-every run. Applying it to a codebase believed correct exposed six defects, including a
-routing step documented as exact that was not. The protocol, not the artifact, is the
-transferable result. No learning-outcome claim is made.
+**Background/Objectives:** Educational simulations are ubiquitous in STEM teaching, yet the
+numbers they display are rarely verified in public, and the process behind them is rarely
+reported at all. We report the design and technical validation of OpenHydroLab, an
+open-source suite of ten interactive browser laboratories covering fluid statics
+(hydrostatic forces on plane and curved surfaces, in two and three dimensions),
+open-channel hydraulics (geometry, uniform flow, specific energy, jumps, gradually varied
+flow) and engineering hydrology (storm and unit hydrographs, rainfall frequency), and of
+the verification protocol
+built around it. **Methods:** Three design commitments distinguish the suite: every
+displayed quantity is computed live from its governing equation rather than animated to look
+plausible; each laboratory runs offline from a local file, with no installation and no
+third-party host; and the physics is exposed in readable source. Every reference value is
+derived independently of the code — from a closed form, a conservation identity, a textbook
+calculation or an independent reimplementation — and every tolerance is justified case by
+case, never widened to pass. **Results:** The protocol yields
+<!--G:comparisons-->582<!--/G--> numerical comparisons and
+<!--G:software-runs-->324<!--/G--> software, offline and accessibility test executions
+across <!--G:engines-->3<!--/G--> browser engines, and regenerates that dataset on every
+run. Applying it to a codebase believed correct exposed six defects, including a routing
+step documented as exact that was not. **Conclusions:** The verification process, not the
+artifact, is the transferable result: it makes what a simulation displays a public,
+reproducible fact rather than an assurance. No learning-outcome claim is made.
 
 **Keywords:** engineering education; educational simulation; hydraulics; hydrology;
 open-channel flow; software verification; open educational resources; design-based
@@ -70,7 +83,10 @@ two decades [@wieman2008phet; @wieman2010teaching], and the broader literature o
 computer simulation in science education is large enough to support meta-analysis
 [@rutten2012learning]. Comparative reviews of physical, virtual and remote laboratories
 find that virtual instruments can serve purposes that physical ones cannot, and vice
-versa [@dejong2013physical; @manickerson2006handson], while the engineering-education
+versa [@dejong2013physical; @manickerson2006handson]; controlled comparisons in
+introductory physics have gone further, finding that a simulation substituted for the
+laboratory equipment it represents can outperform the equipment on both conceptual and
+apparatus-handling measures [@finkelstein2005when], while the engineering-education
 literature has long argued that laboratory work carries objectives distinct from those of
 lectures [@feisel2005role].
 
@@ -102,8 +118,8 @@ compares a hand calculation with a simulation and finds a discrepancy has no way
 which is wrong, and neither, usually, does the instructor.
 
 This paper reports a design-and-technical-validation study of OpenHydroLab, a suite of
-eight interactive browser laboratories for undergraduate hydraulics and hydrology, and of
-the verification protocol built around it. The contribution is threefold:
+ten interactive browser laboratories for undergraduate fluid mechanics, hydraulics and
+hydrology, and of the verification protocol built around it. The contribution is threefold:
 
 1. **A design.** Three commitments — live computation from the governing equation,
    offline self-containment, and readable exposure of the physics — and the specific
@@ -114,8 +130,8 @@ the verification protocol built around it. The contribution is threefold:
    and of what an automated suite must exercise beyond numerical agreement — offline
    operation, the `file://` protocol, accessibility, and cross-engine consistency.
 3. **Evidence from applying it.** A generated validation dataset covering
-   <!--G:comparisons-->354<!--/G--> comparisons on
-   <!--G:modules-->8<!--/G--> laboratories, and an account of the six defects the protocol
+   <!--G:comparisons-->582<!--/G--> comparisons on
+   <!--G:modules-->10<!--/G--> laboratories, and an account of the six defects the protocol
    exposed in code that had already been used in teaching and reviewed by its author.
 
 We state the scope limit at the outset and repeat it where it matters. This study
@@ -138,18 +154,20 @@ Section 5 concludes.
 
 ### 2.1. The suite
 
-OpenHydroLab comprises eight laboratories, each a web page that runs in any current
-browser. Seven are a single self-contained HTML file; the eighth ships alongside a
-vendored copy of a 3D rendering library. Table 1 lists them with the concepts each is
+OpenHydroLab comprises ten laboratories, each a web page that runs in any current
+browser. Eight are a single self-contained HTML file; the two that render in 3D ship
+alongside a vendored copy of a 3D rendering library. Table 1 lists them with the concepts each is
 built to expose. The suite is released under the MIT licence, and the release described
 and verified here is archived with a persistent identifier (Section 6).
 
-**Table 1.** The eight laboratories and the concepts each is designed to expose. The
+**Table 1.** The ten laboratories and the concepts each is designed to expose. The
 "conceptual target" column states the design intent of the module; it is not a claim about
 what students in fact learn, which this study does not test.
 
 | Laboratory | Domain | Physics computed live | Conceptual target |
 |---|---|---|---|
+| `hydrostatic_forces` | Fluid statics | Resultant and centre of pressure on a plane surface at any inclination on one continuous θ slider, with the depth shift written *I*~xc~ sin θ/(*h*~c~*A*) so the θ → 0 singularity is removed while *y*~c~ = *h*~c~/sin θ is still shown running off to infinity; curved surfaces decomposed into *F*~x~ on the vertical projection and *F*~v~ = γ*V*; a step-by-step worked solution generated from the current slider values | The resultant as the *volume* of the pressure prism and the centre of pressure as its centroid — one statement covering horizontal, inclined and vertical surfaces, rather than three memorised formulae |
+| `hydrostatic_forces_3d` | Fluid statics | The pressure prism as an orbitable solid; *A*, *ȳ* and *I*~xc~ re-derived by integration from each of four plate shapes' own chord width and compared on screen with the standard property table; radial traction on a circular arc and the resulting zero moment about the centre of curvature | That the tabulated section properties are derived quantities rather than givens, and why a Tainter gate carries no hydrostatic moment on its pivot at any head |
 | `channel_geometry` | Hydraulics | Geometry elements *A*, *P*, *R*, *T*, *D* for four section shapes; velocity-profile models with α and β by numerical integration; Reynolds and Froude classification; plan-view wave propagation at *c* = √(*gD*) advected at *V* | The Froude number as a ratio of information speeds — whether a surface wave can travel upstream — rather than as a formula |
 | `specific_energy` | Hydraulics | *E*–*y* curve with exact subcritical and supercritical branch roots; sluice-gate alternate depths; flow over a hump including choking past Δ*z*~crit~ | Why one specific energy admits two depths, why the surface *falls* over a hump, and what choking does to the upstream level |
 | `hydraulic_jump` | Hydraulics | Bélanger sequent depths; specific force *M*–*y* and specific energy *E*–*y* on a shared depth axis; energy loss by two independent routes; jump classification, efficiency and length against Fr~1~ | Why momentum is conserved across a jump while energy is not, and the difference between alternate and sequent depths |
@@ -403,15 +421,15 @@ and hence every table below, by running the test suite against the archived rele
 
 ## 3. Results
 
-All results below are from the validation run of <!--G:run-date-->2026-07-29<!--/G-->
+All results below are from the validation run of <!--G:run-date-->2026-08-12<!--/G-->
 against the archived release, with overall status
 **<!--G:run-status-->passed<!--/G-->**.
 
 ### 3.1. Numerical verification
 
-The suite records <!--G:comparisons-->354<!--/G--> numerical comparisons —
-<!--G:cases-->118<!--/G--> distinct verification cases evaluated on each of
-<!--G:engines-->3<!--/G--> browser engines — across <!--G:modules-->8<!--/G-->
+The suite records <!--G:comparisons-->582<!--/G--> numerical comparisons —
+<!--G:cases-->194<!--/G--> distinct verification cases evaluated on each of
+<!--G:engines-->3<!--/G--> browser engines — across <!--G:modules-->10<!--/G-->
 laboratories, with <!--G:failures-->0<!--/G--> failing. Table 3 summarises them by
 laboratory. Errors are the worst observed across engines, and each case is judged against
 its own tolerance.
@@ -423,6 +441,8 @@ a relative tolerance and absolute otherwise, and are the worst observed across e
 <!-- BEGIN GENERATED table:module-summary -->
 | Laboratory | Verification cases | Comparisons (× 3 engines) | Tolerance band | Worst error | Passing |
 |---|---|---|---|---|---|
+| `hydrostatic_forces` | 37 | 111 | 1 × 10^−15^ – 1 × 10^−6^ | 8.8 × 10^−9^ | 111/111 |
+| `hydrostatic_forces_3d` | 39 | 117 | 1 × 10^−15^ – 0.0005 | 3.1 × 10^−5^ | 117/117 |
 | `channel_geometry` | 44 | 132 | 1 × 10^−12^ – 0.005 | 4.0 × 10^−3^ | 132/132 |
 | `specific_energy` | 10 | 30 | 1 × 10^−9^ – 1 × 10^−6^ | < 10^−15^ | 30/30 |
 | `hydraulic_jump` | 8 | 24 | 1 × 10^−9^ – 1 × 10^−8^ | 4.2 × 10^−15^ | 24/24 |
@@ -431,7 +451,7 @@ a relative tolerance and absolute otherwise, and are the worst observed across e
 | `storm_hydrograph` | 9 | 27 | 1 × 10^−9^ – 0.005 | 4.1 × 10^−3^ | 27/27 |
 | `unit_hydrograph` | 9 | 27 | 1 × 10^−9^ – 0.005 | 2.6 × 10^−14^ | 27/27 |
 | `idf_frequency` | 11 | 33 | 1 × 10^−12^ – 0.25 | 1.2 × 10^−1^ | 33/33 |
-| **All modules** | **118** | **354** | — | **1.2 × 10^−1^** | **354/354** |
+| **All modules** | **194** | **582** | — | **1.2 × 10^−1^** | **582/582** |
 <!-- END GENERATED -->
 
 Table 4 groups the comparisons by the tolerance they are held to. The informative column
@@ -441,9 +461,9 @@ behaviour rather than to the mathematics, because a suite whose cases routinely 
 most of their allowance is a suite whose limits were chosen after the fact.
 
 The pattern here is the one the policy predicts. Of the
-<!--G:tight-cases-->65<!--/G--> cases held to 10⁻⁹ or tighter — the closed-form identities
+<!--G:tight-cases-->124<!--/G--> cases held to 10⁻⁹ or tighter — the closed-form identities
 and conservation laws, where nothing but double-precision arithmetic stands between the
-module and its reference — <!--G:exact-cases-->65<!--/G--> agree with their independent
+module and its reference — <!--G:exact-cases-->124<!--/G--> agree with their independent
 reference to better than 10⁻¹², using under a thousandth of a percent of their allowance.
 Every group that consumes an appreciable fraction of its tolerance is one whose limit was
 set by a stated property of the mathematics or of the reference, not by the code: fixed-step
@@ -462,16 +482,18 @@ and that error as a percentage of the tolerance allowed.
 <!-- BEGIN GENERATED table:tolerance-classes -->
 | Tolerance | Cases | Comparisons | Worst error observed | Worst error as % of tolerance |
 |---|---|---|---|---|
+| rel. ≤ 1 × 10^−15^ | 5 | 15 | 0 | 0 |
 | abs. ≤ 1 × 10^−12^ | 9 | 27 | 1.3 × 10^−15^ | 0.13% |
-| rel. ≤ 1 × 10^−12^ | 30 | 90 | 0 | 0 |
-| abs. ≤ 1 × 10^−9^ | 4 | 12 | < 10^−15^ | < 0.001% |
-| rel. ≤ 1 × 10^−9^ | 22 | 66 | < 10^−15^ | < 0.001% |
+| rel. ≤ 1 × 10^−12^ | 71 | 213 | < 10^−15^ | 0.031% |
+| abs. ≤ 1 × 10^−9^ | 10 | 30 | < 10^−15^ | < 0.001% |
+| rel. ≤ 1 × 10^−9^ | 29 | 87 | < 10^−15^ | < 0.001% |
 | abs. ≤ 1 × 10^−8^ | 1 | 3 | 4.2 × 10^−15^ | < 0.001% |
 | rel. ≤ 1 × 10^−8^ | 1 | 3 | < 10^−15^ | < 0.001% |
 | abs. ≤ 1 × 10^−6^ | 7 | 21 | 1.4 × 10^−14^ | < 0.001% |
-| rel. ≤ 1 × 10^−6^ | 14 | 42 | < 10^−15^ | < 0.001% |
+| rel. ≤ 1 × 10^−6^ | 30 | 90 | 9.9 × 10^−8^ | 9.9% |
 | abs. ≤ 5 × 10^−5^ | 1 | 3 | 1.6 × 10^−5^ | 31% |
 | abs. ≤ 0.0005 | 6 | 18 | 2.8 × 10^−4^ | 56% |
+| rel. ≤ 0.0005 | 1 | 3 | 3.1 × 10^−5^ | 6.2% |
 | abs. ≤ 0.0015 | 2 | 6 | 0 | 0 |
 | abs. ≤ 0.002 | 1 | 3 | 2.6 × 10^−14^ | < 0.001% |
 | rel. ≤ 0.002 | 4 | 12 | 1.0 × 10^−6^ | 0.052% |
@@ -548,8 +570,8 @@ The sweeps and identities behind these cases are:
 
 ### 3.4. Software, offline and accessibility verification
 
-Table 7 reports the non-numerical checks: <!--G:software-tests-->88<!--/G--> distinct
-tests executed <!--G:software-runs-->264<!--/G--> times across the engine matrix, with
+Table 7 reports the non-numerical checks: <!--G:software-tests-->108<!--/G--> distinct
+tests executed <!--G:software-runs-->324<!--/G--> times across the engine matrix, with
 <!--G:software-failures-->0<!--/G--> failures. Every laboratory is covered by every class
 of check on every engine.
 
@@ -559,12 +581,12 @@ engine. Cells give passing tests over tests executed on that engine.
 <!-- BEGIN GENERATED table:software-matrix -->
 | Check | Distinct tests | Chromium | Firefox | WebKit |
 |---|---|---|---|---|
-| Accessible names, keyboard operation, focus order, no overflow | 33 | 33/33 | 33/33 | 33/33 |
-| Clean load and live rendering | 18 | 18/18 | 18/18 | 18/18 |
+| Accessible names, keyboard operation, focus order, no overflow | 41 | 41/41 | 41/41 | 41/41 |
+| Clean load and live rendering | 22 | 22/22 | 22/22 | 22/22 |
 | Label separation in the 3D scene | 3 | 3/3 | 3/3 | 3/3 |
-| Operation from the `file://` protocol | 17 | 17/17 | 17/17 | 17/17 |
-| Self-containment and offline operation | 17 | 17/17 | 17/17 | 17/17 |
-| **All checks** | **88** | **88/88** | **88/88** | **88/88** |
+| Operation from the `file://` protocol | 21 | 21/21 | 21/21 | 21/21 |
+| Self-containment and offline operation | 21 | 21/21 | 21/21 | 21/21 |
+| **All checks** | **108** | **108/108** | **108/108** | **108/108** |
 <!-- END GENERATED -->
 
 Two entries deserve comment. The `file://` row exists because of the defect described in
@@ -587,7 +609,7 @@ have been found by inspection or by ordinary use.
 | 1 | The storm hydrograph recorded simulation state *before* advancing the step, so array index *j* held the state at (*j*+1)Δ*t* | Numerical | Discharge at a known instant — the moment the rain stops — against the closed-form cascade response at that instant | Every plotted series displaced half a step along its own time axis; a lag time misread by Δ*t*/2 |
 | 2 | The two-reservoir cascade chained the exponential update — feeding reservoir 1's end-of-step value into reservoir 2 — making it first order in time, under a source comment asserting "exact exponential stepping" | Numerical | Comparison against the closed-form Nash cascade response to a rectangular hyetograph | A rising limb lagging the analytic solution by Δ*t*/2, in a module whose entire purpose is to show *why* the hydrograph has the shape it has |
 | 3 | All 45 range sliders in the suite lacked accessible names | Accessibility | Accessible-name computation on every interactive control | Every laboratory unusable with a screen reader; a control that announces nothing is not a control |
-| 4 | The 3D laboratory loaded its rendering library from a content delivery network | Self-containment | Source scan for third-party hosts, plus run-time request interception | The offline claim false for one of eight laboratories, failing precisely in the low-bandwidth setting the design targets |
+| 4 | The 3D channel-geometry laboratory loaded its rendering library from a content delivery network | Self-containment | Source scan for third-party hosts, plus run-time request interception | The offline claim false for one of the laboratories, failing precisely in the low-bandwidth setting the design targets |
 | 5 | The vendored replacement library, imported as an ES module, worked over HTTP and produced a blank page from `file://` | Delivery | Loading every laboratory from disk with no server | A student double-clicking the file sees nothing, with no error message, while every server-based test passes |
 | 6 | A bed-slope label in the 3D scene overlapped and buried the side-slope label at part of the control range | Presentation | Measured label separation with a floor of one label height | An unreadable annotation at one end of a slider, invisible to every other class of test |
 
@@ -615,7 +637,7 @@ standard it imposes.
 ### 4.1. What this study establishes, and what it does not
 
 The evidence above supports three claims and no others. First, that the quantities the
-eight laboratories display agree with independently derived references to stated
+ten laboratories display agree with independently derived references to stated
 tolerances — in most cases to double precision — across three browser engines. Second,
 that they load, render, animate, remain self-contained and stay operable from the keyboard
 in those engines, both over HTTP and from a local file with no network. Third, that the
@@ -632,7 +654,8 @@ evidence.
 
 ### 4.2. The protocol, not the artifact, is the transferable result
 
-The eight laboratories are useful to instructors of hydraulics and hydrology, a small
+The ten laboratories are useful to instructors of fluid mechanics, hydraulics and
+hydrology, a small
 population. The protocol applies to any educational simulation that puts a computed number
 on screen, which is most of them. Its transferable content is four rules:
 
@@ -682,7 +705,7 @@ constraint.
 
 **Self-containment costs modularity.** No build step, no package manager, no shared
 component library: each laboratory duplicates the utilities it needs, and a fix to a shared
-idea must be applied eight times. This is a real maintenance burden, accepted because the
+idea must be applied ten times. This is a real maintenance burden, accepted because the
 alternative — a build pipeline producing bundles — puts the physics students can read
 behind a compilation step and puts the artifact's longevity at the mercy of a toolchain.
 A single HTML file will still open in a browser in ten years. A 2016 JavaScript build
@@ -696,7 +719,7 @@ for another property valued by anyone who needs to trust the numbers.
 
 ### 4.4. Limitations
 
-Beyond the absence of any learning claim, four limitations bound the results.
+Beyond the absence of any learning claim, five limitations bound the results.
 
 The verification is of **implementation fidelity against physical models, not of the models
 themselves**. The φ-index, the Nash cascade, the Gumbel distribution and Manning's equation
@@ -705,7 +728,7 @@ cascade exactly says nothing about whether a real catchment behaves like one. Ea
 states its module's assumptions and limitations for this reason, and the pedagogical
 framing is that these are models to be understood, including in their failure.
 
-**Coverage is broad rather than exhaustive.** The <!--G:cases-->118<!--/G--> cases were
+**Coverage is broad rather than exhaustive.** The <!--G:cases-->194<!--/G--> cases were
 selected to exercise the quantities a student reads and the identities the teaching rests
 on. They are not a formal coverage analysis of the source, and a defect in a rarely
 exercised branch could survive them.
@@ -720,6 +743,15 @@ labelled as such rather than blended into a headline figure.
 three engines on a desktop-class machine at three viewport sizes. Touch interaction on
 small screens, low-powered hardware and assistive-technology behaviour beyond
 accessible-name computation and keyboard operability remain unverified.
+
+**Module code and test code share an author, and both were written with the assistance of a
+large language model** (see the disclosure in the back matter). The protocol's requirement
+that a reference be derived independently of the code is therefore a requirement on the
+*derivation*, not on the person or the tool that typed it: independence is enforced by
+recording, for every case, the closed form, conservation identity or textbook calculation
+the reference comes from, so that a reader can re-derive it without running the software.
+Independent reimplementation by a second party would be stronger evidence, and the archived
+dataset is published in a form that makes it possible.
 
 ### 4.5. Planned evaluation
 
@@ -737,16 +769,17 @@ nor lend it.
 
 ## 5. Conclusions
 
-We have reported the design and technical validation of OpenHydroLab, eight open,
-offline, interactive laboratories for undergraduate hydraulics and hydrology, and the
+We have reported the design and technical validation of OpenHydroLab, ten open,
+offline, interactive laboratories for undergraduate fluid mechanics, hydraulics and
+hydrology, and the
 verification protocol built around them. The suite computes every displayed quantity from
 its governing equation, runs from a local file with no installation and no third-party
 host, and exposes its physics in readable source. The protocol requires every reference
 value to be derived independently of the code, prefers quantities reachable by two routes,
 sweeps the control ranges and reports the worst case, justifies every tolerance
 individually, and tests the delivery protocol students actually use. Applied to the suite,
-it records <!--G:comparisons-->354<!--/G--> numerical comparisons and
-<!--G:software-runs-->264<!--/G--> software, offline and accessibility test executions
+it records <!--G:comparisons-->582<!--/G--> numerical comparisons and
+<!--G:software-runs-->324<!--/G--> software, offline and accessibility test executions
 across <!--G:engines-->3<!--/G--> browser engines, with
 <!--G:failures-->0<!--/G--> failures, and regenerates its own published dataset on every
 run.
@@ -781,6 +814,14 @@ used under the UK Open Government Licence.
 physics-accurate animations for teaching hydraulics and hydrology* (Version 1.0.2)
 [Computer software]. <https://doi.org/10.5281/zenodo.21665643>
 
+## Author Contributions
+
+Conceptualization, S.D.; methodology, S.D.; software, S.D.; validation, S.D.; formal
+analysis, S.D.; investigation, S.D.; data curation, S.D.; writing—original draft
+preparation, S.D.; writing—review and editing, S.D.; visualization, S.D.; project
+administration, S.D. The author has read and agreed to the published version of the
+manuscript.
+
 ## Funding
 
 This research received no external funding.
@@ -789,6 +830,10 @@ This research received no external funding.
 
 Not applicable. This study involved no human participants and collected no data from
 students.
+
+## Informed Consent Statement
+
+Not applicable.
 
 ## Data Availability Statement
 
@@ -800,9 +845,24 @@ data were used.
 
 ## Acknowledgments
 
-<!-- TODO before submission: acknowledge colleagues who commented on the laboratories and
-students whose questions shaped specific modules, by name and with their permission. Keep
-this factual — MDPI prints it verbatim. -->
+The author thanks the students of the hydraulics and hydrology courses at the University of
+Glasgow (Singapore campus), whose questions in class and in tutorials shaped the conceptual
+targets of several of the laboratories.
+
+## Use of Generative AI and AI-Assisted Technologies
+
+During the development of the software and the preparation of this manuscript, the author
+used Anthropic's Claude (accessed through the Claude Code command-line tool) as a
+programming and drafting assistant. Its use spanned four areas: implementing and
+refactoring the laboratories' JavaScript, including the rendering and interface code;
+writing the automated test suites and the supporting tooling; drafting the module guides
+and the verification protocol document; and drafting and editing the text of this
+manuscript. The author specified the governing equations, the derivation route for each
+reference value and each tolerance, checked every reference value against the closed form,
+conservation identity or textbook source recorded with it, directed the design decisions
+reported in Section 2.2, reviewed and edited all generated code and text, and executed and
+inspected every reported test run. The author takes full responsibility for the content of
+the software and of this publication.
 
 ## Conflicts of Interest
 

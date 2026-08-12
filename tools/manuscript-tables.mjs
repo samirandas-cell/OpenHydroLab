@@ -23,6 +23,8 @@ const matrix = JSON.parse(
 const paperPath = resolve(root, 'paper/paper.md');
 
 const MODULE_TITLES = {
+  hydrostatic_forces: 'Hydrostatic forces on plane and curved surfaces',
+  hydrostatic_forces_3d: 'Hydrostatic forces in three dimensions',
   channel_geometry: 'Channel geometry, velocity distribution and the Froude number',
   specific_energy: 'Specific energy, critical depth and choking',
   hydraulic_jump: 'Hydraulic jump',
@@ -131,6 +133,15 @@ function table(header, rows) {
 const worst = worstByCase(results.cases);
 const engines = results.engines;
 const modules = [...new Set(results.cases.map((c) => c.module))];
+// A module absent from MODULE_TITLES would be dropped from every per-module table while
+// still counting towards the totals, so the rows would silently stop summing. Fail instead.
+const untitled = modules.filter((m) => !(m in MODULE_TITLES));
+if (untitled.length) {
+  console.error(
+    `validation dataset contains modules missing from MODULE_TITLES: ${untitled.join(', ')}`,
+  );
+  process.exit(1);
+}
 const distinctCases = worst.size;
 const comparisons = results.cases.length;
 const failures = results.cases.filter((c) => c.status !== 'pass').length;
