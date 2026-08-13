@@ -104,6 +104,35 @@ clone that has no `paper/` — so `npm run validate` passes there too.
   tag Zenodo has never seen. Check the per-release **Errors** tab at
   <https://zenodo.org/account/settings/github/> — it names the real cause, which in our
   case was `Record 'N' has no file '...zip'`, i.e. their file transfer, not our metadata.
+- **Never diagnose Zenodo before checking `/releases`.** A release saved as a **draft**
+  looks published to the person who made it, is invisible to everyone else, and fires no
+  webhook. v1.0.4 spent four minutes looking like the v1.0.1 storage fault — three records
+  on the concept, the concept DOI still resolving to the previous version — when the real
+  cause was that no release existed at all. Open
+  <https://github.com/samirandas-cell/OpenHydroLab/releases> logged out, or fetch it
+  anonymously: that view is the honest one, because it shows what the webhook saw. The
+  publishing sequence is tag → push → **Publish release** (never Save draft) → verify.
+- **Never call a release archived until the deposit is verified from outside.** Ask the
+  API, not the release page: `https://zenodo.org/api/records/21635797/versions/latest`
+  must report the version you just cut, and `https://zenodo.org/api/records/<id>` must
+  list a non-empty `.zip`. Then confirm what is *inside* the archive — the reproducibility
+  instruction in the paper is a claim about the archive, not about the working tree, and
+  v1.0.4 shipped with the manuscript in it precisely because nobody looked.
+- **Never push or archive the manuscript while a paper is under consideration.** `paper/`
+  and `submission/` are git-ignored for the duration: the manuscript, its bibliography,
+  the built Word files, the blinded review copy, the cover letter and the presubmission
+  enquiry stay on this machine. The Special Issue runs **double-blind** review, and a copy
+  under the author's name on GitHub or Zenodo defeats the blinding however the reviewer
+  finds it. What the repository publishes is the artifact the paper is *about* — the
+  laboratories, the guides, the protocol, the suite and the generated dataset — which is
+  everything a reviewer needs to check the reported numbers. Before any release, confirm
+  the tag is clean: `git ls-tree -r --name-only <tag> | grep -E "^(paper|submission)/"`
+  must return nothing. Removing the folders costs one thing worth knowing —
+  `npm run validate` chains `paper:check`, which threw `ENOENT` on a clone until
+  `manuscript-tables.mjs` was taught to exit 0 when `paper/paper.md` is absent. Keep that
+  behaviour. And note the removal is **forward-only**: `paper/` was tracked from July to
+  13 August and remains inside every archive up to v1.0.4, because rewriting that history
+  would change the SHAs the manuscript cites and break four published DOIs.
 - **Never trust a contact address, count or identifier taken from this repo's own files
   without re-verifying it.** `presubmission-enquiry.md` carried `educsci@mdpi.com`; the
   real address is `education@mdpi.com` (`EducSci_MDPI` is only the journal's social
@@ -112,7 +141,7 @@ clone that has no `paper/` — so `npm run validate` passes there too.
 
 ## Log
 
-### 2026-08-13 — submission copy reviewed and corrected; v1.0.4 prepared, not published
+### 2026-08-13 — submission copy reviewed and corrected; v1.0.4 cut and archived
 
 **Delivered.** `submission/education-sciences/` — the Codex-drafted Education Sciences
 manuscript brought into this repository, reviewed line by line against the dataset and
