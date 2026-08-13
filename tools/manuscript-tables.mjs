@@ -9,7 +9,7 @@
 // every inline count below is derived from validation/results/, so a re-run of the test
 // suite followed by a re-run of this script is the only way those numbers change.
 
-import { readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 
@@ -358,6 +358,15 @@ const inline = {
 // ---------------------------------------------------------------- injection
 
 const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+/* The manuscript is not part of the published repository while the Special Issue runs
+   double-blind review, so a clone has validation/results/ but no paper/paper.md. That is
+   not a failure of the suite: `npm run validate` should still pass on a clean checkout.
+   Locally the file is present and the check runs in full. */
+if (!existsSync(paperPath)) {
+  console.log('no manuscript at paper/paper.md — nothing to generate or check.');
+  process.exit(0);
+}
 
 let text = readFileSync(paperPath, 'utf8');
 const before = text;

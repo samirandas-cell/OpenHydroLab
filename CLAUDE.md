@@ -28,13 +28,16 @@ tests/software/  load, self-containment, file://, accessibility, label layout
 tools/           static server, validation reporter, manuscript tables, three vendoring
 validation/      protocol + generated results (json/md)
 paper/           the Education Sciences manuscript (paper.md, paper.bib) + the enquiry
+                 — LOCAL ONLY, git-ignored during double-blind review
+submission/      the submission package built from it — LOCAL ONLY, git-ignored
 ```
 
 `npm install && npm run install-browsers && npm test` → 405 tests on Chromium, Firefox
 and WebKit (141 physics + 264 software runs); writes `validation/results/`
 (354 numerical comparisons = 118 distinct cases × 3 engines).
 `npm run paper` regenerates the manuscript's tables from that dataset;
-`npm run paper:check` fails if the manuscript has drifted from it.
+`npm run paper:check` fails if the manuscript has drifted from it, and skips cleanly on a
+clone that has no `paper/` — so `npm run validate` passes there too.
 
 ## Locked-in decisions
 

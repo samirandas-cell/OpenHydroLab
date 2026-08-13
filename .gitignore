@@ -3,6 +3,10 @@ test-results/
 validation/results/html/
 playwright-report/
 
-# Submission materials stay local while the Special Issue runs double-blind review:
-# the manuscript, its blinded review copy and the cover letter are not published here.
+# Manuscript and submission materials stay local while the Special Issue runs
+# double-blind review. The laboratories, the protocol, the test suite and the generated
+# dataset are the published artifact; the paper about them is not.
+# `node tools/manuscript-tables.mjs --check` skips cleanly when paper/ is absent, so
+# `npm run validate` still passes on a fresh clone.
+paper/
 submission/
