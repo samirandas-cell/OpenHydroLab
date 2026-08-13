@@ -14,8 +14,8 @@ on scope, add an expert-evaluation instrument and go to CAEE (Wiley, SCIE, free 
 publish), which is also the natural home for the later classroom study. JOSE is closed to
 submissions.
 
-**Cite as:** version DOI [10.5281/zenodo.21665643](https://doi.org/10.5281/zenodo.21665643)
-(v1.0.2) · concept DOI
+**Cite as:** version DOI [10.5281/zenodo.21915552](https://doi.org/10.5281/zenodo.21915552)
+(v1.0.4 — the release the manuscript cites) · concept DOI
 [10.5281/zenodo.21635797](https://doi.org/10.5281/zenodo.21635797) (latest).
 
 ## Layout
@@ -135,21 +135,28 @@ scene alone.
 **Release prep.** `package.json`/`package-lock.json` 1.0.2 → 1.0.4 (they had drifted a
 release behind `CITATION.cff` and `.zenodo.json`), CITATION 1.0.4 / 2026-08-13, Zenodo
 description rewritten for 197 cases. §6 and the Data Availability Statement now cite
-1.0.4 with a `‹ZENODO-DOI-v1.0.4›` token, and the "archive is three cases behind"
-qualification is gone. `.zenodo.json` was deliberately left structurally identical to
-the file that published 1.0.3 — no `related_identifiers` — because a rejected deposition
-wedges the tag on 409 forever. Tag `v1.0.4` exists locally; **nothing is pushed and no
-GitHub Release is published**, which is what actually triggers Zenodo.
+1.0.4, and the "archive is three cases behind" qualification is gone. The release was
+published the same day as **10.5281/zenodo.21915552**, and the DOI is wired through
+`paper/paper.md`, the submission copy, `CITATION.cff` and the README. `.zenodo.json` was
+deliberately left structurally identical to the file that published 1.0.3 — no
+`related_identifiers` — because a rejected deposition wedges the tag on 409 forever. The
+deposit was verified against the Zenodo API rather than assumed: record 21915552, version
+1.0.4, one 1.28 MB archive, concept DOI resolving to it.
 
-**Decisions.** The version DOI stays out of `CITATION.cff` until the release is
-published, per the standing reason in that file. `tools/manuscript-docx.cjs` gained
+**Gotcha.** The first attempt looked published and was not. Zenodo showed three records
+and the concept DOI still resolved to 1.0.3 across four minutes of checks, which reads
+exactly like the v1.0.1 storage fault — but the actual cause was that GitHub had no
+v1.0.4 release at all, only the `/releases/new` form, most likely saved as a draft. A
+draft is invisible anonymously and fires no webhook. **Check `/releases` before
+diagnosing Zenodo**, and note that the anonymous view is the honest one: it shows what
+the webhook saw.
+
+**Decisions.** `tools/manuscript-docx.cjs` gained
 explicit source/bib arguments and `[text]{.mark}` → yellow-highlight support, so the
 review copy is typeset by the same MDPI code path as `paper/paper.docx` rather than by a
 second toolchain; `npm run paper:docx` is unchanged.
 
-**Next.** Publish the release and fill the DOI token
-(`submission/education-sciences/release-checklist-v1.0.4.md`), then the author-side
-submission gate: accept the highlighted corrections, confirm the affiliation wording,
+**Next.** The author-side submission gate: accept the highlighted corrections, confirm the affiliation wording,
 recheck the APC — this file and `paper/presubmission-enquiry.md` still say CHF 2000
 against CHF 1800 shown on the Special Issue page on 13 August 2026.
 
