@@ -15,7 +15,8 @@ publish), which is also the natural home for the later classroom study. JOSE is 
 submissions.
 
 **Cite as:** version DOI [10.5281/zenodo.21915552](https://doi.org/10.5281/zenodo.21915552)
-(v1.0.4 — the release the manuscript cites) · concept DOI
+(v1.0.4; v1.0.5 supersedes it as the release the manuscript cites once published) ·
+concept DOI
 [10.5281/zenodo.21635797](https://doi.org/10.5281/zenodo.21635797) (latest).
 
 ## Layout
@@ -159,9 +160,34 @@ explicit source/bib arguments and `[text]{.mark}` → yellow-highlight support, 
 review copy is typeset by the same MDPI code path as `paper/paper.docx` rather than by a
 second toolchain; `npm run paper:docx` is unchanged.
 
-**Next.** The author-side submission gate: accept the highlighted corrections, confirm the affiliation wording,
+**Next.** Publish the v1.0.5 release and fill its DOI token, then the author-side
+submission gate: accept the highlighted corrections, confirm the affiliation wording,
 recheck the APC — this file and `paper/presubmission-enquiry.md` still say CHF 2000
 against CHF 1800 shown on the Special Issue page on 13 August 2026.
+
+### 2026-08-13 — v1.0.5: the manuscript leaves the published repository
+
+**Delivered.** `paper/` joined `submission/` in `.gitignore`, and v1.0.5 was cut from the
+resulting tree. The archive now holds the laboratories, their guides, the protocol, the
+suite and the generated dataset — everything a reader needs to check the reported
+results — and not the paper describing them, which is withheld while the Special Issue
+runs double-blind review. The dataset is identical to v1.0.4: 197 cases, 591 comparison
+records, 108 checks, 324 executions, none failing. No physics changed.
+
+**Why a second release the same day.** v1.0.4 was published before the manuscript was
+removed, so the archive the paper cited contained the paper. Correct, but self-defeating
+during blind review. v1.0.4 stays published and valid — it holds the same dataset — and
+the manuscript now cites v1.0.5 instead.
+
+**Gotcha.** Removing `paper/` breaks `npm run validate` on a clone, because it chains
+`paper:check` and the tool threw `ENOENT` on the missing file. `manuscript-tables.mjs`
+now exits 0 with a message when `paper/paper.md` is absent, and runs in full when it is
+there. Tested both ways before tagging.
+
+**Limit worth remembering.** The removal is forward-only. `paper/` was tracked since July
+across 47 commits and sits inside all five archives up to v1.0.4; rewriting that history
+would change the SHAs the manuscript cites and break four published DOIs. The text stays
+readable in history and in those archives.
 
 ### 2026-08-09 — fluid mechanics section opened: hydrostatic forces, 2D and 3D
 
