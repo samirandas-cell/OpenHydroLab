@@ -109,6 +109,50 @@ and WebKit (141 physics + 264 software runs); writes `validation/results/`
 
 ## Log
 
+### 2026-08-13 — submission copy reviewed and corrected; v1.0.4 prepared, not published
+
+**Delivered.** `submission/education-sciences/` — the Codex-drafted Education Sciences
+manuscript brought into this repository, reviewed line by line against the dataset and
+the test source, and corrected in eleven places. The folder is **git-ignored**: the
+Special Issue runs double-blind review, so the manuscript, its blinded copy and the
+cover letter stay on disk and out of the public repository and the Zenodo archive. All generated blocks were confirmed
+character-identical to `validation/results/`, and every prose number was recomputed:
+197/591/108/324, 127 tight cases, the sweep sizes, the bisection counts, the test
+viewports and all seven defect narratives hold. Four Word files were built by
+`tools/manuscript-docx.cjs`: a highlighted review copy and a clean submission copy of
+each of the named and blinded manuscripts.
+
+**The corrections that mattered.** §3.1 claimed the 127 tightest cases use "under a
+thousandth of a percent" of their allowance; seven use more, the worst 0.13% — a figure
+Table 4 prints on the same page, so the prose contradicted its own table. The
+`rel ≤ 1e-6` group reaches 9.9% of its bound and appeared neither in that list nor in
+Table 2's tolerance policy, so the second-worst group in the run had no stated
+justification. The retry claim was broader than `playwright.config.mjs`: only
+`accessibility.spec.mjs` sets `retries: 2`. And "every laboratory is covered by every
+class of check" is false for label separation, which measures the 3D channel-geometry
+scene alone.
+
+**Release prep.** `package.json`/`package-lock.json` 1.0.2 → 1.0.4 (they had drifted a
+release behind `CITATION.cff` and `.zenodo.json`), CITATION 1.0.4 / 2026-08-13, Zenodo
+description rewritten for 197 cases. §6 and the Data Availability Statement now cite
+1.0.4 with a `‹ZENODO-DOI-v1.0.4›` token, and the "archive is three cases behind"
+qualification is gone. `.zenodo.json` was deliberately left structurally identical to
+the file that published 1.0.3 — no `related_identifiers` — because a rejected deposition
+wedges the tag on 409 forever. Tag `v1.0.4` exists locally; **nothing is pushed and no
+GitHub Release is published**, which is what actually triggers Zenodo.
+
+**Decisions.** The version DOI stays out of `CITATION.cff` until the release is
+published, per the standing reason in that file. `tools/manuscript-docx.cjs` gained
+explicit source/bib arguments and `[text]{.mark}` → yellow-highlight support, so the
+review copy is typeset by the same MDPI code path as `paper/paper.docx` rather than by a
+second toolchain; `npm run paper:docx` is unchanged.
+
+**Next.** Publish the release and fill the DOI token
+(`submission/education-sciences/release-checklist-v1.0.4.md`), then the author-side
+submission gate: accept the highlighted corrections, confirm the affiliation wording,
+recheck the APC — this file and `paper/presubmission-enquiry.md` still say CHF 2000
+against CHF 1800 shown on the Special Issue page on 13 August 2026.
+
 ### 2026-08-09 — fluid mechanics section opened: hydrostatic forces, 2D and 3D
 
 **Delivered.** Two modules and a new landing-page section, **Fluid mechanics**, placed

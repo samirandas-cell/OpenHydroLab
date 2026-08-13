@@ -29,14 +29,18 @@ const { parseBib, formatReference } = require('./bibtex.cjs');
 
 const REPO = process.argv[2] || 'C:/Teaching/OpenHydroLab';
 const OUT = process.argv[3] || path.join(REPO, 'paper', 'paper.docx');
+/* A submission copy lives outside paper/ and carries its own bibliography, so both
+   inputs can be named explicitly. Defaults keep `npm run paper:docx` unchanged. */
+const SRC = process.argv[4] || path.join(REPO, 'paper', 'paper.md');
+const BIB = process.argv[5] || path.join(REPO, 'paper', 'paper.bib');
 
 const FONT = 'Palatino Linotype';
 const BODY = 18;      // half-points => 9 pt
 const SMALL = 16;     // 8 pt
 const TITLE = 32;     // 16 pt
 
-const src = fs.readFileSync(path.join(REPO, 'paper', 'paper.md'), 'utf8');
-const bib = parseBib(fs.readFileSync(path.join(REPO, 'paper', 'paper.bib'), 'utf8'));
+const src = fs.readFileSync(SRC, 'utf8');
+const bib = parseBib(fs.readFileSync(BIB, 'utf8'));
 
 /* ---------------------------------------------------------------- front matter */
 const fmMatch = src.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n/);
@@ -83,7 +87,11 @@ function runs(text, base = {}) {
   text = replaceCitations(text);
   const out = [];
   // Tokenise bold, italic, code, sub, sup, links, escaped chars.
-  const re = /(\*\*[^*]+\*\*)|(\*[^*]+\*)|(`[^`]+`)|(~[^~\s][^~]*~)|(\^[^^\s][^^]*\^)|(\[[^\]]+\]\([^)]+\))|(<https?:\/\/[^>]+>)|(<sup>.*?<\/sup>)|(\\.)/g;
+  /* [text]{.mark} is Pandoc's highlight span: used by the review copy to mark passages
+     corrected against the dataset. It is tokenised before the link form, which needs a
+     following (…), so the two cannot collide. One level of nested brackets is allowed so
+     that a highlighted passage may contain a link. */
+  const re = /(\*\*[^*]+\*\*)|(\*[^*]+\*)|(`[^`]+`)|(~[^~\s][^~]*~)|(\^[^^\s][^^]*\^)|(\[[^\]]+\]\([^)]+\))|(<https?:\/\/[^>]+>)|(<sup>.*?<\/sup>)|(\\.)|(\[(?:[^\[\]]|\[[^\]]*\])+\]\{\.mark\})/g;
   let last = 0, m;
   const push = (t, props) => { if (t) out.push(new TextRun({ text: t, font: FONT, size: base.size || BODY, ...base, ...props })); };
   while ((m = re.exec(text)) !== null) {
@@ -108,6 +116,10 @@ function runs(text, base = {}) {
       }));
     } else if (m[8]) push(tok.replace(/<\/?sup>/g, ''), { superScript: true });
     else if (m[9]) push(tok.slice(1));
+    else if (m[10]) {
+      const inner = tok.slice(1, tok.lastIndexOf(']'));
+      out.push(...runs(inner, { ...base, highlight: 'yellow' }));
+    }
     last = m.index + tok.length;
   }
   push(text.slice(last));

@@ -2,3 +2,7 @@ node_modules/
 test-results/
 validation/results/html/
 playwright-report/
+
+# Submission materials stay local while the Special Issue runs double-blind review:
+# the manuscript, its blinded review copy and the cover letter are not published here.
+submission/

@@ -7,8 +7,8 @@ authors:
     given-names: Samiran
     affiliation: "James Watt School of Engineering, University of Glasgow (Singapore campus)"
     orcid: "https://orcid.org/0000-0002-3814-534X"
-version: 1.0.3
-date-released: 2026-08-12
+version: 1.0.4
+date-released: 2026-08-13
 license: MIT
 repository-code: "https://github.com/samirandas-cell/OpenHydroLab"
 # The concept DOI is the primary identifier because a release cannot contain
