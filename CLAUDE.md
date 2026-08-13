@@ -14,9 +14,8 @@ on scope, add an expert-evaluation instrument and go to CAEE (Wiley, SCIE, free 
 publish), which is also the natural home for the later classroom study. JOSE is closed to
 submissions.
 
-**Cite as:** version DOI [10.5281/zenodo.21915552](https://doi.org/10.5281/zenodo.21915552)
-(v1.0.4; v1.0.5 supersedes it as the release the manuscript cites once published) ·
-concept DOI
+**Cite as:** version DOI [10.5281/zenodo.21915743](https://doi.org/10.5281/zenodo.21915743)
+(v1.0.5 — the release the manuscript cites) · concept DOI
 [10.5281/zenodo.21635797](https://doi.org/10.5281/zenodo.21635797) (latest).
 
 ## Layout
@@ -160,8 +159,7 @@ explicit source/bib arguments and `[text]{.mark}` → yellow-highlight support, 
 review copy is typeset by the same MDPI code path as `paper/paper.docx` rather than by a
 second toolchain; `npm run paper:docx` is unchanged.
 
-**Next.** Publish the v1.0.5 release and fill its DOI token, then the author-side
-submission gate: accept the highlighted corrections, confirm the affiliation wording,
+**Next.** The author-side submission gate: accept the highlighted corrections, confirm the affiliation wording,
 recheck the APC — this file and `paper/presubmission-enquiry.md` still say CHF 2000
 against CHF 1800 shown on the Special Issue page on 13 August 2026.
 
