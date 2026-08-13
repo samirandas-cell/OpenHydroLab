@@ -216,6 +216,20 @@ across 47 commits and sits inside all five archives up to v1.0.4; rewriting that
 would change the SHAs the manuscript cites and break four published DOIs. The text stays
 readable in history and in those archives.
 
+**Archived.** v1.0.5 = **10.5281/zenodo.21915743** (record 21915743, 1.19 MB, verified
+through the API), wired into §6, the Data Availability Statement, the software citation,
+`CITATION.cff`, the README and the cite-as header above. The concept DOI resolves to it.
+
+**Next.** Submission is now entirely author-side, in
+`submission/education-sciences/review-notes.md`: accept or reject the ten highlighted
+corrections in `manuscript-highlighted.docx` (two change claims in Results), confirm the
+Glasgow affiliation wording and the Singapore postal address, recheck the APC and
+deadline on the day — this file and `paper/presubmission-enquiry.md` still say CHF 2000
+against CHF 1800 shown on 13 August 2026 — confirm the cover letter's declarations, then
+upload `manuscript-blind.docx` for review and `manuscript.docx` for the
+author-information slot. If any text changes, the clean copies must be rebuilt: the
+highlighting has to come off before upload.
+
 ### 2026-08-09 — fluid mechanics section opened: hydrostatic forces, 2D and 3D
 
 **Delivered.** Two modules and a new landing-page section, **Fluid mechanics**, placed
